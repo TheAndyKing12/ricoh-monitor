@@ -1,0 +1,46 @@
+﻿from fastapi import APIRouter, Depends
+
+from sqlalchemy.orm import Session
+
+from ..database import SessionLocal
+
+from .. import crud, schemas
+
+router = APIRouter(prefix="/inventory", tags=["Inventory"])
+
+
+def get_db():
+
+    db = SessionLocal()
+
+    try:
+
+        yield db
+
+    finally:
+
+        db.close()
+
+
+@router.post("/")
+
+def create_item(item: schemas.InventoryCreate, db: Session = Depends(get_db)):
+
+    return crud.create_inventory(db, item)
+
+
+@router.get("/")
+
+def list_inventory(db: Session = Depends(get_db)):
+
+    return crud.get_inventory(db)
+
+
+@router.delete("/{item_id}")
+
+def delete_item(item_id: int, db: Session = Depends(get_db)):
+
+    crud.delete_inventory(db, item_id)
+
+    return {"message": "Deleted"}
+ 

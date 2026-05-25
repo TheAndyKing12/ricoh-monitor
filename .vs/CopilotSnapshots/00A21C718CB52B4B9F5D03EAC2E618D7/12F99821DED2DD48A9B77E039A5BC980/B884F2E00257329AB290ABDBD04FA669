@@ -1,0 +1,39 @@
+﻿with open('frontend/dashboard.html', encoding='utf-8') as f:
+    lines = f.readlines()
+
+# Line 304 (index 303): add missing closing } for the function body
+target = 303
+line = lines[target]
+if line.rstrip('\n').endswith('null;}'):
+    lines[target] = line.rstrip('\n') + '}\n'
+    with open('frontend/dashboard.html', 'w', encoding='utf-8') as f:
+        f.writelines(lines)
+    print("FIXED: added missing } to line 304")
+else:
+    print(f"No fix needed or line changed. End: {repr(line[-30:])}")
+
+with open('frontend/dashboard.html', encoding='utf-8') as f:
+    content = f.read()
+
+js_start = content.index('<script>') + len('<script>')
+js_end = content.index('</script>')
+js = content[js_start:js_end]
+
+balance = 0
+in_str = None
+escape = False
+for ch in js:
+    if escape:
+        escape = False
+        continue
+    if ch == '\\' and in_str in ('"', "'", '`'):
+        escape = True
+        continue
+    if in_str is None:
+        if ch == '{': balance += 1
+        elif ch == '}': balance -= 1
+        elif ch in ('"', "'", '`'): in_str = ch
+    else:
+        if ch == in_str: in_str = None
+
+print(f"Balance final: {balance} {'✅ OK' if balance == 0 else '❌ TODAVIA HAY ERROR'}")

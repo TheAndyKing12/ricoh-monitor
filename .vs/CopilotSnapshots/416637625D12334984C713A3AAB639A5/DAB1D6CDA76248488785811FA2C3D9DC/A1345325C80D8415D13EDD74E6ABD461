@@ -1,0 +1,38 @@
+﻿from fastapi import FastAPI
+
+from fastapi.middleware.cors import CORSMiddleware
+
+from .database import Base, engine
+
+from .routers import printers, inventory, toner_control
+
+
+ 
+
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(title="Ricoh Monitor")
+
+app.add_middleware(
+
+    CORSMiddleware,
+
+    allow_origins=["*"],
+
+    allow_credentials=True,
+
+    allow_methods=["*"],
+
+    allow_headers=["*"],
+
+)
+
+app.include_router(printers.router)
+app.include_router(inventory.router)
+app.include_router(toner_control.router)
+@app.get("/")
+
+def root():
+
+    return {"message": "Sistema Ricoh funcionando"}
+ 

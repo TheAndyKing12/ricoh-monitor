@@ -1,0 +1,97 @@
+
+function formSubmit(form)
+{
+	form.submit();
+}
+
+function uploadSubmit(form)
+{
+	form.submit();
+}
+
+/***********************************************************
+ * Gg[ÒW
+ ***********************************************************/
+
+function Apply(){
+	var skip = new skip_info();
+	if (BaseForm) {
+		if (buttonCheckFlag) { return; }
+		buttonCheckFlag = true;
+		MainForm.mode.value = BaseForm.mode.value;
+
+		if (CurrentMethod == ADRS_GET_USER) {
+			getSkipInfo(SKIP_USER_SET,EMPTY,skip);
+		}
+		else if (CurrentMethod == ADRS_GET_GROUP) {
+			getSkipInfo(SKIP_GROUP_SET,EMPTY,skip);
+		}
+ 		else if (CurrentMethod == ADRS_GET_USER_TEMPLATE) {
+			getSkipInfo(SKIP_USERTEMPLATE_SET,EMPTY,skip);
+		}
+
+		MainForm.wayFrom.value = skip.from;
+		MainForm.wayTo.value = skip.to;
+		utilSubmitForm(MainForm,skip.via);
+		utilPageSkipDisabled();
+	}
+}
+
+function Continue(){
+	var skip = new skip_info();
+	if (BaseForm) {
+		if (buttonCheckFlag) { return; }
+		buttonCheckFlag = true;
+		MainForm.mode.value = BaseForm.mode.value;
+
+		if (CurrentMethod == ADRS_GET_USER) {
+			getSkipInfo(SKIP_USER_CONTINUE,EMPTY,skip);
+		}
+		else if (CurrentMethod == ADRS_GET_GROUP) {
+			getSkipInfo(SKIP_GROUP_CONTINUE,EMPTY,skip);
+		}
+		MainForm.wayFrom.value = skip.from;
+		MainForm.wayTo.value = skip.to;
+		utilSubmitForm(MainForm,skip.via);
+		utilPageSkipDisabled();
+	}
+}
+
+function adrsListJump(){
+	if (BaseForm) {
+		if (buttonCheckFlag) { return; }
+		buttonCheckFlag = true;
+		if (MainForm.pageSpecifiedIn) {
+			MainForm.pageSpecifiedIn.value = FALSE;
+		}
+
+		utilSubmitForm(MainForm,ADRS_LIST);
+		utilPageSkipDisabled();
+	}
+}
+
+function adrsGenErrOk()
+{
+	adrsListJump();
+}
+
+/***********************************************************
+* ímF
+***********************************************************/
+function Delete()
+{
+	var skip = new skip_info();
+	if (BaseForm) {
+
+		if (buttonCheckFlag) { return; }
+		buttonCheckFlag = true;
+		if (utilGetInputValue(MainForm, "entryIndexIn") > 0){
+			getSkipInfo(SKIP_CONFDELETE_EXEC,EMPTY,skip);
+
+			MainForm.wayFrom.value = skip.from;
+			MainForm.wayTo.value = skip.to;
+			utilSubmitForm(MainForm,skip.via);
+			utilPageSkipDisabled();
+		}
+	}
+}

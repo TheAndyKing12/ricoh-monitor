@@ -1,0 +1,208 @@
+﻿import requests
+import re
+
+
+def _find_pair(section_text):
+    """Find 'A todo color' and 'Blanco y Negro' numbers in given text.
+    Returns (color, bw) as ints or (None,None) if not found."""
+    # try color then bw
+    m = re.search(r"A\s*todo\s*color\s*[:：]?\s*(\d+)", section_text, re.IGNORECASE)
+    color = int(m.group(1)) if m else None
+    m2 = re.search(r"Blanco\s*y\s*Negro\s*[:：]?\s*(\d+)", section_text, re.IGNORECASE)
+    bw = int(m2.group(1)) if m2 else None
+    # if not found try reverse order patterns
+    if color is None or bw is None:
+        m_alt = re.search(r"Blanco\s*y\s*Negro\s*[:：]?\s*(\d+).*?A\s*todo\s*color\s*[:：]?\s*(\d+)", section_text, re.IGNORECASE | re.DOTALL)
+        if m_alt:
+            bw = int(m_alt.group(1))
+            color = int(m_alt.group(2))
+    return color, bw
+
+
+def get_ricoh_http_counters(ip):
+    # candidate URLs to try (some Ricoh models use frames)
+    base_paths = [
+        f"http://{ip}/web/guest/es/websys/status/",
+        f"http://{ip}/web/guest/es/websys/",
+        f"http://{ip}/web/guest/es/",
+        f"http://{ip}/web/guest/",
+        f"http://{ip}/web/entry/es/websys/",
+        f"http://{ip}/web/entry/es/",
+        f"http://{ip}/web/entry/",
+        f"http://{ip}/",
+    ]
+
+    candidates = [
+        "status/getUnificationCounter.cgi",
+        "webArch/mainFrame.cgi",
+        "websys/webArch/mainFrame.cgi",
+        "web/entry/es/websys/webArch/mainFrame.cgi",
+        "web/entry/webArch/mainFrame.cgi",
+        "websys/webArch/topPage.cgi",
+        "websys/webArch/header.cgi",
+        "websys/topPage.cgi",
+        "websys/header.cgi",
+        "websys/status/getUnificationCounter.cgi",
+    ]
+
+    copy_color = copy_bw = print_color = print_bw = None
+    html = None
+    try:
+        # try each base + candidate
+        for base in base_paths:
+            for cand in candidates:
+                url = base.rstrip('/') + '/' + cand.lstrip('/')
+                try:
+                    r = requests.get(url, timeout=6)
+                except Exception:
+                    r = None
+                # if unauthenticated or empty, try with admin and empty password
+                if (not r or r.status_code == 401 or not r.text):
+                    try:
+                        r = requests.get(url, timeout=6, auth=("admin", ""))
+                    except Exception:
+                        r = None
+                if not r or not r.text:
+                    continue
+                html = r.text
+                # handle auto-submitting message forms that redirect to mainFrame.cgi
+                try:
+                    form_msg = re.search(r"<form[^>]+action=[\"']([^\"']*message\.cgi)[\"'][^>]*>(.*?)</form>", html, re.IGNORECASE | re.DOTALL)
+                    if form_msg:
+                        action_path = form_msg.group(1)
+                        form_body = form_msg.group(2)
+                        inputs = dict(re.findall(r"<input[^>]+name=[\"']([^\"']+)[\"'][^>]+value=[\"']([^\"']*)[\"']", form_body, re.IGNORECASE))
+                        # resolve action URL
+                        if action_path.lower().startswith('http'):
+                            action_url = action_path
+                        else:
+                            action_url = url.rsplit('/', 1)[0] + '/' + action_path.lstrip('/')
+                        # try POST then follow buttonURL if present
+                        try:
+                            pr = requests.post(action_url, data=inputs, timeout=6)
+                        except Exception:
+                            try:
+                                pr = requests.post(action_url, data=inputs, timeout=6, auth=("admin", ""))
+                            except Exception:
+                                pr = None
+                        if pr and getattr(pr, 'text', None):
+                            html = pr.text
+                        # if buttonURL provided, fetch it
+                        btn = inputs.get('buttonURL')
+                        if btn:
+                            if btn.lower().startswith('http'):
+                                btn_url = btn
+                            else:
+                                btn_url = action_url.rsplit('/', 1)[0] + '/' + btn.lstrip('/')
+                            try:
+                                br = requests.get(btn_url, timeout=6)
+                            except Exception:
+                                try:
+                                    br = requests.get(btn_url, timeout=6, auth=("admin", ""))
+                                except Exception:
+                                    br = None
+                            if br and getattr(br, 'text', None):
+                                html = br.text
+                except Exception:
+                    pass
+                # If the page is a frameset, fetch referenced frames (e.g., topPage.cgi)
+                if re.search(r"<frameset|<frame", html, re.IGNORECASE):
+                    frame_srcs = re.findall(r"<frame[^>]+src=[\"']([^\"']+)[\"']", html, re.IGNORECASE)
+                    # resolve and fetch each frame
+                    for src in frame_srcs:
+                        if src.lower().startswith('http'):
+                            furl = src
+                        else:
+                            fbase = url.rsplit('/', 1)[0]
+                            furl = fbase + '/' + src.lstrip('/')
+                        try:
+                            fr = requests.get(furl, timeout=6)
+                        except Exception:
+                            fr = None
+                        if (not fr or fr.status_code == 401 or not getattr(fr, 'text', None)):
+                            try:
+                                fr = requests.get(furl, timeout=6, auth=("admin", ""))
+                            except Exception:
+                                fr = None
+                        if fr and fr.text:
+                            html = fr.text
+                            # attempt parse this frame for counters
+                            m_copy = re.search(r"Copiadora(.*?)(?:Impresora|$)", html, re.IGNORECASE | re.DOTALL)
+                            if m_copy:
+                                sec = m_copy.group(1)
+                                c, b = _find_pair(sec)
+                                copy_color = c
+                                copy_bw = b
+                            m_print = re.search(r"Impresora(.*?)(?:Fax|$)", html, re.IGNORECASE | re.DOTALL)
+                            if m_print:
+                                sec = m_print.group(1)
+                                c, b = _find_pair(sec)
+                                print_color = c
+                                print_bw = b
+                            if (copy_color is not None or copy_bw is not None) or (print_color is not None or print_bw is not None):
+                                break
+                    if (copy_color is not None or copy_bw is not None) or (print_color is not None or print_bw is not None):
+                        break
+                else:
+                    # normal page: try parse directly
+                    m_copy = re.search(r"Copiadora(.*?)(?:Impresora|$)", html, re.IGNORECASE | re.DOTALL)
+                    if m_copy:
+                        sec = m_copy.group(1)
+                        c, b = _find_pair(sec)
+                        copy_color = c
+                        copy_bw = b
+                    m_print = re.search(r"Impresora(.*?)(?:Fax|$)", html, re.IGNORECASE | re.DOTALL)
+                    if m_print:
+                        sec = m_print.group(1)
+                        c, b = _find_pair(sec)
+                        print_color = c
+                        print_bw = b
+                    if (copy_color is not None or copy_bw is not None) or (print_color is not None or print_bw is not None):
+                        break
+
+        # fallback generic matches across the last fetched html
+        if html and ((copy_color is None and print_color is None) or (copy_bw is None and print_bw is None)):
+            all_color_matches = re.findall(r"A\s*todo\s*color\s*[:：]?\s*(\d+)", html, re.IGNORECASE)
+            all_bw_matches = re.findall(r"Blanco\s*y\s*Negro\s*[:：]?\s*(\d+)", html, re.IGNORECASE)
+            if len(all_color_matches) >= 2:
+                try:
+                    copy_color = copy_color if copy_color is not None else int(all_color_matches[0])
+                except Exception:
+                    pass
+                try:
+                    print_color = print_color if print_color is not None else int(all_color_matches[1])
+                except Exception:
+                    pass
+            if len(all_bw_matches) >= 2:
+                try:
+                    copy_bw = copy_bw if copy_bw is not None else int(all_bw_matches[0])
+                except Exception:
+                    pass
+                try:
+                    print_bw = print_bw if print_bw is not None else int(all_bw_matches[1])
+                except Exception:
+                    pass
+
+        # compute totals when possible
+        bw_pages = None
+        color_pages = None
+        total_pages = None
+        if (copy_bw is not None) or (print_bw is not None):
+            bw_pages = (copy_bw or 0) + (print_bw or 0)
+        if (copy_color is not None) or (print_color is not None):
+            color_pages = (copy_color or 0) + (print_color or 0)
+        if bw_pages is not None and color_pages is not None:
+            total_pages = bw_pages + color_pages
+
+        return {
+            "bw_pages": bw_pages,
+            "color_pages": color_pages,
+            "total_pages": total_pages,
+            "copy_bw": copy_bw,
+            "copy_color": copy_color,
+            "print_bw": print_bw,
+            "print_color": print_color
+        }
+    except Exception as e:
+        print("HTTP counter error:", e)
+        return None

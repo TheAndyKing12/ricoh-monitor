@@ -1,0 +1,186 @@
+﻿from fastapi import APIRouter, Depends
+
+from sqlalchemy.orm import Session
+
+from ..database import SessionLocal
+
+from .. import crud, schemas
+
+from ..snmp import get_snmp_value
+
+router = APIRouter(prefix="/toner-control", tags=["Toner Control"])
+
+
+def get_db():
+
+    db = SessionLocal()
+
+    try:
+
+        yield db
+
+    finally:
+
+        db.close()
+
+
+def safe_int(value):
+
+    try:
+
+        return int(value)
+
+    except:
+
+        return None
+
+
+def detect_is_color(printer):
+
+    if hasattr(printer, "is_color") and printer.is_color is not None:
+
+        return bool(printer.is_color)
+
+    model_upper = (printer.model or "").upper().strip()
+
+    return (
+
+        model_upper.startswith("IM C") or
+
+        model_upper.startswith("MP C") or
+
+        model_upper.startswith("P C") or
+
+        model_upper.startswith("RICOH IM C") or
+
+        model_upper.startswith("RICOH MP C") or
+
+        model_upper.startswith("RICOH P C") or
+
+        "IM C" in model_upper or
+
+        "MP C" in model_upper or
+
+        "P C" in model_upper
+
+    )
+ 
+
+
+@router.get("/")
+
+def get_controls(db: Session = Depends(get_db)):
+
+    printers = crud.get_printers(db)
+
+    controls = crud.get_toner_controls(db)
+
+    control_map = {c.printer_id: c for c in controls}
+
+    results = []
+
+    for p in printers:
+
+        is_color = detect_is_color(p)
+
+        toner_black = safe_int(
+
+            get_snmp_value(p.ip, p.snmp_community, "1.3.6.1.2.1.43.11.1.1.9.1.1")
+
+        )
+
+        toner_cyan = None
+
+        toner_magenta = None
+
+        toner_yellow = None
+
+        if is_color:
+
+            toner_cyan = safe_int(
+
+                get_snmp_value(p.ip, p.snmp_community, "1.3.6.1.2.1.43.11.1.1.9.1.2")
+
+            )
+
+            toner_magenta = safe_int(
+
+                get_snmp_value(p.ip, p.snmp_community, "1.3.6.1.2.1.43.11.1.1.9.1.3")
+
+            )
+
+            toner_yellow = safe_int(
+
+                get_snmp_value(p.ip, p.snmp_community, "1.3.6.1.2.1.43.11.1.1.9.1.4")
+
+            )
+
+        control = control_map.get(p.id)
+
+        results.append({
+
+            "printer_id": p.id,
+
+            "shared_name": p.shared_name,
+
+            "name": p.name,
+
+            "model": p.model,
+
+            "serial": p.serial,
+
+            "location": p.location,
+
+            "is_color": is_color,
+
+            "toner_black": toner_black,
+
+            "toner_cyan": toner_cyan,
+
+            "toner_magenta": toner_magenta,
+
+            "toner_yellow": toner_yellow,
+
+            "check_date": control.check_date if control else "",
+
+            "backup_black": control.backup_black if control else 0,
+
+            "backup_cyan": control.backup_cyan if control else 0,
+
+            "backup_magenta": control.backup_magenta if control else 0,
+
+            "backup_yellow": control.backup_yellow if control else 0,
+
+            "pedido": control.pedido if control else "",
+
+            "work_order": control.work_order if control else "",
+
+            "notas": control.notas if control else ""
+
+        })
+
+    return results
+
+
+@router.put("/{printer_id}")
+
+def update_control(
+
+    printer_id: int,
+
+    data: schemas.TonerControlUpdate,
+
+    db: Session = Depends(get_db)
+
+):
+
+    return crud.update_toner_control(
+
+        db,
+
+        printer_id,
+
+        data.dict(exclude_none=True)
+
+    )
+ 

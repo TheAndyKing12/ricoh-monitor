@@ -1,0 +1,31 @@
+from app.database import SessionLocal
+from app import models
+from app.routers.printers import resolve_hostname_value
+
+def fix_printer_names():
+    db = SessionLocal()
+    printers = db.query(models.Printer).all()
+    print(f"Impresoras encontradas: {len(printers)}")
+    updated = 0
+
+    for p in printers:
+        print(f"[{p.id}] IP={p.ip} | name actual='{p.name}'", end=" ")
+        try:
+            hostname = resolve_hostname_value(p.ip, p.snmp_community or "public")
+        except Exception as e:
+            print(f"-> ERROR resolviendo: {e}")
+            continue
+
+        if hostname and hostname != (p.name or "").strip():
+            print(f"-> ACTUALIZADO a '{hostname}'")
+            p.name = hostname
+            updated += 1
+        else:
+            print(f"-> sin cambio (hostname='{hostname}')")
+
+    db.commit()
+    db.close()
+    print(f"\nFinalizado. {updated} impresoras actualizadas.")
+
+if __name__ == "__main__":
+    fix_printer_names()

@@ -1,0 +1,200 @@
+﻿import requests
+import re
+
+# Temporary debug flag to print HTTP fetch and parsing information
+RICOH_HTTP_DEBUG = True
+
+
+def _parse_int(text):
+    if text is None:
+        return None
+    s = re.sub(r"[^0-9]", "", str(text))
+    if s == "":
+        return None
+    try:
+        return int(s)
+    except Exception:
+        return None
+
+
+def _find_pair(section_text):
+    """Extract (color, bw) numbers from a section of HTML/text."""
+    if not section_text:
+        return None, None
+    # Look for patterns 'A todo color' and 'Blanco y Negro' near numbers
+    m_color = re.search(r"A\s*todo\s*color\s*[:：]?\s*([0-9,\.]+)", section_text, re.IGNORECASE)
+    m_bw = re.search(r"Blanco\s*y\s*Negro\s*[:：]?\s*([0-9,\.]+)", section_text, re.IGNORECASE)
+    color = _parse_int(m_color.group(1)) if m_color else None
+    bw = _parse_int(m_bw.group(1)) if m_bw else None
+    # alternate: reversed order
+    if (color is None or bw is None):
+        m_alt = re.search(r"Blanco\s*y\s*Negro\s*[:：]?\s*([0-9,\.]+).*?A\s*todo\s*color\s*[:：]?\s*([0-9,\.]+)", section_text, re.IGNORECASE | re.DOTALL)
+        if m_alt:
+            bw = _parse_int(m_alt.group(1))
+            color = _parse_int(m_alt.group(2))
+    return color, bw
+
+
+def get_ricoh_http_counters(ip):
+    """Attempt to extract Ricoh counters via HTTP. Returns dict with counters or None."""
+    base_candidates = [
+        f"http://{ip}/web/entry/es/websys/",
+        f"http://{ip}/web/entry/es/",
+        f"http://{ip}/web/entry/",
+        f"http://{ip}/web/guest/es/websys/",
+        f"http://{ip}/web/guest/es/",
+        f"http://{ip}/web/guest/",
+        f"http://{ip}/",
+    ]
+    paths = [
+        "websys/webArch/mainFrame.cgi",
+        "web/entry/es/websys/webArch/mainFrame.cgi",
+        "websys/webArch/topPage.cgi",
+        "websys/webArch/header.cgi",
+        "websys/status/getUnificationCounter.cgi",
+        "web/guest/es/websys/status/getUnificationCounter.cgi",
+        "web/guest/es/websys/webArch/mainFrame.cgi",
+    ]
+
+    copy_bw = copy_color = print_bw = print_color = None
+    final_html = None
+
+    def try_get(u):
+        if RICOH_HTTP_DEBUG:
+            print(f"[RICOH_HTTP] try_get: {u}")
+        try:
+            r = requests.get(u, timeout=6)
+            if r is not None and r.status_code == 200 and r.text:
+                if RICOH_HTTP_DEBUG:
+                    print(f"[RICOH_HTTP] got {len(r.text)} bytes (200) from {u}")
+                return r.text
+        except Exception as e:
+            if RICOH_HTTP_DEBUG:
+                print(f"[RICOH_HTTP] request error {u}: {e}")
+        try:
+            r = requests.get(u, timeout=6, auth=("admin", ""))
+            if r is not None and r.status_code == 200 and r.text:
+                if RICOH_HTTP_DEBUG:
+                    print(f"[RICOH_HTTP] got {len(r.text)} bytes (200, auth) from {u}")
+                return r.text
+        except Exception:
+            pass
+        if RICOH_HTTP_DEBUG:
+            print(f"[RICOH_HTTP] no content from {u}")
+        return None
+
+    # try candidates
+    for base in base_candidates:
+        for p in paths:
+            url = base.rstrip('/') + '/' + p.lstrip('/')
+            html = try_get(url)
+            if not html:
+                continue
+            # handle auto-submit message form that redirects using buttonURL
+            form = re.search(r"<form[^>]+action=[\"']([^\"']*message\.cgi)[\"'][^>]*>(.*?)</form>", html, re.IGNORECASE | re.DOTALL)
+            if form:
+                form_body = form.group(2)
+                inputs = dict(re.findall(r"<input[^>]+name=[\"']([^\"']+)[\"'][^>]+value=[\"']([^\"']*)[\"']", form_body, re.IGNORECASE))
+                btn = inputs.get('buttonURL')
+                if btn:
+                    # build absolute button URL
+                    if btn.lower().startswith('http'):
+                        btn_url = btn
+                    elif btn.startswith('/'):
+                        m = re.match(r"(https?://[^/]+)", url)
+                        host_root = m.group(1) if m else url.split('/')[0]
+                        btn_url = host_root + btn
+                    else:
+                        btn_url = url.rsplit('/', 1)[0] + '/' + btn.lstrip('/')
+                    html2 = try_get(btn_url)
+                    if html2:
+                        html = html2
+            # if frameset, fetch frames and try to parse each
+            if re.search(r"<frameset|<frame", html, re.IGNORECASE):
+                frames = re.findall(r"<frame[^>]+src=[\"']([^\"']+)[\"']", html, re.IGNORECASE)
+                for src in frames:
+                    if src.lower().startswith('http'):
+                        src_url = src
+                    elif src.startswith('/'):
+                        m = re.match(r"(https?://[^/]+)", url)
+                        host_root = m.group(1) if m else url.split('/')[0]
+                        src_url = host_root + src
+                    else:
+                        src_url = url.rsplit('/', 1)[0] + '/' + src.lstrip('/')
+                    fhtml = try_get(src_url)
+                    if not fhtml:
+                        continue
+                    # parse this frame for counters
+                    c_color, c_bw = _find_pair(fhtml)
+                    if c_color is not None or c_bw is not None:
+                        copy_color = copy_color if copy_color is not None else c_color
+                        copy_bw = copy_bw if copy_bw is not None else c_bw
+                    p_color, p_bw = _find_pair(fhtml)
+                    # same parser; sometimes frames contain both sections
+                    if p_color is not None or p_bw is not None:
+                        print_color = print_color if print_color is not None else p_color
+                        print_bw = print_bw if print_bw is not None else p_bw
+                    # store final_html for fallback generic parsing
+                    final_html = fhtml
+                    # continue to next frame
+                if copy_color is not None or copy_bw is not None or print_color is not None or print_bw is not None:
+                    break
+                # else continue trying other URLs
+
+            else:
+                # normal page, try parse
+                c_color, c_bw = _find_pair(html)
+                if c_color is not None or c_bw is not None:
+                    copy_color = copy_color if copy_color is not None else c_color
+                    copy_bw = copy_bw if copy_bw is not None else c_bw
+                p_color, p_bw = _find_pair(html)
+                if p_color is not None or p_bw is not None:
+                    print_color = print_color if print_color is not None else p_color
+                    print_bw = print_bw if print_bw is not None else p_bw
+                final_html = html
+                if copy_color is not None or copy_bw is not None or print_color is not None or print_bw is not None:
+                    break
+
+    # fallback: generic matches across the last fetched final_html
+    if final_html and ((copy_color is None and print_color is None) or (copy_bw is None and print_bw is None)):
+        all_color_matches = re.findall(r"A\s*todo\s*color\s*[:：]?\s*([0-9,\.]+)", final_html, re.IGNORECASE)
+        all_bw_matches = re.findall(r"Blanco\s*y\s*Negro\s*[:：]?\s*([0-9,\.]+)", final_html, re.IGNORECASE)
+        # Heuristic: first occurrence = copy, second = print
+        try:
+            if len(all_color_matches) >= 1 and copy_color is None:
+                copy_color = _parse_int(all_color_matches[0])
+            if len(all_color_matches) >= 2 and print_color is None:
+                print_color = _parse_int(all_color_matches[1])
+            if len(all_bw_matches) >= 1 and copy_bw is None:
+                copy_bw = _parse_int(all_bw_matches[0])
+            if len(all_bw_matches) >= 2 and print_bw is None:
+                print_bw = _parse_int(all_bw_matches[1])
+        except Exception:
+            pass
+
+    # compute totals when possible
+    bw_pages = None
+    color_pages = None
+    total_pages = None
+    if (copy_bw is not None) or (print_bw is not None):
+        bw_pages = (copy_bw or 0) + (print_bw or 0)
+    if (copy_color is not None) or (print_color is not None):
+        color_pages = (copy_color or 0) + (print_color or 0)
+    if bw_pages is not None and color_pages is not None:
+        total_pages = bw_pages + color_pages
+
+    if RICOH_HTTP_DEBUG:
+        print(f"[RICOH_HTTP] result for {ip}: copy_bw={copy_bw}, copy_color={copy_color}, print_bw={print_bw}, print_color={print_color}, bw_pages={bw_pages}, color_pages={color_pages}, total_pages={total_pages}")
+        if final_html:
+            snippet = final_html[:800].replace('\n', ' ')
+            print(f"[RICOH_HTTP] final_html snippet: {snippet}")
+
+    return {
+        "bw_pages": bw_pages,
+        "color_pages": color_pages,
+        "total_pages": total_pages,
+        "copy_bw": copy_bw,
+        "copy_color": copy_color,
+        "print_bw": print_bw,
+        "print_color": print_color,
+    }

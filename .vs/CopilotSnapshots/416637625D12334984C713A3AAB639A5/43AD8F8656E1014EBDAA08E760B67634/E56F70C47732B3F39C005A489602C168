@@ -1,0 +1,1618 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ricoh Monitor Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#111827;color:#f3f4f6}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:240px;background:#0f172a;border-right:1px solid #1f2937;padding:20px}
+.sidebar h2{margin:0 0 20px 0;font-size:22px}
+.menu-button{width:100%;background:#111827;color:#e5e7eb;border:1px solid #374151;border-radius:10px;padding:12px 14px;text-align:left;font-size:14px;cursor:pointer;margin-bottom:10px;transition:.2s ease}
+.menu-button:hover{background:#1f2937}
+.sidebar{width:64px;background:#0f172a;border-right:1px solid #1f2937;padding:12px 8px;transition:width .28s ease}
+.sidebar:hover{width:240px;padding:20px}
+.sidebar h2{margin:0 0 12px 0;font-size:18px;transition:opacity .18s ease,transform .18s ease}
+.sidebar-title{display:inline-block;opacity:1;transform:none;transition:opacity .18s ease,transform .18s ease}
+.sidebar:not(:hover) .sidebar-title{opacity:0;transform:translateX(-8px)}
+.menu-button{display:flex;align-items:center;gap:10px;justify-content:center}
+.sidebar:hover .menu-button{justify-content:flex-start}
+.menu-label{display:inline-block;transition:opacity .18s ease,transform .18s ease}
+.sidebar:not(:hover) .menu-label{opacity:0;transform:translateX(-6px);width:0;overflow:hidden}
+.content{flex:1;display:flex;flex-direction:column}
+header{padding:14px 20px;background:#0f172a;border-bottom:1px solid #1f2937;display:flex;flex-direction:column;gap:12px}
+h1{margin:0;font-size:24px}
+.subtitle{font-size:13px;color:#9ca3af;margin-top:4px}
+.badge{padding:8px 12px;border-radius:999px;background:#1f2937;font-size:13px}
+.tab{display:none;padding:12px}
+.tab.active{display:block;animation:tabFadeIn .18s ease}
+@keyframes tabFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:12px}
+.summary-card{background:#1f2937;border:1px solid #374151;border-radius:14px;padding:18px}
+.summary-card h3{margin:0 0 8px;font-size:14px;color:#9ca3af;font-weight:normal}
+.summary-card .value{font-size:28px;font-weight:bold}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}
+.card{background:#1f2937;border:1px solid #374151;border-radius:16px;padding:18px;box-shadow:0 2px 12px rgba(0,0,0,.25)}
+.card-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+.printer-name{font-size:18px;font-weight:bold;margin:0}
+.printer-model{margin-top:4px;font-size:13px;color:#9ca3af}
+.status-pill{padding:6px 10px;border-radius:999px;font-size:12px;font-weight:bold;text-transform:uppercase;white-space:nowrap}
+.status-online{background:rgba(34,197,94,.18);color:#22c55e;border:1px solid rgba(34,197,94,.4)}
+.status-offline{background:rgba(239,68,68,.18);color:#ef4444;border:1px solid rgba(239,68,68,.4)}
+.info-row{font-size:13px;color:#d1d5db;margin-bottom:6px}
+.toner-section{margin-top:16px}
+.toner-title{font-size:13px;color:#9ca3baf;margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em}
+.toner-item{margin-bottom:12px}
+.toner-label-row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+.bar{width:100%;height:12px;background:#111827;border-radius:999px;overflow:hidden;border:1px solid #374151}
+.bar-fill{height:100%;border-radius:999px;transition:width .4s ease}
+.bar-black{background:#e5e7eb}.bar-cyan{background:#06b6d4}.bar-magenta{background:#d946ef}.bar-yellow{background:#eab308}
+.empty-state,.placeholder-card{text-align:center;padding:60px 20px;color:#9ca3af;background:#1f2937;border-radius:16px;border:1px solid #374151}
+.warning-text{color:#f59e0b;font-size:12px;margin-top:8px}
+.critical-text{color:#ef4444;font-size:12px;margin-top:8px}
+.section-title{margin-top:0;margin-bottom:16px;font-size:24px}
+.action-row{display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.action-button{background:#2563eb;color:#fff;border:none;border-radius:10px;padding:12px 16px;cursor:pointer;font-size:14px}
+.action-button:hover{background:#1d4ed8}
+.action-button-danger{background:#dc2626}
+.action-button-danger:hover{background:#b91c1c}
+.action-button-secondary{background:#475569}
+.action-button-secondary:hover{background:#334155}
+.table-wrapper{background:#1f2937;border:1px solid #374151;border-radius:16px;overflow:auto;max-width:100%;max-height:70vh}
+table{width:100%;border-collapse:collapse;min-width:1100px}
+th,td{padding:14px;text-align:left;border-bottom:1px solid #374151;font-size:14px;vertical-align:top}
+th{background:#111827;color:#9ca3af}
+tr:last-child td{border-bottom:none}
+/* Form layout improvements */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.form-grid > div{display:flex;flex-direction:column;gap:6px}
+.form-grid label{display:block;font-size:13px;color:#cbd5e1;font-weight:600}
+input,select{padding:10px;border-radius:8px;border:1px solid #374151;background:#111827;color:white;width:100%}
+/* Header styling */
+.dashboard-title{font-size:24px;font-weight:700;color:#f8fafc;line-height:1.1}
+.dashboard-header{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.dashboard-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.dashboard-topbar{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:8px;flex-wrap:wrap}
+.dashboard-topbar-left{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.filter-toggle-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-width:220px;min-height:44px;background:linear-gradient(180deg,#1e293b 0%,#162033 100%);border:1px solid #3b4d65;color:#f8fafc;border-radius:999px;padding:10px 16px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.22);transition:.2s ease}
+.filter-toggle-btn:hover{transform:translateY(-1px);background:linear-gradient(180deg,#25344b 0%,#1a2638 100%)}
+.filter-toggle-btn.is-open{background:linear-gradient(180deg,#1d4ed8 0%,#1e40af 100%);border-color:#60a5fa;box-shadow:0 6px 18px rgba(37,99,235,.28)}
+.filter-toggle-btn.is-open .filter-toggle-state{color:#dbeafe}
+.filter-toggle-icon{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:999px;background:#111827;border:1px solid #334155;font-size:12px;color:#cbd5e1;flex:0 0 auto}
+.filter-toggle-btn.is-open .filter-toggle-icon{background:rgba(15,23,42,.6);border-color:#93c5fd;color:#eff6ff}
+.dashboard-filters{display:grid;grid-template-columns:minmax(240px,2fr) repeat(6,minmax(120px,1fr)) minmax(96px,auto);gap:8px;margin:0 0 12px;align-items:center;transition:max-height .25s ease,opacity .2s ease,transform .2s ease;max-height:240px;opacity:1;transform:none;overflow:hidden}
+.dashboard-filters.closed{max-height:0;opacity:0;transform:translateY(-8px);margin:0;gap:0}
+.toolbar-input,.toolbar-select{min-height:34px;padding:7px 10px;border-radius:8px;border:1px solid #374151;background:#0f172a;color:#e5e7eb;font-size:12px;width:100%}
+.toolbar-button{min-height:34px;padding:7px 12px;border-radius:8px;border:1px solid #374151;background:#1f2937;color:#e5e7eb;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+.toolbar-button:hover{background:#273244}
+.warning-text,.error-warn,.toner-low{color:#f59e0b !important;font-weight:700}
+.critical-text,.error-critical,.toner-critical{color:#ef4444 !important;font-weight:700}
+.error-ok{color:#cbd5e1}
+.printer-collapsible{display:none}
+.printer-collapsible.is-open{display:block}
+.discover-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:14px}
+.discover-fields > div{display:flex;flex-direction:column;gap:6px}
+.field-help{font-size:12px;margin-top:4px;color:#9ca3af}
+.field-help.error{color:#ef4444}
+.field-help.success{color:#22c55e}
+.input-invalid{border-color:#ef4444 !important;box-shadow:0 0 0 1px rgba(239,68,68,.35)}
+.input-valid{border-color:#22c55e !important;box-shadow:0 0 0 1px rgba(34,197,94,.25)}
+.discover-select-col{width:56px;text-align:center}
+.discover-checkbox{width:18px;height:18px;accent-color:#2563eb;cursor:pointer}
+.sortable-th{cursor:pointer;user-select:none;white-space:nowrap}
+.sortable-th:hover{color:#e5e7eb}
+@media (max-width:1300px){.dashboard-filters{grid-template-columns:repeat(4,minmax(140px,1fr))}}
+@media (max-width:900px){.dashboard-filters{grid-template-columns:repeat(2,minmax(160px,1fr))}}
+@media (max-width:640px){.dashboard-filters{grid-template-columns:1fr}}
+.density-compact #dashboardCardsView .grid{gap:10px;padding:10px}
+.density-compact #dashboardCardsView .card{padding:12px;min-height:260px}
+.density-compact .dashboard-table thead th,
+.density-compact .dashboard-table td{font-size:12px;padding:6px 8px}
+.density-compact .dashboard-table tbody tr{height:36px}
+.density-compact .summary-card .value{font-size:22px}
+
+.density-standard #dashboardCardsView .grid{gap:16px;padding:16px}
+.density-standard #dashboardCardsView .card{padding:16px;min-height:315px}
+
+.density-large #dashboardCardsView .grid{gap:20px;padding:20px}
+.density-large #dashboardCardsView .card{padding:20px;min-height:360px}
+.density-large .dashboard-table thead th,
+.density-large .dashboard-table td{font-size:16px;padding:14px 16px}
+.density-large .dashboard-table tbody tr{height:60px}
+.density-large .summary-card .value{font-size:38px}
+body.fullscreen .layout{display:block}
+body.fullscreen .sidebar{display:none !important}
+body.fullscreen .content{width:100%;min-height:100vh}
+body.fullscreen #dashboard{padding:0}
+body.fullscreen #dashboard header{border-radius:0}
+</style>
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <h2><span class="sidebar-title">Ricoh Monitor</span></h2>
+        <button class="menu-button" onclick="showTab('dashboard')"><span class="menu-label">Dashboard</span></button>
+        <button class="menu-button" onclick="showTab('printers')"><span class="menu-label">Impresoras</span></button>
+        <button class="menu-button" onclick="showTab('counters')"><span class="menu-label">Contadores</span></button>
+        <button class="menu-button" onclick="showTab('inventory')"><span class="menu-label">Inventario</span></button>
+        <button class="menu-button" onclick="showTab('tonerControl')"><span class="menu-label">Control de Toner</span></button>
+    </aside>
+
+    <main class="content">
+        <!-- Header moved inside the dashboard tab so it only appears on that tab -->
+
+        <div id="dashboard" class="tab dashboard-shell">
+            <header>
+                <div class="dashboard-header" style="width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px">
+                    <div style="display:flex;flex-direction:column;gap:6px">
+                        <div class="dashboard-title">Ricoh Monitor Dashboard</div>
+                        <div class="badge" id="lastUpdate" style="padding:6px 10px;font-size:12px">Actualizando...</div>
+                    </div>
+                    <div class="dashboard-actions" style="display:flex;gap:8px;align-items:center">
+                        <button id="dashboardFilterBtn" class="filter-toggle-btn" type="button" onclick="toggleDashboardFilters()">
+                            <span class="filter-toggle-icon" id="filterToggleIcon">▾</span>
+                            <span>Filtros del dashboard</span>
+                            <span class="filter-toggle-state" id="filterToggleState">Ocultos</span>
+                        </button>
+                        <button id="fullscreenBtn" class="filter-toggle-btn" type="button" onclick="toggleDashboardFullscreen()" title="Pantalla completa">
+                            <span class="filter-toggle-icon" id="fullscreenBtnIcon">⛶</span>
+                            <span id="fullscreenBtnLabel">Pantalla completa</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Move summary cards into header to show metrics at top -->
+                <div class="summary" style="width:100%;margin:0;">
+                    <div class="summary-card"><h3>Total impresoras</h3><div class="value" id="totalPrinters">0</div></div>
+                    <div class="summary-card"><h3>Online</h3><div class="value" id="onlinePrinters">0</div></div>
+                    <div class="summary-card"><h3>Offline</h3><div class="value" id="offlinePrinters">0</div></div>
+                    <div class="summary-card"><h3>Tóner bajo</h3><div class="value" id="lowTonerPrinters">0</div></div>
+                </div>
+            </header>
+            <div class="dashboard-topbar">
+                <div class="dashboard-topbar-left"></div>
+            </div>
+
+            <div id="dashboardFilters" class="dashboard-filters closed">
+                <input id="searchInput" class="toolbar-input" type="text" placeholder="Buscar por shared name, name, IP, modelo o serie">
+
+                <select id="viewMode" class="toolbar-select">
+                    <option value="table">Vista tabla</option>
+                    <option value="cards">Vista tarjetas</option>
+                </select>
+
+                <select id="statusFilter" class="toolbar-select">
+                    <option value="all">Estado: Todas</option>
+                    <option value="online">Estado: Online</option>
+                    <option value="offline">Estado: Offline</option>
+                </select>
+
+                <select id="typeFilter" class="toolbar-select">
+                    <option value="all">Tipo: Todas</option>
+                    <option value="color">Tipo: Color</option>
+                    <option value="mono">Tipo: Blanco y negro</option>
+                </select>
+
+                <select id="errorFilter" class="toolbar-select">
+                    <option value="all">Error: Todos</option>
+                    <option value="ok">Error: Sin error</option>
+                    <option value="low">Error: Tóner bajo</option>
+                    <option value="critical">Error: Tóner crítico</option>
+                    <option value="other">Error: Otros</option>
+                </select>
+
+                <select id="sortFilter" class="toolbar-select">
+                    <option value="relevance_desc">Orden: Relevancia ↓</option>
+                    <option value="relevance_asc">Orden: Relevancia ↑</option>
+                    <option value="shared_name_asc">Orden: Shared Name A-Z</option>
+                    <option value="shared_name_desc">Orden: Shared Name Z-A</option>
+                    <option value="name_asc">Orden: Name A-Z</option>
+                    <option value="name_desc">Orden: Name Z-A</option>
+                    <option value="ip_asc">Orden: IP ↑</option>
+                    <option value="ip_desc">Orden: IP ↓</option>
+                    <option value="model_asc">Orden: Modelo A-Z</option>
+                    <option value="model_desc">Orden: Modelo Z-A</option>
+                </select>
+
+                <select id="densityMode" class="toolbar-select" onchange="setDensityMode(this.value)">
+                    <option value="standard">Densidad: Estándar</option>
+                    <option value="compact">Densidad: Compacta</option>
+                    <option value="large">Densidad: Grande</option>
+                </select>
+
+                <button class="toolbar-button" onclick="resetFilters()">Limpiar</button>
+            </div>
+
+            
+
+            <div id="dashboardCardsView" class="dashboard-view-wrap"><div class="grid" id="printersGrid"></div></div>
+
+            <div id="dashboardTableView" class="dashboard-view-wrap" style="display:none;">
+                <div class="table-wrapper dashboard-table-wrap">
+                    <table class="dashboard-table">
+                        <thead>
+                            <tr>
+                                <th class="sortable-th" onclick="toggleTableSort('shared_name')">Shared Name ${getSortIndicator("shared_name")}</th>
+                                <th class="sortable-th" onclick="toggleTableSort('name')">Name ${getSortIndicator("name")}</th>
+                                <th class="sortable-th" onclick="toggleTableSort('model')">Modelo ${getSortIndicator("model")}</th>
+                                <th class="sortable-th" onclick="toggleTableSort('serial')">Serie ${getSortIndicator("serial")}</th>
+                                <th class="sortable-th" onclick="toggleTableSort('ip')">IP ${getSortIndicator("ip")}</th>
+                                <th class="sortable-th" onclick="toggleTableSort('status')">Status ${getSortIndicator("status")}</th>
+                                <th class="sortable-th" onclick="toggleTableSort('error_message')">Error ${getSortIndicator("error_message")}</th>
+                                <th>Tóner</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dashboardTableBody"><tr><td colspan="8">Cargando...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="printers" class="tab">
+            <h2 class="section-title">Gestión de impresoras</h2>
+
+            <div class="action-row" style="margin-bottom:16px;">
+                <button class="action-button" type="button" onclick="togglePrinterSection('manualPrinterCard')">Agregar impresora manualmente</button>
+                <button class="action-button action-button-secondary" type="button" onclick="togglePrinterSection('discoverPrinterCard')">Buscar impresoras en red</button>
+            </div>
+
+            <div id="manualPrinterCard" class="card printer-collapsible" style="margin-bottom:20px;">
+                <h3 id="printerFormTitle" style="margin-top:0;">Agregar impresora manualmente</h3>
+                <input type="hidden" id="editingPrinterId">
+                <div class="form-grid">
+                    <div><label>Shared Name</label><input id="printerSharedName" placeholder="Ej: IMP-FINANZAS"></div>
+                    <div><label>Nombre</label><input id="printerName" placeholder="Nombre descriptivo"></div>
+                    <div><label>Modelo</label><input id="printerModel" placeholder="Ej: IM C3000"></div>
+                    <div>
+                        <label>IP</label>
+                        <input id="printerIp" placeholder="192.168.1.x">
+                        <div id="printerIpHelp" class="field-help"></div>
+                    </div>
+                    <div><label>Serie</label><input id="printerSerial" placeholder="Número de serie"></div>
+                    <div><label>Ubicación</label><input id="printerLocation" placeholder="Ej: Piso 2"></div>
+                    <div>
+                        <label>Tipo</label>
+                        <select id="printerIsColor">
+                            <option value="true">Color</option>
+                            <option value="false">Blanco y negro</option>
+                        </select>
+                    </div>
+                    <div><label>SNMP Community</label><input id="printerCommunity" value="public"></div>
+                </div>
+                <div class="action-row" style="margin-top:14px;">
+                    <button class="action-button" onclick="savePrinter()">Guardar impresora</button>
+                    <button class="action-button action-button-secondary" onclick="resetPrinterForm()">Limpiar</button>
+                </div>
+            </div>
+
+            <div id="discoverPrinterCard" class="card printer-collapsible" style="margin-bottom:20px;">
+                <h3 style="margin-top:0;">Buscar impresoras en red</h3>
+                <div class="discover-fields">
+                    <div>
+                        <label>Buscar por</label>
+                        <select id="discoverMode" onchange="toggleDiscoverModeFields()">
+                            <option value="range">Rango de IP</option>
+                            <option value="ip">IP específica</option>
+                        </select>
+                    </div>
+                    <div id="discoverStartWrap">
+                        <label>IP inicial</label>
+                        <input id="discoverStartIp" placeholder="Ej: 10.131.105.1">
+                        <div id="discoverStartIpHelp" class="field-help"></div>
+                    </div>
+                    <div id="discoverEndWrap">
+                        <label>IP final</label>
+                        <input id="discoverEndIp" placeholder="Ej: 10.131.105.254">
+                        <div id="discoverEndIpHelp" class="field-help"></div>
+                    </div>
+                    <div id="discoverSingleWrap" style="display:none;">
+                        <label>IP impresora</label>
+                        <input id="discoverSingleIp" placeholder="Ej: 10.131.105.25">
+                        <div id="discoverSingleIpHelp" class="field-help"></div>
+                    </div>
+                    <div>
+                        <label>SNMP Community</label>
+                        <input id="discoverCommunity" value="public">
+                    </div>
+                </div>
+                <div class="action-row">
+                    <button class="action-button" onclick="discoverPrinters()">Buscar impresoras</button>
+                    <button class="action-button" onclick="importPrinters()">Importar encontradas</button>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="discover-select-col"><input id="selectAllDiscovered" class="discover-checkbox" type="checkbox" onchange="toggleAllDiscovered(this.checked)"></th>
+                                <th>Shared Name</th>
+                                <th>Nombre</th>
+                                <th>IP</th>
+                                <th>Modelo</th>
+                                <th>Serie</th>
+                                <th>Tipo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="printersList"><tr><td colspan="7">Configure la búsqueda y presione buscar.</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-top:0;">Impresoras registradas</h3>
+                <div class="action-row">
+                    <input id="printerSearch" placeholder="Buscar impresora..." oninput="filterSavedPrinters()" style="max-width:340px;">
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="sortable-th" onclick="toggleSavedPrintersSort('id')">ID <span id="savedPrintersSort_id">▲</span></th>
+                                <th class="sortable-th" onclick="toggleSavedPrintersSort('shared_name')">Shared Name <span id="savedPrintersSort_shared_name">↕</span></th>
+                                <th class="sortable-th" onclick="toggleSavedPrintersSort('name')">Nombre <span id="savedPrintersSort_name">↕</span></th>
+                                <th class="sortable-th" onclick="toggleSavedPrintersSort('ip')">IP <span id="savedPrintersSort_ip">↕</span></th>
+                                <th>Modelo</th>
+                                <th>Serie</th>
+                                <th>Tipo</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="savedPrintersList"><tr><td colspan="8">Cargando impresoras...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="counters" class="tab">
+            <h2 class="section-title">Contadores de impresión</h2>
+            <div class="action-row" style="align-items:center; margin-bottom:8px;">
+                <button class="action-button" onclick="loadCounters()">Refrescar contadores</button>
+                <label style="display:inline-flex;align-items:center;gap:8px;margin-left:8px;color:#cbd5e1;font-size:13px">
+                    <input type="checkbox" id="countersAuto" onchange="toggleCountersAuto(this.checked)"> Auto
+                    <input id="countersAutoInterval" type="number" value="60" style="width:72px;margin-left:6px;padding:6px;border-radius:6px;background:#0f172a;border:1px solid #374151;color:#fff">s
+                </label>
+                <div style="margin-left:auto;">
+                    <span class="badge" id="countersLastUpdate" style="padding:6px 10px;font-size:12px">Última: -</span>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table class="counters-table">
+                    <thead>
+                        <tr>
+                            <th class="sticky-left-1 col-name text-left">Impresora</th>
+                            <th class="sticky-left-2 col-serial text-left">Serie</th>
+                            <th class="sticky-left-3 col-ip text-left">IP</th>
+                            <th class="col-total num-right col-number">Total páginas</th>
+                            <th class="col-copy num-right col-number">Copiado B/N</th>
+                            <th class="col-copy num-right col-number">Copiado Color</th>
+                            <th class="col-print num-right col-number">Impresión B/N</th>
+                            <th class="col-print num-right col-number">Impresión Color</th>
+                            <th class="col-total num-right col-number">Blanco y negro</th>
+                            <th class="col-total num-right col-number">Color</th>
+                        </tr>
+                    </thead>
+                    <tbody id="countersList"><tr><td colspan="10">Cargando contadores...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="inventory" class="tab">
+            <h2 class="section-title">Inventario de tóner</h2>
+            <div class="card">
+                <div class="form-grid">
+                    <input id="invName" placeholder="Nombre (Ej: Toner Black)">
+                    <input id="invModel" placeholder="Modelo impresora">
+                    <select id="invType">
+                        <option value="toner">Toner</option>
+                        <option value="drum">Drum</option>
+                        <option value="fuser">Fuser</option>
+                    </select>
+                    <input id="invQty" type="number" placeholder="Cantidad">
+                    <input id="invMin" type="number" placeholder="Stock mínimo">
+                </div>
+                <div style="margin-top:14px;">
+                    <button class="action-button" onclick="addInventoryItem()">Agregar</button>
+                </div>
+            </div>
+            <br>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>ID</th><th>Nombre</th><th>Modelo</th><th>Tipo</th><th>Cantidad</th><th>Mínimo</th><th></th></tr></thead>
+                    <tbody id="inventoryList"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tonerControl" class="tab">
+            <h2 class="section-title">Control de Tóner</h2>
+            <div class="action-row">
+                <button class="action-button" onclick="loadTonerControl()">Refrescar</button>
+            </div>
+            <div class="table-wrapper toner-control-wrapper">
+                <table class="toner-control-table">
+                    <thead>
+                        <tr>
+                            <th class="tc-col-shared">Shared Name</th>
+                            <th class="tc-col-name">Name</th>
+                            <th class="tc-col-model">Modelo</th>
+                            <th class="tc-col-serial">Serie</th>
+                            <th class="tc-col-check">Check</th>
+                            <th class="tc-col-k">K</th>
+                            <th class="tc-col-c">C</th>
+                            <th class="tc-col-m">M</th>
+                            <th class="tc-col-y">Y</th>
+                            <th class="tc-col-bk">Backup K</th>
+                            <th class="tc-col-bc">Backup C</th>
+                            <th class="tc-col-bm">Backup M</th>
+                            <th class="tc-col-by">Backup Y</th>
+                            <th class="tc-col-location">Ubicación</th>
+                            <th class="tc-col-pedido">Pedido</th>
+                            <th class="tc-col-wo">WO</th>
+                            <th class="tc-col-notas">Notas</th>
+                            <th class="tc-col-action">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tonerControlList">
+                        <tr><td colspan="18">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+        <script>
+            let dashboardRawData = [];
+            let dashboardFilteredData = [];
+            let dashboardSortColumn = "shared_name";
+            let dashboardSortDirection = "asc";
+            // realtime / pagination / density state
+            let realtimeConnected = false;
+            let printersEventSource = null;
+            let currentPage = 1;
+            let pageSize = 50;
+            const VIRTUALIZE_THRESHOLD = 300;
+            // When true, render a simplified table row (no small bars) to speed up large renders
+            let simpleTableMode = false;
+            let printersFetchController = null;
+            let printersPollInterval = null;
+            const PRINTERS_POLL_MS = 30000;
+            let searchDebounceTimer = null;
+            let __virtualState = null;
+            let hostnameLookupController = null;
+            let discoveredPrintersCache = [];
+            let savedPrintersSortColumn = 'id';
+            let savedPrintersSortDirection = 'asc';
+
+            function togglePrinterSection(sectionId) {
+                ['manualPrinterCard', 'discoverPrinterCard'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (!el) return;
+                    if (id === sectionId) el.classList.toggle('is-open');
+                    else el.classList.remove('is-open');
+                });
+            }
+
+            function toggleDiscoverModeFields() {
+                const mode = document.getElementById('discoverMode')?.value || 'range';
+                const startWrap = document.getElementById('discoverStartWrap');
+                const endWrap = document.getElementById('discoverEndWrap');
+                const singleWrap = document.getElementById('discoverSingleWrap');
+                if (startWrap) startWrap.style.display = mode === 'range' ? '' : 'none';
+                if (endWrap) endWrap.style.display = mode === 'range' ? '' : 'none';
+                if (singleWrap) singleWrap.style.display = mode === 'ip' ? '' : 'none';
+            }
+
+            function isValidIpv4(ip) {
+                return /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/.test((ip || '').trim());
+            }
+
+            function setFieldValidation(inputId, helpId, message = '', state = '') {
+                const input = document.getElementById(inputId);
+                const help = document.getElementById(helpId);
+                if (!input) return;
+                input.classList.remove('input-valid', 'input-invalid');
+                if (state === 'valid') input.classList.add('input-valid');
+                if (state === 'invalid') input.classList.add('input-invalid');
+                if (help) {
+                    help.textContent = message;
+                    help.className = `field-help${state === 'invalid' ? ' error' : state === 'valid' ? ' success' : ''}`;
+                }
+            }
+
+            function validatePrinterIpField() {
+                const ip = document.getElementById('printerIp')?.value.trim() || '';
+                if (!ip) {
+                    setFieldValidation('printerIp', 'printerIpHelp', '');
+                    return false;
+                }
+                if (!isValidIpv4(ip)) {
+                    setFieldValidation('printerIp', 'printerIpHelp', 'IP inválida', 'invalid');
+                    return false;
+                }
+                setFieldValidation('printerIp', 'printerIpHelp', 'IP válida', 'valid');
+                return true;
+            }
+
+            function validateDiscoverFields() {
+                const mode = document.getElementById('discoverMode')?.value || 'range';
+                const startIp = document.getElementById('discoverStartIp')?.value.trim() || '';
+                const endIp = document.getElementById('discoverEndIp')?.value.trim() || '';
+                const singleIp = document.getElementById('discoverSingleIp')?.value.trim() || '';
+                let valid = true;
+
+                if (mode === 'range') {
+                    if (!startIp) setFieldValidation('discoverStartIp', 'discoverStartIpHelp', 'Ingrese IP inicial', 'invalid');
+                    else if (!isValidIpv4(startIp)) { setFieldValidation('discoverStartIp', 'discoverStartIpHelp', 'IP inicial inválida', 'invalid'); valid = false; }
+                    else setFieldValidation('discoverStartIp', 'discoverStartIpHelp', 'OK', 'valid');
+
+                    if (!endIp) setFieldValidation('discoverEndIp', 'discoverEndIpHelp', 'Ingrese IP final', 'invalid');
+                    else if (!isValidIpv4(endIp)) { setFieldValidation('discoverEndIp', 'discoverEndIpHelp', 'IP final inválida', 'invalid'); valid = false; }
+                    else setFieldValidation('discoverEndIp', 'discoverEndIpHelp', 'OK', 'valid');
+
+                    if (!startIp || !endIp) valid = false;
+                } else {
+                    setFieldValidation('discoverStartIp', 'discoverStartIpHelp', '');
+                    setFieldValidation('discoverEndIp', 'discoverEndIpHelp', '');
+                    if (!singleIp) { setFieldValidation('discoverSingleIp', 'discoverSingleIpHelp', 'Ingrese una IP', 'invalid'); valid = false; }
+                    else if (!isValidIpv4(singleIp)) { setFieldValidation('discoverSingleIp', 'discoverSingleIpHelp', 'IP inválida', 'invalid'); valid = false; }
+                    else setFieldValidation('discoverSingleIp', 'discoverSingleIpHelp', 'OK', 'valid');
+                }
+
+                return valid;
+            }
+
+            function getSelectedDiscoveredPrinters() {
+                return discoveredPrintersCache.filter((_, index) => {
+                    const checkbox = document.getElementById(`discoverSelect_${index}`);
+                    return !!checkbox?.checked;
+                });
+            }
+
+            function toggleAllDiscovered(checked) {
+                discoveredPrintersCache.forEach((_, index) => {
+                    const checkbox = document.getElementById(`discoverSelect_${index}`);
+                    if (checkbox) checkbox.checked = checked;
+                });
+            }
+
+            async function autofillPrinterNameFromIp(force = false) {
+                const ipEl = document.getElementById('printerIp');
+                const nameEl = document.getElementById('printerName');
+                const communityEl = document.getElementById('printerCommunity');
+                if (!ipEl || !nameEl) return;
+
+                const ip = ipEl.value.trim();
+                const community = (communityEl?.value || 'public').trim() || 'public';
+                const currentName = nameEl.value.trim();
+                const canOverride = !currentName || nameEl.dataset.autoFilled === 'true';
+                if (!isValidIpv4(ip) || (!force && !canOverride)) return;
+
+                if (hostnameLookupController) {
+                    try { hostnameLookupController.abort(); } catch (e) {}
+                }
+                hostnameLookupController = new AbortController();
+
+                try {
+                    const response = await fetch(`/printers/resolve-hostname?ip=${encodeURIComponent(ip)}&community=${encodeURIComponent(community)}`, {
+                        signal: hostnameLookupController.signal
+                    });
+                    const data = await response.json();
+                    if (data?.hostname && (!nameEl.value.trim() || nameEl.dataset.autoFilled === 'true')) {
+                        nameEl.value = data.hostname;
+                        nameEl.dataset.autoFilled = 'true';
+                    }
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        console.warn('No se pudo resolver el hostname de la impresora.', error);
+                    }
+                } finally {
+                    hostnameLookupController = null;
+                }
+            }
+
+            function teardownVirtualTable() {
+                if (!__virtualState) return;
+                try {
+                    const tw = __virtualState.tableWrap;
+                    if (tw && __virtualState.scrollHandler) tw.removeEventListener('scroll', __virtualState.scrollHandler);
+                } catch (e) {}
+                __virtualState = null;
+            }
+
+            function setupVirtualTable(tableWrap, tableBody, data, colsCount) {
+                teardownVirtualTable();
+                if (!tableWrap || !tableBody) return;
+                const total = data.length;
+                // measure row height using a hidden temporary row
+                let rowHeight = 44;
+                if (total > 0) {
+                    try {
+                        const tmp = document.createElement('template');
+                        tmp.innerHTML = buildDashboardTableRow(data[0]);
+                        const tmpTr = tmp.content.querySelector('tr');
+                        if (tmpTr) {
+                            tmpTr.style.visibility = 'hidden';
+                            tableBody.appendChild(tmpTr);
+                            rowHeight = tmpTr.getBoundingClientRect().height || rowHeight;
+                            tableBody.removeChild(tmpTr);
+                        }
+                    } catch (e) {}
+                }
+                const buffer = 10;
+                const render = () => {
+                    const scrollTop = tableWrap.scrollTop;
+                    const viewportH = tableWrap.clientHeight || window.innerHeight;
+                    const visible = Math.max(1, Math.ceil(viewportH / rowHeight));
+                    const start = Math.max(0, Math.floor(scrollTop / rowHeight) - buffer);
+                    const end = Math.min(total, start + visible + buffer * 2);
+                    const slice = data.slice(start, end);
+                    const rowsHtml = slice.map(buildDashboardTableRow).join('');
+                    const topH = start * rowHeight;
+                    const bottomH = Math.max(0, (total - end) * rowHeight);
+                    tableBody.innerHTML = `<tr data-spacer-top style="height:${topH}px"><td colspan="${colsCount}"></td></tr>` + rowsHtml + `<tr data-spacer-bottom style="height:${bottomH}px"><td colspan="${colsCount}"></td></tr>`;
+                };
+                const handler = () => { requestAnimationFrame(render); };
+                tableWrap.addEventListener('scroll', handler);
+                __virtualState = { tableWrap, tableBody, data, rowHeight, buffer, colsCount, scrollHandler: handler };
+                // initial render
+                render();
+            }
+
+            function showTab(tabName) {
+                document.querySelectorAll(".tab").forEach(tab => tab.classList.remove('active'));
+                const selectedTab = document.getElementById(tabName);
+                if (selectedTab) { selectedTab.classList.add('active'); }
+
+                if (tabName === 'dashboard') {
+                    startPrintersPolling();
+                } else {
+                    stopPrintersPolling();
+                }
+
+                if (tabName === "dashboard" && typeof loadPrinters === "function") loadPrinters();
+                if (tabName === "printers" && typeof loadSavedPrinters === "function") loadSavedPrinters();
+                if (tabName === "counters" and typeof loadCounters === "function") loadCounters();
+                if (tabName === "inventory" and typeof loadInventory === "function") loadInventory();
+                if (tabName === "tonerControl" and typeof loadTonerControl === "function") loadTonerControl();
+            }
+
+            function startPrintersPolling() {
+                // immediately load and then start interval
+                stopPrintersPolling();
+                // if realtime connected, don't start polling
+                if (realtimeConnected) return;
+                loadPrinters();
+                printersPollInterval = setInterval(() => {
+                    // only poll when dashboard tab is active
+                    const dash = document.getElementById('dashboard');
+                    if (dash && dash.classList.contains('active')) loadPrinters();
+                }, PRINTERS_POLL_MS);
+            }
+
+            function stopPrintersPolling() {
+                if (printersPollInterval) { clearInterval(printersPollInterval); printersPollInterval = null; }
+                if (printersFetchController) { try { printersFetchController.abort(); } catch(e) {} printersFetchController = null; }
+            }
+
+            // density control
+            function setDensityMode(mode) {
+                document.body.classList.remove('density-compact','density-standard','density-large');
+                if (mode === 'compact') document.body.classList.add('density-compact');
+                else if (mode === 'large') document.body.classList.add('density-large');
+                else document.body.classList.add('density-standard');
+            }
+
+            // Pagination controls
+            function setPageSize(n){ pageSize = Number(n) || 50; currentPage = 1; loadPrinters(); }
+            function nextPage(){ currentPage++; loadPrinters(); }
+            function prevPage(){ if (currentPage>1) currentPage--; loadPrinters(); }
+
+            // Realtime: try Server-Sent Events with fallback to polling
+            function initRealtime() {
+                try {
+                    if (!window.EventSource) return;
+                    printersEventSource = new EventSource('/printers/stream');
+                    printersEventSource.onopen = () => {
+                        realtimeConnected = true;
+                        stopPrintersPolling();
+                        console.info('SSE connected');
+                    };
+                    printersEventSource.onmessage = (ev) => {
+                        try { const payload = JSON.parse(ev.data); /* server may push update events */ } catch(e) {}
+                        // refresh UI on server push
+                        loadPrinters();
+                    };
+                    printersEventSource.onerror = (e) => {
+                        console.warn('SSE error, falling back to polling', e);
+                        realtimeConnected = false;
+                        try { printersEventSource.close(); } catch(e){}
+                        printersEventSource = null;
+                        // start polling again
+                        startPrintersPolling();
+                    };
+                } catch (err) {
+                    console.warn('Realtime init failed', err);
+                }
+            }
+            function safeValue(value) { if (value === null || value === undefined || value === "") return null; const n = Number(value); return Number.isNaN(n) ? null : n; }
+            function tonerClass(value, baseClass) { const n = Number(value); if (Number.isNaN(n)) return baseClass; if (n < 10) return "toner-critical"; if (n < 30) return "toner-low"; return baseClass; }
+            function tonerDisplay(value) { if (value === null || value === undefined || value === "") return "-"; return value; }
+            function tonerAlertText(value) { if (value === null) return ""; if (value < 10) return '<div class="critical-text">Crítico: tóner muy bajo</div>'; if (value < 30) return '<div class="warning-text">Advertencia: tóner bajo</div>'; return ""; }
+            function renderTonerBar(label, value, cssClass) {
+                const numeric = safeValue(value); const display = numeric === null ? "-" : `${numeric}%`; const width = numeric === null ? 0 : Math.max(0, Math.min(100, numeric));
+                return `<div class="toner-item"><div class="toner-label-row"><span>${label}</span><span>${display}</span></div><div class="bar"><div class="bar-fill ${cssClass}" style="width:${width}%"></div></div>${label === "Black" ? tonerAlertText(numeric) : ""}</div>`;
+            }
+
+            // compact inline toner representation for table rows (small bar + value)
+            function renderTonerMini(label, value, cssClass) {
+                const numeric = safeValue(value);
+                if (numeric === null) return `<span class="tc-muted">-</span>`;
+                const width = Math.max(0, Math.min(100, numeric));
+                if (simpleTableMode) {
+                    // simplified compact representation for performance: just a colored percentage
+                    return `<span class="mini-label ${cssClass}" title="${label}: ${numeric}%">${numeric}%</span>`;
+                }
+                return `<div class="toner-mini" title="${label}: ${numeric}%"><div class="mini-bar"><div class="fill ${cssClass}" style="width:${width}%"></div></div><span class="mini-label">${numeric}%</span></div>`;
+            }
+            function getDashboardRelevance(printer) {
+                const status = (printer.status || "offline").toLowerCase();
+                const errorText = (printer.error_message || "Sin error").toLowerCase();
+                const black = safeValue(printer.toner_black);
+                let score = 0;
+                if (status !== 'online') score += 100;
+                if (errorText.includes('crítico') || errorText.includes('critical')) score += 80;
+                else if (errorText.includes('low toner') || errorText.includes('tóner bajo')) score += 40;
+                else if (errorText !== 'sin error') score += 20;
+                if (black !== null) score += Math.max(0, 100 - black);
+                return score;
+            }
+            function normalizeErrorType(errorText) {
+                const text = (errorText || 'Sin error').toLowerCase();
+                if (!text || text === 'sin error') return 'ok';
+                if (text.includes('crítico') || text.includes('critical')) return 'critical';
+                if (text.includes('low toner') || text.includes('tóner bajo')) return 'low';
+                return 'other';
+            }
+            function getErrorClass(errorText, status) {
+                if ((status || '').toLowerCase() !== 'online') return 'error-critical';
+                const type = normalizeErrorType(errorText);
+                if (type === 'critical') return 'error-critical';
+                if (type === 'low') return 'error-warn';
+                if (type === 'other') return 'error-critical';
+                return 'error-ok';
+            }
+            function buildCard(printer) {
+                const status = (printer.status || "offline").toLowerCase();
+                const statusClass = status === "online" ? "status-online" : "status-offline";
+                const shared = printer.shared_name || 'Sin shared name';
+                const nameLine = printer.name ? `<div class="printer-secondary">${printer.name}</div>` : '';
+                let tonerHtml = renderTonerBar("Black", printer.toner_black, "bar-black");
+                if (printer.is_color) {
+                    tonerHtml += renderTonerBar("Cyan", printer.toner_cyan, "bar-cyan");
+                    tonerHtml += renderTonerBar("Magenta", printer.toner_magenta, "bar-magenta");
+                    tonerHtml += renderTonerBar("Yellow", printer.toner_yellow, "bar-yellow");
+                }
+                return `<div class="card"><div class="card-header"><div><div class="printer-name">${shared}</div>${nameLine}<div class="printer-model">${printer.model ?? "-"}</div></div><div class="status-pill ${statusClass}">${status === 'online' ? 'ONLINE' : 'OFFLINE'}</div></div><div class="card-grid"><div class="info-row"><strong>Serie:</strong> ${printer.serial ?? "-"}</div><div class="info-row"><strong>IP:</strong> ${printer.ip ?? "-"}</div><div class="info-row"><strong>Ubicación:</strong> ${printer.location ?? "-"}</div><div class="info-row"><strong>Error:</strong> <span class="${getErrorClass(printer.error_message, printer.status)}">${printer.error_message ?? "Sin error"}</span></div><div class="info-row"><strong>Tipo:</strong> ${printer.is_color ? "Color" : "Blanco y negro"}</div></div><div class="toner-section"><div class="toner-title">Consumibles</div>${tonerHtml}</div></div>`;
+            }
+            function buildDashboardTableRow(printer) {
+                const status = (printer.status || "offline").toLowerCase();
+                const statusHtml = status === "online" ? `<span class="status-badge status-badge-online">Online</span>` : `<span class="status-badge status-badge-offline">Offline</span>`;
+                const errorClass = getErrorClass(printer.error_message, printer.status);
+                const errorText = printer.error_message || "Sin error";
+                const normalized = normalizeErrorType(printer.error_message);
+                let rowClass = '';
+                if (status !== 'online') rowClass = 'row-error';
+                else if (normalized === 'critical') rowClass = 'row-error';
+                else if (normalized === 'low') rowClass = 'row-low';
+                const tonerPieces = [];
+                if (simpleTableMode) {
+                    const kb = safeValue(printer.toner_black);
+                    tonerPieces.push(`<span class="toner-k">K: ${kb === null ? '-' : kb + '%'} </span>`);
+                    if (printer.is_color) {
+                        const cb = safeValue(printer.toner_cyan);
+                        const mb = safeValue(printer.toner_magenta);
+                        const yb = safeValue(printer.toner_yellow);
+                        tonerPieces.push(`<span class="toner-c">C: ${cb === null ? '-' : cb + '%'}</span>`);
+                        tonerPieces.push(`<span class="toner-m">M: ${mb === null ? '-' : mb + '%'}</span>`);
+                        tonerPieces.push(`<span class="toner-y">Y: ${yb === null ? '-' : yb + '%'}</span>`);
+                    }
+                } else {
+                    tonerPieces.push(renderTonerMini('K', printer.toner_black, 'bar-black'));
+                    if (printer.is_color) {
+                        tonerPieces.push(renderTonerMini('C', printer.toner_cyan, 'bar-cyan'));
+                        tonerPieces.push(renderTonerMini('M', printer.toner_magenta, 'bar-magenta'));
+                        tonerPieces.push(renderTonerMini('Y', printer.toner_yellow, 'bar-yellow'));
+                    }
+                }
+                return `<tr class="${rowClass}"><td class="shared-name-cell">${printer.shared_name ?? "-"}</td><td class="name-cell" title="${printer.name ?? '-'}">${printer.name ?? "-"}</td><td class="model-cell" title="${printer.model ?? "-"}">${printer.model ?? "-"}</td><td>${printer.serial ?? "-"}</td><td class="ip-cell">${printer.ip ?? "-"}</td><td>${statusHtml}</td><td class="${errorClass}">${errorText}</td><td><div class="toner-inline">${tonerPieces.join("")}</div></td></tr>`;
+            }
+            function compareDashboardValues(a, b, column) {
+
+                const av = ((a[column] ?? "") + "").toLowerCase().trim();
+
+                const bv = ((b[column] ?? "") + "").toLowerCase().trim();
+
+                if (column === "ip") {
+
+                    const aip = av.split(".").map(x => parseInt(x || "0", 10));
+
+                    const bip = bv.split(".").map(x => parseInt(x || "0", 10));
+
+                    for (let i = 0; i < 4; i++) {
+
+                        if ((aip[i] || 0) < (bip[i] || 0)) return -1;
+
+                        if ((aip[i] || 0) > (bip[i] || 0)) return 1;
+
+                    }
+
+                    return 0;
+
+                }
+
+                return av.localeCompare(bv);
+
+            }
+
+            function sortDashboardTableColumns(data) {
+
+                const sorted = [...data];
+
+                sorted.sort((a, b) => {
+
+                    let result = compareDashboardValues(a, b, dashboardSortColumn);
+
+                    if (dashboardSortDirection === "desc") {
+
+                        result *= -1;
+
+                    }
+
+                    return result;
+
+                });
+
+                return sorted;
+
+            }
+
+            function toggleTableSort(column) {
+
+                if (dashboardSortColumn === column) {
+
+                    dashboardSortDirection = dashboardSortDirection === "asc" ? "desc" : "asc";
+
+                } else {
+
+                    dashboardSortColumn = column;
+
+                    dashboardSortDirection = "asc";
+
+                }
+
+                loadPrinters();
+
+            }
+
+            function getSortIndicator(column) {
+
+                if (dashboardSortColumn !== column) return "↕";
+
+                return dashboardSortDirection === "asc" ? "▲" : "▼";
+
+            }
+
+            function ipToNumber(ip) {
+                return String(ip || '').split('.').reduce((acc, part) => (acc * 256) + (parseInt(part, 10) || 0), 0);
+            }
+            function sortDashboardData(data, sortValue) {
+                const sorted = [...data];
+                sorted.sort((a, b) => {
+                    const sharedA = (a.shared_name || '').toLowerCase();
+                    const sharedB = (b.shared_name || '').toLowerCase();
+                    const nameA = (a.name || '').toLowerCase();
+                    const nameB = (b.name || '').toLowerCase();
+                    const modelA = (a.model || '').toLowerCase();
+                    const modelB = (b.model || '').toLowerCase();
+                    if (sortValue === 'relevance_desc') return getDashboardRelevance(b) - getDashboardRelevance(a);
+                    if (sortValue === 'relevance_asc') return getDashboardRelevance(a) - getDashboardRelevance(b);
+                    if (sortValue === 'shared_name_asc') return sharedA.localeCompare(sharedB);
+                    if (sortValue === 'shared_name_desc') return sharedB.localeCompare(sharedA);
+                    if (sortValue === 'name_asc') return nameA.localeCompare(nameB);
+                    if (sortValue === 'name_desc') return nameB.localeCompare(nameA);
+                    if (sortValue === 'model_asc') return modelA.localeCompare(modelB);
+                    if (sortValue === 'model_desc') return modelB.localeCompare(modelA);
+                    if (sortValue === 'ip_asc') return ipToNumber(a.ip) - ipToNumber(b.ip);
+                    if (sortValue === 'ip_desc') return ipToNumber(b.ip) - ipToNumber(a.ip);
+                    return 0;
+                });
+                return sorted;
+            }
+            function toggleDashboardFilters() {
+                const panel = document.getElementById('dashboardFilters');
+                const icon = document.getElementById('filterToggleIcon');
+                const state = document.getElementById('filterToggleState');
+                const btn = document.getElementById('dashboardFilterBtn');
+                const closed = panel.classList.toggle('closed');
+                if (closed) panel.classList.remove('open'); else panel.classList.add('open');
+                if (btn) btn.classList.toggle('is-open', !closed);
+                icon.textContent = closed ? '▾' : '▴';
+                state.textContent = closed ? 'Ocultos' : 'Visibles';
+            }
+
+            // debounce helper for inputs
+            function debounceApplyFilters(delay = 300) {
+                if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+                searchDebounceTimer = setTimeout(() => { applyFilters(); }, delay);
+            }
+            
+            // Fullscreen toggle + scale-to-fit helpers
+            function toggleDashboardFullscreen() {
+                const isFs = document.body.classList.toggle('fullscreen');
+                const btnLabel = document.getElementById('fullscreenBtnLabel');
+                const btnIcon = document.getElementById('fullscreenBtnIcon');
+                if (btnLabel) btnLabel.textContent = isFs ? 'Salir pantalla' : 'Pantalla completa';
+                if (btnIcon) btnIcon.textContent = isFs ? '🗗' : '⛶';
+                if (isFs) {
+                    showTab('dashboard');
+                    const vm = document.getElementById('viewMode');
+                    if (vm) vm.value = 'table';
+                    applyFilters();
+                    setTimeout(() => { adjustGridScale(); setTableFullHeight(); }, 180);
+                } else {
+                    resetGridScale();
+                    resetTableFullHeight();
+                }
+            }
+
+            function setTableFullHeight() {
+                const header = document.querySelector('header');
+                const filters = document.getElementById('dashboardFilters');
+                const tableWrap = document.querySelector('#dashboardTableView .table-wrapper.dashboard-table-wrap');
+                if (!tableWrap) return;
+                const headerH = header ? header.getBoundingClientRect().height : 60;
+                const filtersH = (filters && !filters.classList.contains('closed')) ? filters.getBoundingClientRect().height : 0;
+                const available = Math.max(200, window.innerHeight - headerH - filtersH - 24);
+                tableWrap.style.height = available + 'px';
+                tableWrap.style.maxHeight = available + 'px';
+            }
+
+            function resetTableFullHeight() {
+                const tableWrap = document.querySelector('#dashboardTableView .table-wrapper.dashboard-table-wrap');
+                if (!tableWrap) return;
+                tableWrap.style.height = '';
+                tableWrap.style.maxHeight = '';
+            }
+
+            function adjustGridScale() {
+                const grid = document.getElementById('printersGrid');
+                if (!grid) return;
+                // wrap grid contents in a scale container so we can transform
+                if (!grid.classList.contains('scale-container')) grid.classList.add('scale-container');
+                const cards = Array.from(grid.children).filter(n => n.nodeType === 1);
+                if (cards.length === 0) { grid.style.transform = ''; return; }
+                const card = cards[0];
+                const style = window.getComputedStyle(card);
+                const cardHeight = card.getBoundingClientRect().height + parseFloat(style.marginTop || 0) + parseFloat(style.marginBottom || 0);
+                const gap = 8; // approximated gap used in fullscreen
+                const container = grid.parentElement; // dashboard-view-wrap
+                const availableH = window.innerHeight - (document.querySelector('header')?.getBoundingClientRect().height || 80) - 24;
+                // compute columns based on current grid width and card width
+                const gridWidth = grid.getBoundingClientRect().width || window.innerWidth;
+                const cardWidth = card.getBoundingClientRect().width || 200;
+                const columns = Math.max(1, Math.floor(gridWidth / (cardWidth + gap)));
+                const rows = Math.ceil(cards.length / columns);
+                const totalHeight = rows * cardHeight + Math.max(0, (rows - 1) * gap);
+                const scale = Math.min(1, availableH / Math.max(1, totalHeight));
+                grid.style.transform = `scale(${scale})`;
+                // keep origin top
+                grid.style.transformOrigin = 'top center';
+            }
+
+            function resetGridScale() {
+                const grid = document.getElementById('printersGrid');
+                if (!grid) return;
+                grid.style.transform = '';
+                grid.style.transformOrigin = '';
+            }
+
+            // adjust on resize when in fullscreen
+            window.addEventListener('resize', () => { if (document.body.classList.contains('fullscreen')) adjustGridScale(); });
+            function resetFilters() {
+                document.getElementById('searchInput').value = '';
+                document.getElementById('statusFilter').value = 'all';
+                document.getElementById('typeFilter').value = 'all';
+                document.getElementById('errorFilter').value = 'all';
+                document.getElementById('sortFilter').value = 'relevance_desc';
+                document.getElementById('viewMode').value = 'table';
+                applyFilters();
+            }
+            function applyFilters() { loadPrinters(); }
+            async function loadPrinters() {
+                try {
+                    console.time('loadPrinters_total');
+                    // abort previous fetch if running
+                    if (printersFetchController) {
+                        try { printersFetchController.abort(); } catch(e) {}
+                    }
+                    printersFetchController = new AbortController();
+                    console.time('fetch');
+                    const response = await fetch("/printers/status", { signal: printersFetchController.signal });
+                    let data = await response.json();
+                    console.timeEnd('fetch');
+                    if (!Array.isArray(data)) data = [];
+                    const search = (document.getElementById("searchInput")?.value || "").toLowerCase().trim();
+                    const statusFilter = document.getElementById("statusFilter")?.value || "all";
+                    const typeFilter = document.getElementById("typeFilter")?.value || "all";
+                    const errorFilter = document.getElementById("errorFilter")?.value || "all";
+                    const sortFilter = document.getElementById("sortFilter")?.value || "relevance_desc";
+                    const viewMode = document.getElementById("viewMode")?.value || "table";
+                    console.time('filter_sort');
+                    if (search) {
+                        data = data.filter(p => ((p.shared_name || "") + " " + (p.name || "") + " " + (p.ip || "") + " " + (p.model || "") + " " + (p.serial || "")).toLowerCase().includes(search));
+                    }
+                    data = data.filter(p => {
+                        const status = (p.status || '').toLowerCase();
+                        const errorType = normalizeErrorType(p.error_message);
+                        const matchesStatus = statusFilter === 'all' || (statusFilter === 'online' && status === 'online') || (statusFilter === 'offline' && status !== 'online');
+                        const matchesType = typeFilter === 'all' || (typeFilter === 'color' && !!p.is_color) || (typeFilter === 'mono' && !p.is_color);
+                        const matchesError = errorFilter === 'all' || (errorFilter === 'ok' && errorType === 'ok') || (errorFilter === 'low' && errorType === 'low') || (errorFilter === 'critical' && errorType === 'critical') || (errorFilter === 'other' && errorType === 'other');
+                        return matchesStatus && matchesType && matchesError;
+                    });
+                    data = sortDashboardData(data, sortFilter);
+                    data = sortDashboardTableColumns(data);
+                    console.timeEnd('filter_sort');
+                    dashboardRawData = [...data];
+                    dashboardFilteredData = [...data];
+
+                    const cardsView = document.getElementById("dashboardCardsView");
+                    const tableView = document.getElementById("dashboardTableView");
+                    const grid = document.getElementById("printersGrid");
+
+                    // ensure table header exists (keeps existing markup predictable)
+                    tableView.innerHTML = `
+                        <div class="table-wrapper dashboard-table-wrap">
+                            <table class="dashboard-table">
+                                <thead>
+                                    <tr>
+                                        <th class="sortable-th" onclick="toggleTableSort('shared_name')">Shared Name ${getSortIndicator("shared_name")}</th>
+                                        <th class="sortable-th" onclick="toggleTableSort('name')">Name ${getSortIndicator("name")}</th>
+                                        <th class="sortable-th" onclick="toggleTableSort('model')">Modelo ${getSortIndicator("model")}</th>
+                                        <th class="sortable-th" onclick="toggleTableSort('serial')">Serie ${getSortIndicator("serial")}</th>
+                                        <th class="sortable-th" onclick="toggleTableSort('ip')">IP ${getSortIndicator("ip")}</th>
+                                        <th class="sortable-th" onclick="toggleTableSort('status')">Status ${getSortIndicator("status")}</th>
+                                        <th class="sortable-th" onclick="toggleTableSort('error_message')">Error ${getSortIndicator("error_message")}</th>
+                                        <th>Tóner</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashboardTableBody"></tbody>
+                            </table>
+                        </div>
+                    `;
+
+                    const tableBody = document.getElementById("dashboardTableBody");
+                    grid.innerHTML = ""; tableBody.innerHTML = "";
+                    if (data.length === 0) {
+                        grid.innerHTML = `<div class="empty-state">No hay impresoras para mostrar con esos filtros.</div>`;
+                        tableBody.innerHTML = `<tr><td colspan="8">No hay impresoras para mostrar.</td></tr>`;
+                        document.getElementById("totalPrinters").textContent = "0";
+                        document.getElementById("onlinePrinters").textContent = "0";
+                        document.getElementById("offlinePrinters").textContent = "0";
+                        document.getElementById("lowTonerPrinters").textContent = "0";
+                        document.getElementById("lastUpdate").textContent = "Sin datos";
+                    } else {
+                        let onlineCount = 0, offlineCount = 0, lowTonerCount = 0;
+                        // client-side pagination to avoid rendering huge DOM lists
+                        const totalItems = data.length;
+                        const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+                        if (currentPage > totalPages) currentPage = totalPages;
+                        const startIdx = (currentPage - 1) * pageSize;
+                        const endIdx = Math.min(totalItems, startIdx + pageSize);
+                        const pageData = data.slice(startIdx, endIdx);
+
+                        const gridFragment = document.createDocumentFragment();
+                        // for table view build an HTML string (fast), for cards build nodes
+                        let rowsHtml = "";
+                        const rowsList = [];
+
+                        pageData.forEach(printer => {
+                            const status = (printer.status || "offline").toLowerCase();
+                            if (status === "online") onlineCount++; else offlineCount++;
+                            const black = safeValue(printer.toner_black);
+                            if (black !== null && black < 30) lowTonerCount++;
+
+                            if (viewMode === 'cards') {
+                                const cardT = document.createElement('template');
+                                cardT.innerHTML = buildCard(printer).trim();
+                                const cardEl = cardT.content.firstElementChild;
+                                if (cardEl) gridFragment.appendChild(cardEl);
+                            } else {
+                                // table mode: accumulate row strings for tbody (kept in array to allow chunked append)
+                                const rowStr = buildDashboardTableRow(printer);
+                                rowsHtml += rowStr;
+                                rowsList.push(rowStr);
+                            }
+                        });
+
+                    console.time('render');
+                    if (viewMode === 'cards') {
+                            grid.appendChild(gridFragment);
+                        } else {
+                            // If dataset is very large, enable virtualization to render only visible rows
+                            const tableWrap = tableView.querySelector('.table-wrapper.dashboard-table-wrap');
+                            const TOTAL = rowsList.length;
+                            const useVirtual = dashboardRawData.length > VIRTUALIZE_THRESHOLD && TOTAL > 0;
+                            if (useVirtual) {
+                                // dashboardRawData contains the fully sorted/filtered data
+                                setupVirtualTable(tableWrap, tableBody, dashboardRawData, 8);
+                            } else {
+                                // fast replace tbody content normally, but if many rows do chunked append to avoid blocking
+                                if (TOTAL > 300) {
+                                    tableBody.innerHTML = '';
+                                    const CHUNK = 100;
+                                    let idx = 0;
+                                    const appendChunk = () => {
+                                        const end = Math.min(TOTAL, idx + CHUNK);
+                                        const slice = rowsList.slice(idx, end).join('');
+                                        tableBody.insertAdjacentHTML('beforeend', slice);
+                                        idx = end;
+                                        if (idx < TOTAL) {
+                                            setTimeout(appendChunk, 0);
+                                        }
+                                    };
+                                    appendChunk();
+                                } else {
+                                    tableBody.innerHTML = rowsHtml;
+                                }
+                                teardownVirtualTable();
+                            }
+                        }
+                    console.timeEnd('render');
+
+                        document.getElementById("totalPrinters").textContent = data.length;
+                        document.getElementById("onlinePrinters").textContent = onlineCount;
+                        document.getElementById("offlinePrinters").textContent = offlineCount;
+                        document.getElementById("lowTonerPrinters").textContent = lowTonerCount;
+                        document.getElementById("lastUpdate").textContent = "Actualizado: " + new Date().toLocaleTimeString();
+                    }
+                    if (document.body.classList.contains('fullscreen')) {
+                        setTimeout(() => { adjustGridScale(); setTableFullHeight(); }, 60);
+                    }
+                    cardsView.style.display = viewMode === "cards" ? "block" : "none";
+                    tableView.style.display = viewMode === "table" ? "block" : "none";
+                } catch (error) {
+                    if (error.name === 'AbortError') {
+                        return;
+                    }
+                    console.error("loadPrinters error:", error);
+                } finally {
+                    printersFetchController = null;
+                    console.timeEnd('loadPrinters_total');
+                }
+            }
+
+            function clearDiscoveredPrinters() {
+                discoveredPrintersCache = [];
+                const list = document.getElementById("printersList");
+                const selectAll = document.getElementById('selectAllDiscovered');
+                if (list) list.innerHTML = `<tr><td colspan="7">Configure la búsqueda y presione buscar.</td></tr>`;
+                if (selectAll) selectAll.checked = false;
+            }
+
+            async function discoverPrinters() {
+                try {
+                    const mode = document.getElementById('discoverMode')?.value || 'range';
+                    const startIp = document.getElementById('discoverStartIp')?.value.trim() || '';
+                    const endIp = document.getElementById('discoverEndIp')?.value.trim() || '';
+                    const singleIp = document.getElementById('discoverSingleIp')?.value.trim() || '';
+                    const community = document.getElementById('discoverCommunity')?.value.trim() || 'public';
+                    const params = new URLSearchParams({ mode, community });
+                    if (!validateDiscoverFields()) return;
+                    if (mode === 'range') {
+                        params.set('start_ip', startIp);
+                        params.set('end_ip', endIp);
+                    } else {
+                        params.set('ip', singleIp);
+                    }
+
+                    const response = await fetch(`/printers/discover?${params.toString()}`);
+                    const data = await response.json();
+                    const list = document.getElementById("printersList");
+                    const selectAll = document.getElementById('selectAllDiscovered');
+                    list.innerHTML = "";
+                    discoveredPrintersCache = Array.isArray(data) ? data : [];
+                    if (selectAll) selectAll.checked = false;
+                    if (!Array.isArray(data) || data.length === 0) { list.innerHTML = `<tr><td colspan="7">No se encontraron impresoras.</td></tr>`; return; }
+                    data.forEach((printer, index) => {
+                        list.innerHTML += `<tr><td class="discover-select-col"><input id="discoverSelect_${index}" class="discover-checkbox" type="checkbox" checked></td><td>${printer.shared_name ?? "-"}</td><td>${printer.name ?? "-"}</td><td>${printer.ip ?? "-"}</td><td>${printer.model ?? "-"}</td><td>${printer.serial ?? "-"}</td><td>${printer.is_color ? "Color" : "Blanco y negro"}</td></tr>`;
+                    });
+                } catch (error) {
+                    console.error("discoverPrinters error:", error);
+                    discoveredPrintersCache = [];
+                    document.getElementById("printersList").innerHTML = `<tr><td colspan="7">No se pudo descubrir impresoras.</td></tr>`;
+                }
+            }
+
+            async function importPrinters() {
+                try {
+                    const selectedPrinters = getSelectedDiscoveredPrinters();
+                    if (!selectedPrinters.length) {
+                        alert("Seleccione al menos una impresora para importar.");
+                        return;
+                    }
+                    const community = document.getElementById('discoverCommunity')?.value.trim() || 'public';
+                    const payload = selectedPrinters.map(printer => ({
+                        ...printer,
+                        snmp_community: printer.snmp_community || community
+                    }));
+                    const response = await fetch("/printers/import-discovered", {
+                        method: "POST",
+                        headers: { "Content-Type: "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await response.json();
+                    alert(`Importadas: ${data.imported_count} | Omitidas: ${data.skipped_count}`);
+                    clearDiscoveredPrinters();
+                    loadPrinters();
+                    loadSavedPrinters();
+                } catch (error) {
+                    alert("No se pudieron importar las impresoras.");
+                    console.error(error);
+                }
+            }
+
+            function filterSavedPrinters() {
+                const search = (document.getElementById("printerSearch")?.value || "").toLowerCase().trim();
+                document.querySelectorAll("#savedPrintersList tr").forEach(row => {
+                    row.style.display = row.textContent.toLowerCase().includes(search) ? "" : "none";
+                });
+            }
+
+            function resetPrinterForm() {
+                document.getElementById("editingPrinterId").value = "";
+                document.getElementById("printerFormTitle").textContent = "Agregar impresora manualmente";
+                document.getElementById("printerSharedName").value = "";
+                document.getElementById("printerName").value = "";
+                document.getElementById("printerName").dataset.autoFilled = 'false';
+                document.getElementById("printerModel").value = "";
+                document.getElementById("printerIp").value = "";
+                document.getElementById("printerSerial").value = "";
+                document.getElementById("printerLocation").value = "";
+                document.getElementById("printerIsColor").value = "true";
+                document.getElementById("printerCommunity").value = "public";
+                const manualCard = document.getElementById('manualPrinterCard');
+                if (manualCard) manualCard.classList.add('is-open');
+            }
+
+            function editPrinter(printer) {
+                document.getElementById("editingPrinterId").value = printer.id;
+                document.getElementById("printerFormTitle").textContent = `Editar impresora ID ${printer.id}`;
+                document.getElementById("printerSharedName").value = printer.shared_name ?? "";
+                document.getElementById("printerName").value = printer.name ?? "";
+                document.getElementById("printerName").dataset.autoFilled = 'false';
+                document.getElementById("printerModel").value = printer.model ?? "";
+                document.getElementById("printerIp").value = printer.ip ?? "";
+                document.getElementById("printerSerial").value = printer.serial ?? "";
+                document.getElementById("printerLocation").value = printer.location ?? "";
+                document.getElementById("printerIsColor").value = printer.is_color ? "true" : "false";
+                document.getElementById("printerCommunity").value = printer.snmp_community ?? "public";
+                const manualCard = document.getElementById('manualPrinterCard');
+                const discoverCard = document.getElementById('discoverPrinterCard');
+                if (discoverCard) discoverCard.classList.remove('is-open');
+                if (manualCard) manualCard.classList.add('is-open');
+                showTab("printers");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+
+            async function savePrinter() {
+                const editingId = document.getElementById("editingPrinterId").value.trim();
+                const payload = {
+                    shared_name: document.getElementById("printerSharedName").value.trim() || null,
+                    name: document.getElementById("printerName").value.trim() || null,
+                    model: document.getElementById("printerModel").value.trim(),
+                    ip: document.getElementById("printerIp").value.trim(),
+                    serial: document.getElementById("printerSerial").value.trim() || null,
+                    location: document.getElementById("printerLocation").value.trim() || null,
+                    is_color: document.getElementById("printerIsColor").value === "true",
+                    snmp_community: document.getElementById("printerCommunity").value.trim() || "public"
+                };
+                if (!validatePrinterIpField()) { alert("La IP no es válida."); return; }
+                if (!payload.ip || !payload.model) { alert("IP y modelo son obligatorios."); return; }
+                try {
+                    let response;
+                    if (editingId) {
+                        response = await fetch(`/printers/${editingId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+                    } else {
+                        response = await fetch("/printers/", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+                    }
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.detail || "Error guardando impresora");
+                    alert(editingId ? "Impresora actualizada correctamente." : "Impresora agregada correctamente.");
+                    setFieldValidation('printerIp', 'printerIpHelp', '');
+                    resetPrinterForm();
+                    loadSavedPrinters();
+                    loadPrinters();
+                } catch (error) {
+                    if ((error.message || '').toLowerCase().includes('ip')) {
+                        setFieldValidation('printerIp', 'printerIpHelp', error.message, 'invalid');
+                    }
+                    alert(error.message || "No se pudo guardar la impresora.");
+                    console.error(error);
+                }
+            }
+
+            async function addPrinterManual() { await savePrinter(); }
+
+            async function loadSavedPrinters() {
+                try {
+                    const response = await fetch("/printers/");
+                    let data = await response.json();
+                    const list = document.getElementById("savedPrintersList");
+                    list.innerHTML = "";
+                    if (!Array.isArray(data) || data.length === 0) {
+                        list.innerHTML = `<tr><td colspan="8">No hay impresoras guardadas.</td></tr>`;
+                        updateSavedPrintersSortIndicators();
+                        return;
+                    }
+                    data.sort((a, b) => {
+                        let result = compareSavedPrinterValues(a, b, savedPrintersSortColumn);
+                        if (savedPrintersSortDirection === 'desc') result *= -1;
+                        return result;
+                    });
+                    data.forEach(printer => {
+                        const printerJson = JSON.stringify(printer).replace(/'/g, "&apos;");
+                        list.innerHTML += `<tr><td>${printer.id}</td><td>${printer.shared_name ?? "-"}</td><td>${printer.name ?? "-"}</td><td>${printer.ip ?? "-"}</td><td>${printer.model ?? "-"}</td><td>${printer.serial ?? "-"}</td><td>${printer.is_color ? "Color" : "Blanco y negro"}</td><td><div class="action-row" style="margin-bottom:0;"><button class="action-button" onclick='editPrinter(${printerJson})'>Editar</button><button class="action-button action-button-danger" onclick="deletePrinter(${printer.id})">Eliminar</button></div></td></tr>`;
+                    });
+                    updateSavedPrintersSortIndicators();
+                    filterSavedPrinters();
+                } catch (error) {
+                    console.error("loadSavedPrinters error:", error);
+                    document.getElementById("savedPrintersList").innerHTML = `<tr><td colspan="8">No se pudieron cargar las impresoras guardadas.</td></tr>`;
+                    updateSavedPrintersSortIndicators();
+                }
+            }
+
+            function getSavedPrintersSortIndicator(column) {
+                if (savedPrintersSortColumn !== column) return '↕';
+                return savedPrintersSortDirection === 'asc' ? '▲' : '▼';
+            }
+
+            function updateSavedPrintersSortIndicators() {
+                ['id', 'shared_name', 'name', 'ip'].forEach(column => {
+                    const indicator = document.getElementById(`savedPrintersSort_${column}`);
+                    if (indicator) indicator.textContent = getSavedPrintersSortIndicator(column);
+                });
+            }
+
+            function compareSavedPrinterValues(a, b, column) {
+                const av = ((a[column] ?? "") + "").toLowerCase().trim();
+                const bv = ((b[column] ?? "") + "").toLowerCase().trim();
+                if (column === "id") return Number(a.id || 0) - Number(b.id || 0);
+                if (column === "ip") {
+                    const aip = av.split(".").map(x => parseInt(x || "0", 10));
+                    const bip = bv.split(".").map(x => parseInt(x || "0", 10));
+                    for (let i = 0; i < 4; i++) {
+                        if ((aip[i] || 0) < (bip[i] || 0)) return -1;
+                        if ((aip[i] || 0) > (bip[i] || 0)) return 1;
+                    }
+                    return 0;
+                }
+                return av.localeCompare(bv);
+            }
+
+            function toggleSavedPrintersSort(column) {
+                if (savedPrintersSortColumn === column) {
+                    savedPrintersSortDirection = savedPrintersSortDirection === "asc" ? "desc" : "asc";
+                } else {
+                    savedPrintersSortColumn = column;
+                    savedPrintersSortDirection = "asc";
+                }
+                loadSavedPrinters();
+            }
+
+            async function deletePrinter(printerId) {
+                if (!confirm(`¿Eliminar la impresora con ID ${printerId}?`)) return;
+                try {
+                    const response = await fetch(`/printers/${printerId}`, { method: "DELETE" });
+                    if (!response.ok) throw new Error("No se pudo eliminar");
+                    loadSavedPrinters();
+                    loadPrinters();
+                } catch (error) {
+                    alert("No se pudo eliminar la impresora.");
+                    console.error(error);
+                }
+            }
+
+            let countersAutoTimer = null;
+            let countersAutoInterval = 60;
+
+            function toggleCountersAuto(checked) {
+                if (checked) startCountersAuto(); else stopCountersAuto();
+            }
+
+            function startCountersAuto() {
+                const iv = Number(document.getElementById('countersAutoInterval')?.value) || 60;
+                countersAutoInterval = Math.max(5, iv);
+                if (countersAutoTimer) clearInterval(countersAutoTimer);
+                countersAutoTimer = setInterval(loadCounters, countersAutoInterval * 1000);
+                loadCounters();
+            }
+
+            function stopCountersAuto() {
+                if (countersAutoTimer) { clearInterval(countersAutoTimer); countersAutoTimer = null; }
+            }
+
+            async function loadCounters() {
+                const list = document.getElementById("countersList");
+                const lastEl = document.getElementById('countersLastUpdate');
+                if (!list) return;
+                try {
+                    list.innerHTML = `<tr><td colspan="10">Actualizando contadores...</td></tr>`;
+                    if (lastEl) lastEl.textContent = 'Actualizando...';
+                    fetch("/printers/counters")
+                        .then(response => response.json())
+                        .then(data => {
+                            if (!Array.isArray(data) || data.length === 0) {
+                                list.innerHTML = `<tr><td colspan="10">No hay datos.</td></tr>`;
+                                if (lastEl) lastEl.textContent = 'Última: -';
+                                return;
+                            }
+                            const fmt = value => {
+                                if (value === null || value === undefined || value === '' || value === '-') return '-';
+                                const n = Number(value);
+                                return Number.isNaN(n) ? value : n.toLocaleString('es-CR');
+                            };
+                            const frag = document.createDocumentFragment();
+                            data.forEach(p => {
+                                const tr = document.createElement('tr');
+                                tr.innerHTML = `
+                                    <td class="sticky-left-1 col-name text-left">${p.name ?? "-"}</td>
+                                    <td class="sticky-left-2 col-serial text-left">${p.serial ?? "-"}</td>
+                                    <td class="sticky-left-3 col-ip text-left ip-cell">${p.ip ?? "-"}</td>
+                                    <td class="col-total num-right">${fmt(p.total_pages)}</td>
+                                    <td class="col-copy num-right">${fmt(p.copy_bw)}</td>
+                                    <td class="col-copy num-right">${fmt(p.copy_color)}</td>
+                                    <td class="col-print num-right">${fmt(p.print_bw)}</td>
+                                    <td class="col-print num-right">${fmt(p.print_color)}</td>
+                                    <td class="col-total num-right">${fmt(p.bw_pages)}</td>
+                                    <td class="col-total num-right">${fmt(p.color_pages)}</td>
+                                `;
+                                frag.appendChild(tr);
+                            });
+                            list.innerHTML = '';
+                            list.appendChild(frag);
+                            if (lastEl) lastEl.textContent = 'Actualizado: ' + new Date().toLocaleTimeString();
+                        })
+                        .catch(error => {
+                            list.innerHTML = `<tr><td colspan="10">No se pudieron cargar los contadores.</td></tr>`;
+                            if (lastEl) lastEl.textContent = 'Error';
+                            console.error("loadCounters error:", error);
+                        });
+                } catch (error) {
+                    list.innerHTML = `<tr><td colspan="10">No se pudieron cargar los contadores.</td></tr>`;
+                    if (lastEl) lastEl.textContent = 'Error';
+                    console.error("loadCounters error:", error);
+                }
+            }
+
+            async function loadInventory() {
+                try {
+                    const response = await fetch("/inventory/");
+                    const data = await response.json();
+                    const list = document.getElementById("inventoryList");
+                    list.innerHTML = "";
+                    if (!Array.isArray(data) || data.length === 0) { list.innerHTML = `<tr><td colspan="7">No hay inventario registrado.</td></tr>`; return; }
+                    data.forEach(item => { list.innerHTML += `<tr><td>${item.id}</td><td>${item.name}</td><td>${item.model}</td><td>${item.type}</td><td>${item.quantity}</td><td>${item.min_stock}</td><td><button class="action-button action-button-danger" onclick="deleteInventory(${item.id})">Eliminar</button></td></tr>`; });
+                } catch (error) { console.error(error); }
+            }
+
+            async function addInventoryItem() {
+                const payload = { name: document.getElementById("invName").value.trim(), model: document.getElementById("invModel").value.trim(), type: document.getElementById("invType").value, quantity: Number(document.getElementById("invQty").value), min_stock: Number(document.getElementById("invMin").value) };
+                if (!payload.name || !payload.model || Number.isNaN(payload.quantity) || Number.isNaN(payload.min_stock)) { alert("Completa todos los campos del inventario."); return; }
+                try {
+                    await fetch("/inventory/", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+                    document.getElementById("invName").value = "";
+                    document.getElementById("invModel").value = "";
+                    document.getElementById("invType").value = "toner";
+                    document.getElementById("invQty").value = "";
+                    document.getElementById("invMin").value = "";
+                    loadInventory();
+                } catch (error) { alert("No se pudo agregar el inventario."); console.error(error); }
+            }
+
+            async function deleteInventory(id) {
+                try { await fetch(`/inventory/${id}`, { method: "DELETE" }); loadInventory(); }
+                catch (error) { alert("No se pudo eliminar el inventario."); console.error(error); }
+            }
+
+            async function loadTonerControl() {
+                try {
+                    const response = await fetch("/toner-control/");
+                    const data = await response.json();
+                    const list = document.getElementById("tonerControlList");
+                    if (!list) return;
+                    list.innerHTML = "";
+                    if (!Array.isArray(data) || data.length === 0) {
+                        list.innerHTML = `<tr><td colspan="18">No hay impresoras</td></tr>`;
+                        return;
+                    }
+                    data.forEach(p => {
+                        list.innerHTML += `
+                        <tr>
+                        <td class="tc-col-shared tc-shared-cell" title="${p.shared_name ?? "-"}">${p.shared_name ?? "-"}</td>
+                        <td class="tc-col-name tc-name-cell" title="${p.name ?? "-"}">${p.name ?? "-"}</td>
+                        <td class="tc-col-model tc-model-cell" title="${p.model ?? "-"}">${p.model ?? "-"}</td>
+                        <td class="tc-col-serial tc-serial-cell">${p.serial ?? "-"}</td>
+                        <td class="tc-col-check"><input class="tc-input-check" value="${p.check_date ?? ""}" id="check_${p.printer_id}"></td>
+                        <td class="tc-col-k td-k tc-toner-cell"><span class="${tonerClass(p.toner_black, 'toner-k')}">${tonerDisplay(p.toner_black)}</span></td>
+                        <td class="tc-col-c td-c tc-toner-cell">${p.is_color ? `<span class="${tonerClass(p.toner_cyan, 'toner-c')}">${tonerDisplay(p.toner_cyan)}</span>` : `<span class="tc-muted">-</span>`}</td>
+                        <td class="tc-col-m td-m tc-toner-cell">${p.is_color ? `<span class="${tonerClass(p.toner_magenta, 'toner-m')}">${tonerDisplay(p.toner_magenta)}</span>` : `<span class="tc-muted">-</span>`}</td>
+                        <td class="tc-col-y td-y tc-toner-cell">${p.is_color ? `<span class="${tonerClass(p.toner_yellow, 'toner-y')}">${tonerDisplay(p.toner_yellow)}</span>` : `<span class="tc-muted">-</span>`}</td>
+                        <td class="tc-col-bk"><input class="tc-input-backup" type="number" value="${p.backup_black ?? 0}" id="bk_${p.printer_id}"></td>
+                        <td class="tc-col-bc">${p.is_color ? `<input class="tc-input-backup" type="number" value="${p.backup_cyan ?? 0}" id="bc_${p.printer_id}">` : `<span class="tc-muted">-</span>`}</td>
+                        <td class="tc-col-bm">${p.is_color ? `<input class="tc-input-backup" type="number" value="${p.backup_magenta ?? 0}" id="bm_${p.printer_id}">` : `<span class="tc-muted">-</span>`}</td>
+                        <td class="tc-col-by">${p.is_color ? `<input class="tc-input-backup" type="number" value="${p.backup_yellow ?? 0}" id="by_${p.printer_id}">` : `<span class="tc-muted">-</span>`}</td>
+                        <td class="tc-col-location" title="${p.location ?? "-"}">${p.location ?? "-"}</td>
+                        <td class="tc-col-pedido"><input class="tc-input-text" value="${p.pedido ?? ""}" id="pedido_${p.printer_id}"></td>
+                        <td class="tc-col-wo"><input class="tc-input-text" value="${p.work_order ?? ""}" id="wo_${p.printer_id}"></td>
+                        <td class="tc-col-notas"><input class="tc-input-text" value="${p.notas ?? ""}" id="notas_${p.printer_id}"></td>
+                        <td class="tc-col-action"><button class="action-button" onclick="saveBackup(${p.printer_id}, ${p.is_color})">Guardar</button></td>
+                        </tr>`;
+                    });
+                } catch (error) {
+                    const list = document.getElementById("tonerControlList");
+                    if (list) list.innerHTML = `<tr><td colspan="18">Error cargando datos</td></tr>`;
+                    console.error("loadTonerControl error:", error);
+                }
+            }
+
+            async function saveBackup(id, isColor) {
+                const data = { check_date: document.getElementById("check_" + id).value, backup_black: Number(document.getElementById("bk_" + id).value) || 0, pedido: document.getElementById("pedido_" + id).value, work_order: document.getElementById("wo_" + id).value, notas: document.getElementById("notas_" + id).value };
+                if (isColor) {
+                    data.backup_cyan = Number(document.getElementById("bc_" + id).value) || 0;
+                    data.backup_magenta = Number(document.getElementById("bm_" + id).value) || 0;
+                    data.backup_yellow = Number(document.getElementById("by_" + id).value) || 0;
+                }
+                try {
+                    await fetch(`/toner-control/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+                    alert("Guardado");
+                    loadTonerControl();
+                } catch (error) { alert("Error guardando backup"); console.error(error); }
+            }
+
+            (function attachFilterListeners(){
+                const searchEl = document.getElementById('searchInput');
+                if (searchEl) searchEl.addEventListener('input', () => debounceApplyFilters(300));
+                ['viewMode','densityMode','statusFilter','typeFilter','errorFilter','sortFilter'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.addEventListener('change', () => applyFilters());
+                });
+                const printerIpEl = document.getElementById('printerIp');
+                const printerNameEl = document.getElementById('printerName');
+                const discoverStartIpEl = document.getElementById('discoverStartIp');
+                const discoverEndIpEl = document.getElementById('discoverEndIp');
+                const discoverSingleIpEl = document.getElementById('discoverSingleIp');
+                if (printerIpEl) {
+                    printerIpEl.addEventListener('input', () => validatePrinterIpField());
+                    printerIpEl.addEventListener('blur', () => { validatePrinterIpField(); autofillPrinterNameFromIp(); });
+                    printerIpEl.addEventListener('change', () => { validatePrinterIpField(); autofillPrinterNameFromIp(); });
+                }
+                if (printerNameEl) {
+                    printerNameEl.dataset.autoFilled = 'false';
+                    printerNameEl.addEventListener('input', () => { printerNameEl.dataset.autoFilled = 'false'; });
+                }
+                [discoverStartIpEl, discoverEndIpEl, discoverSingleIpEl].forEach(el => {
+                    if (el) el.addEventListener('input', () => validateDiscoverFields());
+                });
+                toggleDiscoverModeFields();
+            })();
+
+            showTab('dashboard');
+            setDensityMode('standard');
+            initRealtime();
+            setTimeout(() => { if (!realtimeConnected) startPrintersPolling(); }, 300);
+        </script>
+</body>
+</html>

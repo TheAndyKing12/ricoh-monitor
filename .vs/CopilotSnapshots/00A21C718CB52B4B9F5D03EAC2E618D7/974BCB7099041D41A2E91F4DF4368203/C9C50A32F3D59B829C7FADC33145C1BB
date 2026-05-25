@@ -1,0 +1,915 @@
+﻿from fastapi import APIRouter, Depends, HTTPException, Body, Query, Response
+from ipaddress import ip_network, ip_address
+from pydantic import BaseModel
+from datetime import datetime, timezone
+import csv
+import io
+
+from sqlalchemy.orm import Session
+
+from concurrent.futures import ThreadPoolExecutor
+import threading
+import socket
+
+from ..database import SessionLocal
+
+from .. import crud, schemas, models
+
+from app.ricoh_http import get_ricoh_http_counters, get_ricoh_http_hostname
+ 
+from ..snmp import get_snmp_value, get_snmp_values, get_snmp_walk
+import time 
+
+router = APIRouter(prefix="/printers", tags=["Printers"])
+STATUS_CACHE = {
+    "timestamp": 0,
+    "data": None
+}
+
+STATUS_CACHE_TTL = 65
+
+MAX_WORKERS = 12
+REFRESH_IN_PROGRESS = False
+REFRESH_LOCK = threading.Lock()
+COUNTERS_CACHE = {
+    "timestamp": 0,
+    "data": None
+}
+COUNTERS_CACHE_TTL = 60
+COUNTERS_LOCK = threading.Lock()
+COUNTERS_LAST_ROWS: dict[int, dict] = {}
+COUNTERS_LAST_CHANGED_AT: dict[int, float] = {}
+COUNTERS_LAST_REFRESH_TS = 0.0
+
+HOSTNAME_SYNC_TTL = 300
+HOSTNAME_SYNC_BATCH_SIZE = 2
+HOSTNAME_LAST_SYNC: dict[int, float] = {}
+HOSTNAME_SYNC_IN_PROGRESS: set[int] = set()
+HOSTNAME_SYNC_LOCK = threading.Lock()
+
+
+def _sync_hostname_for_printer(printer_id: int):
+    db = SessionLocal()
+    try:
+        printer = crud.get_printer_by_id(db, printer_id)
+        if not printer:
+            return
+        resolved_name = resolve_hostname_value(printer.ip, printer.snmp_community)
+        if resolved_name and resolved_name != (printer.name or "").strip():
+            crud.update_printer(db, printer_id, {"name": resolved_name})
+    except Exception:
+        pass
+    finally:
+        db.close()
+        with HOSTNAME_SYNC_LOCK:
+            HOSTNAME_LAST_SYNC[printer_id] = time.time()
+            HOSTNAME_SYNC_IN_PROGRESS.discard(printer_id)
+
+
+def _schedule_hostname_sync(printer_id: int) -> bool:
+    now = time.time()
+    with HOSTNAME_SYNC_LOCK:
+        last_sync = HOSTNAME_LAST_SYNC.get(printer_id, 0)
+        if printer_id in HOSTNAME_SYNC_IN_PROGRESS:
+            return False
+        if (now - last_sync) < HOSTNAME_SYNC_TTL:
+            return False
+        HOSTNAME_SYNC_IN_PROGRESS.add(printer_id)
+
+    threading.Thread(target=_sync_hostname_for_printer, args=(printer_id,), daemon=True).start()
+    return True
+
+
+def get_db():
+
+    db = SessionLocal()
+
+    try:
+
+        yield db
+
+    finally:
+
+        db.close()
+
+
+def safe_int(value):
+
+    try:
+
+        return int(value)
+
+    except:
+
+        return None
+
+
+def decode_printer_error_state(raw_value):
+
+    if raw_value is None:
+
+        return []
+
+    try:
+
+        octets = list(raw_value.asNumbers())
+
+    except:
+
+        try:
+
+            octets = list(bytes(raw_value))
+
+        except:
+
+            return []
+
+    bit_names = [
+
+        "Low Paper",             # 0
+
+        "No Paper",              # 1
+
+        "Low Toner",             # 2
+
+        "No Toner",              # 3
+
+        "Door Open",             # 4
+
+        "Paper Jam",             # 5
+
+        "Offline",               # 6
+
+        "Service Requested",     # 7
+
+        "Input Tray Missing",    # 8
+
+        "Output Tray Missing",   # 9
+
+        "Marker Supply Missing", # 10
+
+        "Output Near Full",      # 11
+
+        "Output Full",           # 12
+
+        "Input Tray Empty",      # 13
+
+        "Maintenance Required"   # 14
+
+    ]
+
+    errors = []
+
+    for byte_index, byte_value in enumerate(octets):
+
+        for bit_index in range(8):
+
+            global_bit_index = byte_index * 8 + bit_index
+
+            if global_bit_index >= len(bit_names):
+
+                continue
+
+            mask = 0x80 >> bit_index
+
+            if byte_value & mask:
+
+                errors.append(bit_names[global_bit_index])
+
+    return errors
+
+
+def detect_is_color(printer):
+
+    if hasattr(printer, "is_color") and printer.is_color is not None:
+
+        return bool(printer.is_color)
+
+    model_upper = (printer.model or "").upper().strip()
+
+    return (
+
+        model_upper.startswith("IM C") or
+
+        model_upper.startswith("MP C") or
+
+        model_upper.startswith("P C") or
+
+        "IM C" in model_upper or
+
+        "MP C" in model_upper or
+
+        "P C" in model_upper
+
+    )
+ 
+
+def detect_is_color_from_model(model_str: str):
+
+    model_upper = (model_str or "").upper()
+
+    return (
+
+        "IM C" in model_upper or
+
+        "MP C" in model_upper or
+
+        "P C" in model_upper
+
+    )
+
+
+def build_fast_printer_status(printer):
+
+    is_color = detect_is_color(printer)
+
+    oids = [
+        "1.3.6.1.2.1.43.11.1.1.9.1.1",
+        "1.3.6.1.2.1.25.3.5.1.1.1",
+        "1.3.6.1.2.1.25.3.5.1.2.1",
+    ]
+    if is_color:
+        oids += [
+            "1.3.6.1.2.1.43.11.1.1.9.1.2",
+            "1.3.6.1.2.1.43.11.1.1.9.1.3",
+            "1.3.6.1.2.1.43.11.1.1.9.1.4"
+        ]
+
+    try:
+        values = get_snmp_values(printer.ip, printer.snmp_community, oids)
+    except Exception:
+        values = None
+
+    def _v(oid):
+        if not values:
+            return None
+        return values.get(oid)
+
+    # Use printer.name from DB (kept current by _sync_hostname_for_printer via
+    # resolve_hostname_value: HTTP > DNS > SNMP). Reading sysName directly from
+    # SNMP is unreliable on Ricoh printers — it often returns the model name.
+    live_name = printer.name or printer.model
+
+    toner_black = safe_int(_v("1.3.6.1.2.1.43.11.1.1.9.1.1"))
+    status_code = safe_int(_v("1.3.6.1.2.1.25.3.5.1.1.1"))
+    error_state_raw = _v("1.3.6.1.2.1.25.3.5.1.2.1")
+    error_list = decode_printer_error_state(error_state_raw)
+
+    status = "online" if toner_black is not None else "offline"
+    printer_state = "unknown"
+    if status_code == 3:
+        printer_state = "idle"
+    elif status_code == 4:
+        printer_state = "printing"
+    elif status_code == 5:
+        printer_state = "warmup"
+    elif status_code == 6:
+        printer_state = "stopped"
+
+    if status == "offline":
+        error_message = "Sin respuesta SNMP"
+    elif error_list:
+        error_message = ", ".join(error_list)
+    elif toner_black is not None and toner_black < 10:
+        error_message = "Tóner crítico"
+    elif toner_black is not None and toner_black < 30:
+        error_message = "Low Toner"
+    else:
+        error_message = "Sin error"
+
+    printer_data = {
+        "id": printer.id,
+        "shared_name": getattr(printer, "shared_name", None),
+        "name": live_name,
+        "model": printer.model,
+        "serial": printer.serial,
+        "ip": printer.ip,
+        "location": printer.location,
+        "is_color": is_color,
+        "status": status,
+        "printer_state": printer_state,
+        "error_message": error_message,
+        "toner_black": toner_black
+    }
+
+    if is_color:
+        toner_cyan = safe_int(_v("1.3.6.1.2.1.43.11.1.1.9.1.2"))
+        toner_magenta = safe_int(_v("1.3.6.1.2.1.43.11.1.1.9.1.3"))
+        toner_yellow = safe_int(_v("1.3.6.1.2.1.43.11.1.1.9.1.4"))
+        printer_data["toner_cyan"] = toner_cyan
+        printer_data["toner_magenta"] = toner_magenta
+        printer_data["toner_yellow"] = toner_yellow
+
+    return printer_data
+
+
+def resolve_hostname_value(ip: str, community: str = "public") -> str | None:
+    hostname = None
+
+    try:
+        hostname = get_ricoh_http_hostname(ip)
+    except Exception:
+        hostname = None
+
+    if not hostname:
+        try:
+            hostname = socket.gethostbyaddr(ip)[0]
+        except Exception:
+            hostname = None
+
+    if not hostname:
+        try:
+            snmp_name = get_snmp_value(ip, community, "1.3.6.1.2.1.1.5.0")
+            if snmp_name is not None:
+                hostname = str(snmp_name).strip()
+        except Exception:
+            hostname = None
+
+    if hostname and "." in hostname:
+        hostname = hostname.split(".")[0]
+
+    return hostname
+
+
+@router.post("/", response_model=schemas.PrinterResponse)
+def create_printer(printer: schemas.PrinterCreate, db: Session = Depends(get_db)):
+    existing = crud.get_printer_by_ip(db, printer.ip)
+    if existing:
+        raise HTTPException(status_code=400, detail="Ya existe una impresora con esa IP")
+
+    printer_data = printer.dict()
+    resolved_name = resolve_hostname_value(printer.ip, printer.snmp_community)
+    if resolved_name:
+        printer_data["name"] = resolved_name
+
+    created = crud.create_printer(db, schemas.PrinterCreate(**printer_data))
+    clear_all_cache()
+    return created
+
+
+@router.get("/", response_model=list[schemas.PrinterResponse])
+def list_printers(db: Session = Depends(get_db)):
+    printers = crud.get_printers(db)
+    scheduled = 0
+    for printer in printers:
+        if scheduled >= HOSTNAME_SYNC_BATCH_SIZE:
+            break
+        if _schedule_hostname_sync(printer.id):
+            scheduled += 1
+    return printers
+
+
+@router.put("/{printer_id}", response_model=schemas.PrinterResponse)
+def update_printer(printer_id: int, printer: schemas.PrinterUpdate, db: Session = Depends(get_db)):
+    existing = crud.get_printer_by_id(db, printer_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Printer not found")
+
+    data = printer.dict(exclude_unset=True)
+    if "ip" in data and data["ip"] != existing.ip:
+        duplicate = crud.get_printer_by_ip(db, data["ip"])
+        if duplicate:
+            raise HTTPException(status_code=400, detail="Ya existe una impresora con esa IP")
+
+    target_ip = data.get("ip", existing.ip)
+    target_community = data.get("snmp_community", existing.snmp_community)
+    resolved_name = resolve_hostname_value(target_ip, target_community)
+    if resolved_name:
+        data["name"] = resolved_name
+
+    updated = crud.update_printer(db, printer_id, data)
+    clear_all_cache()
+    return updated
+
+
+@router.delete("/{printer_id}")
+def delete_printer(printer_id: int, db: Session = Depends(get_db)):
+    printer = crud.get_printer_by_id(db, printer_id)
+    if not printer:
+        raise HTTPException(status_code=404, detail="Printer not found")
+
+    crud.delete_printer(db, printer_id)
+    clear_all_cache()
+    return {"message": "Printer deleted"}
+
+
+@router.get("/status")
+def get_printers_status(db: Session = Depends(get_db)):
+    now = time.time()
+
+    if (
+        STATUS_CACHE["data"] is not None and
+        (now - STATUS_CACHE["timestamp"]) < STATUS_CACHE_TTL
+    ):
+        return STATUS_CACHE["data"]
+
+    printers = crud.get_printers(db)
+
+    scheduled = 0
+    for printer in printers:
+        if scheduled >= HOSTNAME_SYNC_BATCH_SIZE:
+            break
+        if _schedule_hostname_sync(printer.id):
+            scheduled += 1
+
+    # If there is no cached data yet, return a lightweight placeholder and refresh in background
+    if STATUS_CACHE["data"] is None:
+
+        placeholder = []
+
+        for p in printers:
+
+            placeholder.append({
+
+                "id": p.id,
+
+                "shared_name": getattr(p, "shared_name", None),
+
+                "name": p.name,
+
+                "model": p.model,
+
+                "serial": p.serial,
+
+                "ip": p.ip,
+
+                "location": p.location,
+
+                "is_color": detect_is_color(p),
+
+                "status": "unknown",
+
+                "printer_state": "unknown",
+
+                "error_message": "Cargando...",
+
+                "toner_black": None
+
+            })
+
+        STATUS_CACHE["timestamp"] = now
+
+        STATUS_CACHE["data"] = placeholder
+
+        def refresh_cache():
+
+            try:
+
+                with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+
+                    results = list(executor.map(build_fast_printer_status, printers))
+
+                STATUS_CACHE["timestamp"] = time.time()
+
+                STATUS_CACHE["data"] = results
+
+            finally:
+
+                with REFRESH_LOCK:
+
+                    global REFRESH_IN_PROGRESS
+
+                    REFRESH_IN_PROGRESS = False
+
+        with REFRESH_LOCK:
+
+            global REFRESH_IN_PROGRESS
+
+            if not REFRESH_IN_PROGRESS:
+
+                REFRESH_IN_PROGRESS = True
+
+                threading.Thread(target=refresh_cache, daemon=True).start()
+
+        return placeholder
+
+    # otherwise perform synchronous refresh
+
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+
+        results = list(executor.map(build_fast_printer_status, printers))
+
+    STATUS_CACHE["timestamp"] = now
+
+    STATUS_CACHE["data"] = results
+
+    return results
+
+
+def build_printer_counters(printer):
+    # basic counters (batch SNMP)
+    oids = [
+        "1.3.6.1.2.1.43.10.2.1.4.1.1",  # total
+        "1.3.6.1.4.1.367.3.2.1.7.2.9.1.2.1",  # bw pages
+        "1.3.6.1.4.1.367.3.2.1.7.2.9.1.2.3"   # color pages
+    ]
+    is_color = detect_is_color(printer)
+    try:
+        vals = get_snmp_values(printer.ip, printer.snmp_community, oids)
+    except Exception:
+        vals = None
+
+    def _v(oid):
+        if not vals:
+            return None
+        return vals.get(oid)
+
+    total_pages = safe_int(_v(oids[0]))
+    bw_pages = safe_int(_v(oids[1]))
+    color_pages = safe_int(_v(oids[2])) if is_color else None
+
+    snmp_present = any(_v(oid) is not None for oid in oids)
+
+    # additional counters: copies and prints (may be available via HTTP on Ricoh devices)
+    copy_bw = None
+    copy_color = None
+    print_bw = None
+    print_color = None
+
+    http_data = get_ricoh_http_counters(printer.ip)
+    http_used = False
+    if http_data:
+        if http_data.get("bw_pages") is not None:
+            bw_pages = safe_int(http_data["bw_pages"])
+            http_used = True
+        if is_color and http_data.get("color_pages") is not None:
+            color_pages = safe_int(http_data["color_pages"])
+            http_used = True
+        if http_data.get("total_pages") is not None:
+            total_pages = safe_int(http_data["total_pages"])
+            http_used = True
+        if http_data.get("copy_bw") is not None:
+            copy_bw = safe_int(http_data["copy_bw"])
+            http_used = True
+        if is_color and http_data.get("copy_color") is not None:
+            copy_color = safe_int(http_data["copy_color"])
+            http_used = True
+        if http_data.get("print_bw") is not None:
+            print_bw = safe_int(http_data["print_bw"])
+            http_used = True
+        if is_color and http_data.get("print_color") is not None:
+            print_color = safe_int(http_data["print_color"])
+            http_used = True
+
+    # if copy/print counters are available prefer summing them for BW and Color
+    if copy_bw is not None or print_bw is not None:
+        bw_pages = (copy_bw or 0) + (print_bw or 0)
+    if is_color and (copy_color is not None or print_color is not None):
+        color_pages = (copy_color or 0) + (print_color or 0)
+
+    # recompute total if possible
+    if is_color:
+        if (bw_pages is not None) and (color_pages is not None):
+            total_pages = bw_pages + color_pages
+    else:
+        if bw_pages is not None:
+            total_pages = bw_pages
+        color_pages = None
+        copy_color = None
+        print_color = None
+
+    counter_status = "online" if (total_pages is not None or bw_pages is not None or (is_color and color_pages is not None)) else "offline"
+    if snmp_present and http_used:
+        counter_source = "mixed"
+    elif http_used:
+        counter_source = "http"
+    elif snmp_present:
+        counter_source = "snmp"
+    else:
+        counter_source = "fallback"
+
+    row = {
+        "id": printer.id,
+        "name": getattr(printer, "shared_name", None) or printer.name or printer.model,
+        "serial": printer.serial,
+        "ip": printer.ip,
+        "is_color": is_color,
+        "counter_status": counter_status,
+        "counter_source": counter_source,
+        "total_pages": total_pages,
+        "copy_bw": copy_bw,
+        "copy_color": copy_color,
+        "print_bw": print_bw,
+        "print_color": print_color,
+        "bw_pages": bw_pages,
+        "color_pages": color_pages,
+    }
+    row["is_complete"] = _counter_is_complete(row)
+    return row
+
+
+@router.get("/counters")
+def get_printers_counters(
+    status: str = Query(default="all", pattern="^(all|online|offline)$"),
+    printer_type: str = Query(default="all", pattern="^(all|mono|color)$"),
+    incomplete: str = Query(default="all", pattern="^(all|true|false)$"),
+    sort_by: str = Query(default="name"),
+    sort_dir: str = Query(default="asc", pattern="^(asc|desc)$"),
+    db: Session = Depends(get_db),
+):
+    rows, _ = _refresh_counters_cache(db)
+    return _apply_counter_filters_and_sort(
+        rows,
+        status=status,
+        printer_type=printer_type,
+        incomplete=incomplete,
+        sort_by=sort_by,
+        sort_dir=sort_dir,
+    )
+
+
+@router.get("/counters/export")
+def export_printers_counters_csv(
+    status: str = Query(default="all", pattern="^(all|online|offline)$"),
+    printer_type: str = Query(default="all", pattern="^(all|mono|color)$"),
+    incomplete: str = Query(default="all", pattern="^(all|true|false)$"),
+    sort_by: str = Query(default="name"),
+    sort_dir: str = Query(default="asc", pattern="^(asc|desc)$"),
+    db: Session = Depends(get_db),
+):
+    rows, _ = _refresh_counters_cache(db)
+    rows = _apply_counter_filters_and_sort(
+        rows,
+        status=status,
+        printer_type=printer_type,
+        incomplete=incomplete,
+        sort_by=sort_by,
+        sort_dir=sort_dir,
+    )
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    headers = [
+        "id", "name", "serial", "ip", "is_color", "counter_status", "counter_source",
+        "total_pages", "copy_bw", "copy_color", "print_bw", "print_color", "bw_pages", "color_pages", "is_complete"
+    ]
+    writer.writerow(headers)
+    for row in rows:
+        writer.writerow([row.get(h) for h in headers])
+
+    return Response(
+        content=output.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=printers_counters.csv"},
+    )
+
+
+@router.get("/counters/changes")
+def get_printers_counters_changes(since: float = Query(default=0), db: Session = Depends(get_db)):
+    rows, refreshed_at = _refresh_counters_cache(db)
+    with COUNTERS_LOCK:
+        changed_ids = [pid for pid, changed_at in COUNTERS_LAST_CHANGED_AT.items() if changed_at > since]
+    changed = [row for row in rows if row.get("id") in changed_ids]
+    return {
+        "server_ts": refreshed_at,
+        "changed": changed,
+        "full_refresh_required": since <= 0,
+    }
+
+
+@router.get("/{printer_id}/counters/debug")
+def get_printer_counters_debug(printer_id: int, db: Session = Depends(get_db)):
+    printer = crud.get_printer_by_id(db, printer_id)
+    if not printer:
+        raise HTTPException(status_code=404, detail="Printer not found")
+
+    is_color = detect_is_color(printer)
+    oids = [
+        "1.3.6.1.2.1.43.10.2.1.4.1.1",
+        "1.3.6.1.4.1.367.3.2.1.7.2.9.1.2.1",
+        "1.3.6.1.4.1.367.3.2.1.7.2.9.1.2.3",
+    ]
+    snmp_raw: dict[str, str | None] = {}
+    try:
+        vals = get_snmp_values(printer.ip, printer.snmp_community, oids)
+    except Exception:
+        vals = None
+    for oid in oids:
+        raw = vals.get(oid) if vals else None
+        snmp_raw[oid] = None if raw is None else str(raw)
+
+    http_raw = None
+    try:
+        http_raw = get_ricoh_http_counters(printer.ip)
+    except Exception:
+        http_raw = None
+
+    final_applied = build_printer_counters(printer)
+    return {
+        "printer": {
+            "id": printer.id,
+            "name": printer.name,
+            "ip": printer.ip,
+            "serial": printer.serial,
+            "is_color": is_color,
+        },
+        "snmp_raw": snmp_raw,
+        "http_raw": http_raw,
+        "final_applied": final_applied,
+    }
+
+
+@router.get("/{printer_id}/counters/history")
+def get_printer_counters_history(
+    printer_id: int,
+    granularity: str = Query(default="daily", pattern="^(daily|weekly|monthly)$"),
+    limit: int = Query(default=90, ge=1, le=500),
+    db: Session = Depends(get_db),
+):
+    printer = crud.get_printer_by_id(db, printer_id)
+    if not printer:
+        raise HTTPException(status_code=404, detail="Printer not found")
+
+    rows = db.query(models.PrinterCounterSnapshot).filter(
+        models.PrinterCounterSnapshot.printer_id == printer_id,
+        models.PrinterCounterSnapshot.granularity == granularity,
+    ).order_by(models.PrinterCounterSnapshot.captured_at.desc()).limit(limit).all()
+
+    return {
+        "printer_id": printer_id,
+        "granularity": granularity,
+        "items": [
+            {
+                "captured_at": r.captured_at.isoformat() if r.captured_at else None,
+                "period_bucket": r.period_bucket,
+                "total_pages": r.total_pages,
+                "bw_pages": r.bw_pages,
+                "color_pages": r.color_pages,
+                "copy_bw": r.copy_bw,
+                "copy_color": r.copy_color,
+                "print_bw": r.print_bw,
+                "print_color": r.print_color,
+                "source": r.source,
+                "is_complete": r.is_complete,
+            }
+            for r in rows
+        ],
+    }
+
+
+def clear_status_cache():
+
+    STATUS_CACHE["timestamp"]=0
+
+    STATUS_CACHE["data"]= None
+
+
+def clear_counters_cache():
+
+    COUNTERS_CACHE["timestamp"]=0
+
+    COUNTERS_CACHE["data"]=None
+
+    with COUNTERS_LOCK:
+        global COUNTERS_LAST_REFRESH_TS
+        COUNTERS_LAST_ROWS.clear()
+        COUNTERS_LAST_CHANGED_AT.clear()
+        COUNTERS_LAST_REFRESH_TS = 0.0
+
+
+def clear_all_cache():
+    clear_status_cache()
+    clear_counters_cache()
+
+
+@router.get("/resolve-hostname")
+def resolve_printer_hostname(ip: str, community: str = "public"):
+    return {"hostname": resolve_hostname_value(ip, community)}
+
+
+def _counter_is_complete(row: dict) -> bool:
+    if not row:
+        return False
+    is_color = bool(row.get("is_color"))
+    if row.get("bw_pages") is None or row.get("total_pages") is None:
+        return False
+    if is_color and row.get("color_pages") is None:
+        return False
+    return True
+
+
+def _snapshot_bucket(captured_at: datetime, granularity: str) -> str:
+    if granularity == "daily":
+        return captured_at.strftime("%Y-%m-%d")
+    if granularity == "weekly":
+        iso = captured_at.isocalendar()
+        return f"{iso.year}-{iso.week:02d}"
+    if granularity == "monthly":
+        return captured_at.strftime("%Y-%m")
+    raise ValueError("Granularity not supported")
+
+
+def _upsert_counter_snapshots(db: Session, counters: list[dict], captured_at: datetime):
+    for row in counters:
+        printer_id = row.get("id")
+        if printer_id is None:
+            continue
+        for granularity in ("daily", "weekly", "monthly"):
+            bucket = _snapshot_bucket(captured_at, granularity)
+            snap = db.query(models.PrinterCounterSnapshot).filter(
+                models.PrinterCounterSnapshot.printer_id == printer_id,
+                models.PrinterCounterSnapshot.granularity == granularity,
+                models.PrinterCounterSnapshot.period_bucket == bucket,
+            ).first()
+            if not snap:
+                snap = models.PrinterCounterSnapshot(
+                    printer_id=printer_id,
+                    granularity=granularity,
+                    period_bucket=bucket,
+                )
+                db.add(snap)
+            snap.captured_at = captured_at
+            snap.total_pages = row.get("total_pages")
+            snap.bw_pages = row.get("bw_pages")
+            snap.color_pages = row.get("color_pages")
+            snap.copy_bw = row.get("copy_bw")
+            snap.copy_color = row.get("copy_color")
+            snap.print_bw = row.get("print_bw")
+            snap.print_color = row.get("print_color")
+            snap.source = row.get("counter_source")
+            snap.is_complete = bool(row.get("is_complete"))
+    db.commit()
+
+
+def _counter_signature(row: dict) -> tuple:
+    return (
+        row.get("total_pages"),
+        row.get("bw_pages"),
+        row.get("color_pages"),
+        row.get("copy_bw"),
+        row.get("copy_color"),
+        row.get("print_bw"),
+        row.get("print_color"),
+        row.get("counter_status"),
+        row.get("is_complete"),
+    )
+
+
+def _apply_counter_filters_and_sort(
+    rows: list[dict],
+    status: str = "all",
+    printer_type: str = "all",
+    incomplete: str = "all",
+    sort_by: str = "name",
+    sort_dir: str = "asc",
+) -> list[dict]:
+    filtered: list[dict] = []
+    for row in rows or []:
+        row_status = (row.get("counter_status") or "offline").lower()
+        row_type = "color" if row.get("is_color") else "mono"
+        row_incomplete = not bool(row.get("is_complete"))
+
+        if status in {"online", "offline"} and row_status != status:
+            continue
+        if printer_type in {"mono", "color"} and row_type != printer_type:
+            continue
+        if incomplete == "true" and not row_incomplete:
+            continue
+        if incomplete == "false" and row_incomplete:
+            continue
+        filtered.append(row)
+
+    reverse = (sort_dir or "asc").lower() == "desc"
+
+    def sort_key(item: dict):
+        val = item.get(sort_by)
+        if isinstance(val, str):
+            return val.lower()
+        if val is None:
+            return -1 if reverse else 10**18
+        return val
+
+    try:
+        filtered.sort(key=sort_key, reverse=reverse)
+    except Exception:
+        pass
+    return filtered
+
+
+def _refresh_counters_cache(db: Session, force: bool = False) -> tuple[list[dict], float]:
+    global COUNTERS_LAST_REFRESH_TS
+    now = time.time()
+    if (not force and COUNTERS_CACHE["data"] is not None and (now - COUNTERS_CACHE["timestamp"]) < COUNTERS_CACHE_TTL):
+        return COUNTERS_CACHE["data"], COUNTERS_CACHE["timestamp"]
+
+    printers = crud.get_printers(db)
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        results = list(executor.map(build_printer_counters, printers))
+
+    captured_at = datetime.now(timezone.utc)
+    _upsert_counter_snapshots(db, results, captured_at)
+
+    with COUNTERS_LOCK:
+        for row in results:
+            printer_id = row.get("id")
+            if printer_id is None:
+                continue
+            prev = COUNTERS_LAST_ROWS.get(printer_id)
+            if prev is None or _counter_signature(prev) != _counter_signature(row):
+                COUNTERS_LAST_CHANGED_AT[printer_id] = now
+            COUNTERS_LAST_ROWS[printer_id] = row
+        COUNTERS_LAST_REFRESH_TS = now
+
+    COUNTERS_CACHE["timestamp"] = now
+    COUNTERS_CACHE["data"] = results
+    return results, now

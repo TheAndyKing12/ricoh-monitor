@@ -1,0 +1,90 @@
+﻿import requests
+import re
+
+
+def _find_pair(section_text):
+    """Find 'A todo color' and 'Blanco y Negro' numbers in given text.
+    Returns (color, bw) as ints or (None,None) if not found."""
+    # try color then bw
+    m = re.search(r"A\s*todo\s*color\s*[:：]?\s*(\d+)", section_text, re.IGNORECASE)
+    color = int(m.group(1)) if m else None
+    m2 = re.search(r"Blanco\s*y\s*Negro\s*[:：]?\s*(\d+)", section_text, re.IGNORECASE)
+    bw = int(m2.group(1)) if m2 else None
+    # if not found try reverse order patterns
+    if color is None or bw is None:
+        m_alt = re.search(r"Blanco\s*y\s*Negro\s*[:：]?\s*(\d+).*?A\s*todo\s*color\s*[:：]?\s*(\d+)", section_text, re.IGNORECASE | re.DOTALL)
+        if m_alt:
+            bw = int(m_alt.group(1))
+            color = int(m_alt.group(2))
+    return color, bw
+
+
+def get_ricoh_http_counters(ip):
+    url = f"http://{ip}/web/guest/es/websys/status/getUnificationCounter.cgi"
+    try:
+        r = requests.get(url, timeout=6)
+        html = r.text
+        # normalize spaces
+        text = re.sub(r"\s+", " ", html)
+
+        # search for Copiadora section
+        copy_color = None
+        copy_bw = None
+        m_copy = re.search(r"Copiadora(.*?)(?:Impresora|$)", html, re.IGNORECASE | re.DOTALL)
+        if m_copy:
+            sec = m_copy.group(1)
+            c, b = _find_pair(sec)
+            copy_color = c
+            copy_bw = b
+
+        # search for Impresora section
+        print_color = None
+        print_bw = None
+        m_print = re.search(r"Impresora(.*?)(?:Fax|$)", html, re.IGNORECASE | re.DOTALL)
+        if m_print:
+            sec = m_print.group(1)
+            c, b = _find_pair(sec)
+            print_color = c
+            print_bw = b
+
+        # fallback: try generic matches for any 'A todo color' and 'Blanco y Negro'
+        if (copy_color is None and print_color is None) or (copy_bw is None and print_bw is None):
+            all_color_matches = re.findall(r"A\s*todo\s*color\s*[:：]?\s*(\d+)", html, re.IGNORECASE)
+            all_bw_matches = re.findall(r"Blanco\s*y\s*Negro\s*[:：]?\s*(\d+)", html, re.IGNORECASE)
+            # heuristics: first pair might be copy, second pair print
+            if len(all_color_matches) >= 2:
+                try:
+                    copy_color = int(all_color_matches[0]) if copy_color is None else copy_color
+                    print_color = int(all_color_matches[1]) if print_color is None else print_color
+                except Exception:
+                    pass
+            if len(all_bw_matches) >= 2:
+                try:
+                    copy_bw = int(all_bw_matches[0]) if copy_bw is None else copy_bw
+                    print_bw = int(all_bw_matches[1]) if print_bw is None else print_bw
+                except Exception:
+                    pass
+
+        # compute totals when possible
+        bw_pages = None
+        color_pages = None
+        total_pages = None
+        if (copy_bw is not None) or (print_bw is not None):
+            bw_pages = (copy_bw or 0) + (print_bw or 0)
+        if (copy_color is not None) or (print_color is not None):
+            color_pages = (copy_color or 0) + (print_color or 0)
+        if bw_pages is not None and color_pages is not None:
+            total_pages = bw_pages + color_pages
+
+        return {
+            "bw_pages": bw_pages,
+            "color_pages": color_pages,
+            "total_pages": total_pages,
+            "copy_bw": copy_bw,
+            "copy_color": copy_color,
+            "print_bw": print_bw,
+            "print_color": print_color
+        }
+    except Exception as e:
+        print("HTTP counter error:", e)
+        return None

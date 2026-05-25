@@ -1,0 +1,2847 @@
+/***********************************************************
+ * xjsBase
+ ***********************************************************/
+var CmdForm,MainForm,BaseForm;
+var CurrentMethod;
+
+var	SET					= 1;
+var	RESET				= 0;
+var TRUE				= "true";
+var FALSE				= "false";
+var NONE				= "none";
+var	EMPTY				= "";
+var RES_SUCCESS 		= "SUCCESS";
+var KIND_ENTRY_GROUP	= "2";
+
+var ADRS_LIST			= "adrsList.cgi";
+var ADRS_LIST_LOADENTRY	= "adrsListLoadEntry.cgi"
+var ADRS_GET_USER		= "adrsGetUser.cgi";
+var ADRS_SET_USER		= "adrsSetUser.cgi";
+var ADRS_GET_GROUP		= "adrsGetGroup.cgi";
+var ADRS_SET_GROUP		= "adrsSetGroup.cgi";
+var ADRS_EDIT_PWD		= "adrsEditPassword.cgi";
+var ADRS_EDIT_LIST		= "adrsEditEntryList.cgi";
+var ADRS_CONFDELETE		= "adrsConfDeleteEntry.cgi";
+var ADRS_DELETE			= "adrsDeleteEntry.cgi";
+var ADRS_UPLOAD_FILE	= "adrsUploadFile.cgi";
+var ADRS_MAINTENANCE	= "adrsMaintenance.cgi";
+var ADRS_SET_MAINTE		= "adrsSetMainte.cgi";
+var ADRS_UPLOAD_RESULT	= "adrsGetUploadResult.cgi";
+var ADRS_UPLOAD			= "adrsUploadFile.cgi";
+var ADRS_GET_CERTIFICATE= "adrsGetCertificate.cgi";
+var ADRS_GET_USER_TEMPLATE	= "adrsGetUserTemplate.cgi";
+var ADRS_SET_USER_TEMPLATE	= "adrsSetUserTemplate.cgi";
+var ADRS_DELETE_LIMITCOUNT	= "adrsDeleteLimitCount.cgi";
+var ADRS_GET_USER_WIZARD	= "adrsGetUserWizard.cgi"
+var ADRS_SET_USER_WIZARD	= "adrsSetUserWizard.cgi"
+var ADRS_CENTRA				= "adrsCentraGet.cgi";
+
+var ADD					= "ADD";
+var MOD					= "MOD";
+var SELF				= "SELF";
+var OTHER				= "OTHER";
+var SESSION				= "SESSION";
+var SELECTEDCHECK_PUBLIC = new Array(4);
+var SELECTEDCHECK_LIST = new Array();
+var ownerLineStatList = new Array(4);
+var ADSARRAYHREF = new Array();
+var buttonCheckFlag = false;
+
+var SKIP_USER_SET			= "user_set";
+var SKIP_USER_CONTINUE		= "user_continue";
+var SKIP_GROUP_SET			= "group_set";
+var SKIP_GROUP_CONTINUE		= "group_continue";
+var SKIP_USER_GROUP			= "user_group";
+var SKIP_GROUP_USER			= "group_user";
+var SKIP_USER_PASSWORD		= "user_password";
+var SKIP_USER_ENTRYLIST		= "user_entrylist";
+var SKIP_GROUP_PASSWORD		= "group_password";
+var SKIP_GROUP_ENTRYLIST	= "group_entrylist";
+var SKIP_CONFDELETE_EXEC	= "confdelete_exec";
+var SKIP_UPLOAD_RESULT		= "confdelete_list";
+var SKIP_CERTIFICATE_GET	= "certificate_get";
+var SKIP_USERTEMPLATE_SET	= "usertemplate_set";
+var SKIP_LIMITCOUNT_DELETE	= "limitcount_delete";
+
+var SkipList = makeSkipList();
+var toUp = new Array();
+	toUp[0]= new Image();
+	toUp[0].src = "/images/gotoPageTop.gif";
+	toUp[1]= new Image();
+	toUp[1].src = "/images/gotoPageTop-r.gif";
+
+var usrCodeEnableChanged = { value:"false" };
+var usrCodeDisableChanged = { value:"false" };
+var localAuthEnableChanged = { value:"false" };
+var localAuthDisableChanged = { value:"false" };
+var faxDestEnableChanged = { value:"false" };
+var faxDestDisableChanged = { value:"false" };
+var faxFcodeSubEnableChanged = { value:"false" };
+var faxFcodeSubDisableChanged = { value:"false" };
+var faxFcodeSepEnableChanged = { value:"false" };
+var faxFcodeSepDisableChanged = { value:"false" };
+var mailAddressEnableChanged = { value:"false" };
+var mailAddressDisableChanged = { value:"false" };
+var folderPortNoEnableChanged = { value:"false" };
+var folderPortNoDisableChanged = { value:"false" };
+var folderServerNameEnableChanged = { value:"false" };
+var folderServerNameDisableChanged = { value:"false" };
+var folderPathNameEnableChanged = { value:"false" };
+var folderPathNameDisableChanged = { value:"false" };
+var limitCountOfUpperEnableChanged = { value:"false" };
+var limitCountOfUpperDisableChanged = { value:"false" };
+
+
+
+
+function baseInit()
+{
+	if (document.commandForm) {
+		if( document.commandForm.submit )
+		{
+			CmdForm = document.commandForm;
+		}
+		else
+		{
+			CmdForm = document.commandForm[0];
+		}
+	}
+	else
+	{
+		CmdForm = null;
+	}
+	if (document.mainForm) {
+		if( document.mainForm.submit )
+		{
+			MainForm = document.mainForm;
+		}
+		else
+		{
+			MainForm = document.mainForm[0];
+		}
+	}
+	else
+	{
+		MainForm = null;
+	}
+	if (document.basicForm) {
+		if( document.basicForm.submit )
+		{
+			BaseForm = document.basicForm;
+		}
+		else
+		{
+			BaseForm = document.basicForm[0];
+		}
+		if( BaseForm.methodName )
+		{
+			CurrentMethod = BaseForm.methodName.value + ".cgi";
+		}
+	}
+	else
+	{
+		BaseForm = null;
+		CurrentMethod = null;
+	}
+
+	SET					= 1;
+	RESET				= 0;
+	TRUE				= "true";
+	FALSE				= "false";
+	NONE				= "none";
+	EMPTY				= "";
+	RES_SUCCESS 		= "SUCCESS";
+	KIND_ENTRY_GROUP	= "2";
+
+	ADRS_LIST			= "adrsList.cgi";
+	ADRS_LIST_LOADENTRY	= "adrsListLoadEntry.cgi"
+	ADRS_GET_USER		= "adrsGetUser.cgi";
+	ADRS_SET_USER		= "adrsSetUser.cgi";
+	ADRS_GET_GROUP		= "adrsGetGroup.cgi";
+	ADRS_SET_GROUP		= "adrsSetGroup.cgi";
+	ADRS_EDIT_PWD		= "adrsEditPassword.cgi";
+	ADRS_EDIT_LIST		= "adrsEditEntryList.cgi";
+	ADRS_CONFDELETE		= "adrsConfDeleteEntry.cgi";
+	ADRS_DELETE			= "adrsDeleteEntry.cgi";
+	ADRS_UPLOAD_FILE	= "adrsUploadFile.cgi";
+	ADRS_MAINTENANCE	= "adrsMaintenance.cgi";
+	ADRS_SET_MAINTE		= "adrsSetMainte.cgi";
+	ADRS_UPLOAD_RESULT	= "adrsGetUploadResult.cgi";
+	ADRS_UPLOAD			= "adrsUploadFile.cgi";
+	ADRS_GET_CERTIFICATE= "adrsGetCertificate.cgi";
+	ADRS_GET_USER_TEMPLATE	= "adrsGetUserTemplate.cgi";
+	ADRS_SET_USER_TEMPLATE	= "adrsSetUserTemplate.cgi";
+	ADRS_DELETE_LIMITCOUNT	= "adrsDeleteLimitCount.cgi";
+	ADRS_GET_USER_WIZARD	= "adrsGetUserWizard.cgi"
+	ADRS_SET_USER_WIZARD	= "adrsSetUserWizard.cgi"
+
+	ADD					= "ADD";
+	MOD					= "MOD";
+	SELF				= "SELF";
+	OTHER				= "OTHER";
+	SESSION				= "SESSION";
+	SELECTEDCHECK_PUBLIC = new Array(4);
+	SELECTEDCHECK_LIST = new Array();
+	ownerLineStatList = new Array(4);
+	buttonCheckFlag = false;
+
+	SKIP_USER_SET			= "user_set";
+	SKIP_USER_CONTINUE		= "user_continue";
+	SKIP_GROUP_SET			= "group_set";
+	SKIP_GROUP_CONTINUE		= "group_continue";
+	SKIP_USER_GROUP			= "user_group";
+	SKIP_GROUP_USER			= "group_user";
+	SKIP_USER_PASSWORD		= "user_password";
+	SKIP_USER_ENTRYLIST		= "user_entrylist";
+	SKIP_GROUP_PASSWORD		= "group_password";
+	SKIP_GROUP_ENTRYLIST	= "group_entrylist";
+	SKIP_CONFDELETE_EXEC	= "confdelete_exec";
+	SKIP_UPLOAD_RESULT		= "confdelete_list";
+	SKIP_CERTIFICATE_GET	= "certificate_get";
+	SKIP_USERTEMPLATE_SET	= "usertemplate_set";
+	SKIP_LIMITCOUNT_DELETE	= "limitcount_delete";
+
+	SkipList = makeSkipList();
+
+	usrCodeEnableChanged = { value:"false" };
+	usrCodeDisableChanged = { value:"false" };
+	localAuthEnableChanged = { value:"false" };
+	localAuthDisableChanged = { value:"false" };
+	faxDestEnableChanged = { value:"false" };
+	faxDestDisableChanged = { value:"false" };
+	faxFcodeSubEnableChanged = { value:"false" };
+	faxFcodeSubDisableChanged = { value:"false" };
+	faxFcodeSepEnableChanged = { value:"false" };
+	faxFcodeSepDisableChanged = { value:"false" };
+	mailAddressEnableChanged = { value:"false" };
+	mailAddressDisableChanged = { value:"false" };
+	folderPortNoEnableChanged = { value:"false" };
+	folderPortNoDisableChanged = { value:"false" };
+	folderServerNameEnableChanged = { value:"false" };
+	folderServerNameDisableChanged = { value:"false" };
+	folderPathNameEnableChanged = { value:"false" };
+	folderPathNameDisableChanged = { value:"false" };
+	limitCountOfUpperEnableChanged = { value:"false" };
+	limitCountOfUpperDisableChanged = { value:"false" };
+}
+
+var adrsPageId = "";
+function adrsPageMouseOver(id)
+{
+	adrsPageId = id;
+}
+function adrsPageMouseOut()
+{
+	adrsPageId = "";
+}
+
+function listControl_initLeft(left)
+{
+	var img;
+	var anc;
+	if( left == 1 )
+	{
+		anc = $("#pageCtrlTop");
+		img = anc.children("img");
+		if( adrsPageId != "Top" )
+		{
+			img.attr("src","/images/btnArrowLeft2.gif");
+		}
+		else
+		{
+			img.attr("src","/images/btnArrowLeft2-r.gif");
+		}
+		anc.attr("href",anc.attr("bk_href"));
+		anc.removeAttr("bk_href");
+		anc.removeAttr("onmouseout");
+		anc.removeAttr("onmouseover");
+		anc.mouseover(function(){changeImage(arrowImg,'imgTop',1)});
+		anc.mouseout(function(){changeImage(arrowImg,'imgTop',0)});
+		
+		anc = $("#pageCtrlPrevious");
+		img = anc.children("img");
+		if( adrsPageId != "Previous" )
+		{
+			img.attr("src","/images/btnArrowLeft1.gif");
+		}
+		else
+		{
+			img.attr("src","/images/btnArrowLeft1-r.gif");
+		}
+		anc.attr("href",anc.attr("bk_href"));
+		anc.removeAttr("bk_href");
+		anc.removeAttr("onmouseout");
+		anc.removeAttr("onmouseover");
+		anc.mouseover(function(){changeImage(arrowImg,'imgPrevious',3)});
+		anc.mouseout(function(){changeImage(arrowImg,'imgPrevious',2)});
+	}
+	else
+	{
+		$("#pageCtrlTop").removeAttr("href");
+		$("#pageCtrlTop").removeAttr("onmouseout");
+		$("#pageCtrlTop").removeAttr("onmouseover");
+		$("#pageCtrlPrevious").removeAttr("href");
+		$("#pageCtrlPrevious").removeAttr("onmouseout");
+		$("#pageCtrlPrevious").removeAttr("onmouseover");
+	}
+}
+function listControl_initRight(right)
+{
+	var img;
+	var anc;
+	if( right == 1 )
+	{
+		anc = $("#pageCtrlNext");
+		img = anc.children("img");
+		if( adrsPageId != "Next" )
+		{
+			img.attr("src","/images/btnArrowRight1.gif");
+		}
+		else
+		{
+			img.attr("src","/images/btnArrowRight1-r.gif");
+		}
+		anc.attr("href",anc.attr("bk_href"));
+		anc.removeAttr("bk_href");
+		anc.removeAttr("onmouseout");
+		anc.removeAttr("onmouseover");
+		anc.mouseover(function(){changeImage(arrowImg,'imgNext',5)});
+		anc.mouseout(function(){changeImage(arrowImg,'imgNext',4)});
+		
+		anc = $("#pageCtrlLast");
+		img = anc.children("img");
+		if( adrsPageId != "Last" )
+		{
+			img.attr("src","/images/btnArrowRight2.gif");
+		}
+		else
+		{
+			img.attr("src","/images/btnArrowRight2-r.gif");
+		}
+		anc.attr("href",anc.attr("bk_href"));
+		anc.removeAttr("bk_href");
+		anc.removeAttr("onmouseout");
+		anc.removeAttr("onmouseover");
+		anc.mouseover(function(){changeImage(arrowImg,'imgLast',7)});
+		anc.mouseout(function(){changeImage(arrowImg,'imgLast',6)});
+	}
+	else
+	{
+		$("#pageCtrlNext").removeAttr("href");
+		$("#pageCtrlNext").removeAttr("onmouseout");
+		$("#pageCtrlNext").removeAttr("onmouseover");
+		$("#pageCtrlLast").removeAttr("href");
+		$("#pageCtrlLast").removeAttr("onmouseout");
+		$("#pageCtrlLast").removeAttr("onmouseover");
+	}
+	adrsPageId = "";
+}
+
+function utilGetIndexSelect(elem){
+	var val = 0;
+	if (elem) {
+		for (var i = 0; i < elem.length; i++) {
+			if ( elem.options[i].selected ) {
+				val = i+1;
+				break;
+			}
+		}
+	}
+	return val;
+}
+
+function utilSetIndexSelect(elem,ordinal){
+	if (elem) {
+		if (elem.length + 1 >= ordinal) {
+			elem.options[ordinal-1].selected = SET;
+		}
+	}
+}
+
+function utilGetInputValue(form,name) {
+	var el;
+	var val = EMPTY;
+
+	if (form) {
+		for (var i=0; i < form.length; i++) {
+			el = form.elements[i];
+
+			if (el.name == name) {
+				if (el.type == "text" || el.type == "password" || el.type == "file" || el.type == "hidden") {
+					val = el.value;
+					break;
+				}
+				else if (el.type == "radio") {
+					if (el.checked) {
+						val = el.value;
+						break;
+					}
+				}
+				else if (el.type == "select-one") {
+					for(var j=0; j < el.length; j++) {
+						if (el.options[j].selected) {
+							val = el.options[j].value;
+							break;
+						}
+					}
+					break;
+				}
+				else if (el.type == "select-multiple") {
+					for(var j=0; j < el.length; j++) {
+						if (el.options[j].selected) {
+							if (val != EMPTY)
+								val += ",";
+							val += el.options[j].value;
+						}
+					}
+					break;
+				}
+				else if (el.type == "checkbox") {
+					if (el.checked) {
+						if (val != EMPTY)
+							val += ",";
+						val += el.value;
+					}
+				}
+				else {
+					alert("not supported type");
+					return;
+				}
+			}
+
+		}
+	}
+	return val;
+}
+
+function utilDisableInput(elem,disabled) {
+	if (elem) {
+		if (elem.length) {
+			for (var i=0; i < elem.length; i++) {
+				elem[i].disabled = disabled;
+			}
+		}
+		else {
+			elem.disabled = disabled;
+		}
+	}
+}
+
+function utilDisableOneOfElements(elems,value,disabled) {
+	if (elems) {
+		if (elems.length) {
+			for (var i=0; i < elems.length; i++) {
+				if (elems[i].value == value) {
+					elems[i].disabled = disabled;
+					break;
+				}
+			}
+		}
+		else {
+			if (elems.value == value) {
+				elems.disabled = disabled;
+			}
+		}
+	}
+}
+
+function utilIsElementChecked(elems,value) {
+	if (elems) {
+		if (elems.length) {
+			for (var i=0; i < elems.length; i++) {
+				if (elems[i].value == value) {
+					if (elems[i].checked && !elems[i].disabled)
+						return SET;
+					else
+						return RESET;
+				}
+			}
+		}
+		else {
+			if (elems.value == value) {
+				if (elems.checked && !elems.disabled)
+					return SET;
+				else
+					return RESET;
+			}
+		}
+	}
+	return NONE;
+}
+
+function utilExchangeValue(element1,element2)
+{
+	var value1,value2;
+	if (element1 && element2) {
+		value1 = element1.value;
+		value2 = element2.value;
+
+		element1.value = value2;
+		element2.value = value1;
+	}
+}
+
+function utilPageSkipDisabled()
+{
+	if( CmdForm )
+	{
+		if(CmdForm.entryKindIn){
+			CmdForm.entryKindIn.disabled = TRUE;
+		}
+	}
+	
+	if( MainForm )
+	{
+		if(MainForm.entryFilterIn){
+			MainForm.entryFilterIn.disabled = TRUE;
+		}
+		
+		if(MainForm.searchItemIn){
+			MainForm.searchItemIn.disabled = TRUE;
+		}
+
+		if(MainForm.listCountIn){
+			MainForm.listCountIn.disabled = TRUE;
+		}
+
+	}
+
+	var aobj = document.getElementsByTagName('A');
+	for(var i=0; i<aobj.length ;i++){
+		aobj[i].removeAttribute('href');
+	}
+
+	var inputobj = document.getElementsByTagName('INPUT');
+	for(var i=0; i<inputobj.length ;i++){
+		if(inputobj[i].type=='button'){
+			inputobj[i].disabled = SET;
+		}
+	}
+}
+function GetCheckedAuth(){
+	var i=0;
+	var j=0;
+	var k=0;
+	var l=0;
+	
+	if( !document.mainForm )
+	{
+		return;
+	}
+	
+	for(i=0;i<document.mainForm.length;i++){
+		if(document.mainForm.elements[i].name == "permissionPublicIn"){
+			for(j=0;j<4;j++){
+				if(document.mainForm.elements[i].checked){
+					SELECTEDCHECK_PUBLIC[k]= 1;
+				}else{
+					SELECTEDCHECK_PUBLIC[k]= 0;
+				}
+				k++;
+			}
+			break;
+		}
+	}
+
+	for(i=0;i<document.mainForm.length;i++){
+		if(document.mainForm.elements[i].name == "readableEntryIndicesIn"){
+			for(j=0;j<4;j++){
+				if(document.mainForm.elements[i+j].checked){
+					SELECTEDCHECK_LIST[l]= 1;
+				}else{
+					SELECTEDCHECK_LIST[l]= 0;
+				}
+				l++;
+			}
+		}
+	}
+}
+function publicCheck(n){
+	var i=0;
+
+	if( !document.mainForm )
+	{
+		return;
+	}
+	
+	for(i=0;i<document.mainForm.permissionPublicIn.length;i++){
+		if(i!=n){
+			document.mainForm.permissionPublicIn[i].checked=false 
+		}
+	}
+}
+function PermCheck(){
+	var i=0;
+	var j=0;
+	
+	if( !document.mainForm )
+	{
+		return;
+	}
+	
+	for(i=0;i<document.mainForm.length;i++){
+		if(document.mainForm.elements[i].name == "readableEntryIndicesIn"){
+			if(document.mainForm.elements[i].checked && SELECTEDCHECK_LIST[j] == 0){
+				SELECTEDCHECK_LIST[j] = 1;
+				document.mainForm.elements[i+1].checked=false;
+				document.mainForm.elements[i+2].checked=false;
+				document.mainForm.elements[i+3].checked=false;
+			}
+			if(document.mainForm.elements[i+1].checked && SELECTEDCHECK_LIST[j+1] == 0){
+				SELECTEDCHECK_LIST[j+1] = 1;
+				document.mainForm.elements[i].checked=false;
+				document.mainForm.elements[i+2].checked=false;
+				document.mainForm.elements[i+3].checked=false;
+			}
+			if(document.mainForm.elements[i+2].checked && SELECTEDCHECK_LIST[j+2] == 0){
+				SELECTEDCHECK_LIST[j+2] = 1;
+				document.mainForm.elements[i].checked=false;
+				document.mainForm.elements[i+1].checked=false;
+				document.mainForm.elements[i+3].checked=false;
+			}
+			if(document.mainForm.elements[i+3].checked && SELECTEDCHECK_LIST[j+3] == 0){
+				SELECTEDCHECK_LIST[j+3] = 1;
+				document.mainForm.elements[i].checked=false;
+				document.mainForm.elements[i+1].checked=false;
+				document.mainForm.elements[i+2].checked=false;
+			}
+
+			if (document.mainForm.elements[i].checked == false && SELECTEDCHECK_LIST[j] == 1) {
+				SELECTEDCHECK_LIST[j] = 0;
+			}
+
+			if (document.mainForm.elements[i+1].checked == false && SELECTEDCHECK_LIST[j+1] == 1) {
+				SELECTEDCHECK_LIST[j+1] = 0;
+			}
+
+			if (document.mainForm.elements[i+2].checked == false && SELECTEDCHECK_LIST[j+2] == 1) {
+				SELECTEDCHECK_LIST[j+2] = 0;
+			}
+
+			if (document.mainForm.elements[i+3].checked == false && SELECTEDCHECK_LIST[j+3] == 1) {
+				SELECTEDCHECK_LIST[j+3] = 0;
+			}
+			j+=4;
+		}
+	}
+}
+function PermCheckForOwner(){
+	var myIndexElemNum = 0;
+	var ret = 0;
+
+	myIndexElemNum = getMyIndexElemNum();
+	ret = checkMyLineStat(myIndexElemNum);
+	if(!ret){
+		restoreMyLineStat(myIndexElemNum);
+		return;
+	}
+	PermCheck();
+	keepMyLineStat(myIndexElemNum);
+}
+function initKeepMyLineStat(){
+	var myIndexElemNum = 0;
+
+	myIndexElemNum = getMyIndexElemNum();
+	if(!myIndexElemNum){
+		return;
+	}
+	keepMyLineStat(myIndexElemNum);
+}
+function keepMyLineStat(myIndexElemNum){
+	var i = 0;
+
+	if( !document.mainForm )
+	{
+		return;
+	}
+	for(i=0; i<4; i++){
+		if(document.mainForm.elements[myIndexElemNum + i].checked == true){
+			ownerLineStatList[i] = 1;
+		}
+		else{
+			ownerLineStatList[i] = 0;
+		}
+	}
+}
+function restoreMyLineStat(myIndexElemNum){
+	var i = 0;
+
+	if( !document.mainForm )
+	{
+		return;
+	}
+	for(i=0; i<4; i++){
+		if(ownerLineStatList[i] == 1){
+			document.mainForm.elements[myIndexElemNum + i].checked = true;
+		}
+		else{
+			document.mainForm.elements[myIndexElemNum + i].checked = false;
+		}
+	}
+}
+function checkMyLineStat(myIndexElemNum){
+	if( !document.mainForm )
+	{
+		return;
+	}
+	if(document.mainForm.elements[myIndexElemNum + 0].checked == false && document.mainForm.elements[myIndexElemNum + 1].checked == false && 
+	   document.mainForm.elements[myIndexElemNum + 2].checked == false && document.mainForm.elements[myIndexElemNum + 3].checked == false)
+	{
+		return 0;
+	}
+	else{
+		return 1;
+	}
+}
+function getMyIndexElemNum(){
+	var i = 0;
+
+	if( !document.mainForm )
+	{
+		return;
+	}
+	for(i=0; i<document.mainForm.length; i++){
+		if(document.mainForm.elements[i].name == "readableEntryIndicesIn" && document.mainForm.elements[i].id == "OWNER_R"){
+			return i;
+		}
+	}
+	return 0;
+}
+
+function part_info(key,value) {
+	this.key = key;
+	this.value = value;
+}
+
+function url_parts() {
+	this.cgi = EMPTY;
+	this.marker = EMPTY;
+	this.query = EMPTY;
+}
+function skip_list() {
+	this.skipname;
+	this.from = new url_parts();
+	this.via = new url_parts();
+	this.to = new url_parts();
+}
+function skip_info() {
+	this.from = EMPTY;
+	this.via = EMPTY;
+	this.to = EMPTY;
+}
+function makeSkipList() {
+	var List = new Array();
+	var size = 0;
+	var obj;
+
+	obj				= new skip_list();
+	obj.skipname	= SKIP_USER_SET;
+	obj.from.cgi	= new part_info(EMPTY,	ADRS_GET_USER);
+	obj.from.marker	= new part_info(EMPTY,	EMPTY);
+	obj.from.query	= new part_info(EMPTY,	"?outputSpecifyModeIn=SETTINGS");
+	obj.via.cgi		= new part_info(EMPTY,	ADRS_SET_USER);
+	obj.via.marker	= new part_info(EMPTY,	EMPTY);
+	obj.via.query	= new part_info(EMPTY,	"?inputSpecifyModeIn=WRITE");
+	obj.to.cgi		= new part_info(EMPTY,	ADRS_LIST);
+	obj.to.marker	= new part_info(EMPTY,	EMPTY);
+	List[size++]	= obj;
+
+	obj				= new skip_list();
+	obj.skipname	= SKIP_USER_CONTINUE;
+	obj.from.cgi	= new part_info(EMPTY,	ADRS_GET_USER);
+	obj.from.marker	= new part_info(EMPTY,	EMPTY);
+	obj.from.query	= new part_info(EMPTY,	"?outputSpecifyModeIn=SETTINGS");
+	obj.via.cgi		= new part_info(EMPTY,	ADRS_SET_USER);
+	obj.via.marker	= new part_info(EMPTY,	EMPTY);
+	obj.via.query	= new part_info(EMPTY,	"?inputSpecifyModeIn=WRITE");
+	obj.to.cgi		= new part_info(EMPTY,	ADRS_GET_USER);
+	obj.to.marker	= new part_info(EMPTY,	EMPTY);
+	obj.to.query	= new part_info(EMPTY,	"?outputSpecifyModeIn=DEFAULT&mode=ADDUSER");
+	List[size++]	= obj;
+
+	obj				= new skip_list();
+	obj.skipname	= SKIP_GROUP_SET;
+	obj.from.cgi	= new part_info(EMPTY,	ADRS_GET_GROUP);
+	obj.from.marker	= new part_info(EMPTY,	EMPTY);
+	obj.from.query	= new part_info(EMPTY,	"?outputSpecifyModeIn=SETTINGS");
+	obj.via.cgi		= new part_info(EMPTY,	ADRS_SET_GROUP);
+	obj.via.marker	= new part_info(EMPTY,	EMPTY);
+	obj.via.query	= new part_info(EMPTY,	"?inputSpecifyModeIn=WRITE");
+	obj.to.cgi		= new part_info(EMPTY,	ADRS_LIST);
+	obj.to.marker	= new part_info(EMPTY,	EMPTY);
+	List[size++]	= obj;
+
+	obj				= new skip_list();
+	obj.skipname	= SKIP_GROUP_CONTINUE;
+	obj.from.cgi	= new part_info(EMPTY,	ADRS_GET_GROUP);
+	obj.from.marker	= new part_info(EMPTY,	EMPTY);
+	obj.from.query	= new part_info(EMPTY,	"?outputSpecifyModeIn=SETTINGS");
+	obj.via.cgi		= new part_info(EMPTY,	ADRS_SET_GROUP);
+	obj.via.marker	= new part_info(EMPTY,	EMPTY);
+	obj.via.query	= new part_info(EMPTY,	"?inputSpecifyModeIn=WRITE");
+	obj.to.cgi		= new part_info(EMPTY,	ADRS_GET_GROUP);
+	obj.to.marker	= new part_info(EMPTY,	EMPTY);
+	obj.to.query	= new part_info(EMPTY,	"?outputSpecifyModeIn=DEFAULT&mode=ADDGROUP");
+	List[size++]	= obj;
+
+	obj				= new skip_list();
+	obj.skipname	= SKIP_USER_GROUP
+	obj.from.cgi	= new part_info(EMPTY,	ADRS_GET_USER);
+	obj.from.marker	= new part_info(EMPTY,	EMPTY);
+	obj.from.query	= new part_info(EMPTY,	"?outputSpecifyModeIn=SETTINGS");
+	obj.via.cgi		= new part_info(EMPTY,	ADRS_SET_USER);
+	obj.via.marker	= new part_info(EMPTY,	EMPTY);
+	obj.via.query	= new part_info(EMPTY,	"?inputSpecifyModeIn=SESSION");
+	obj.to.cgi		= new part_info(EMPTY,	ADRS_GET_GROUP);
+	obj.to.marker	= new part_info(EMPTY,	EMPTY);
+	obj.to.query	= new part_info(EMPTY,	"?outputSpecifyModeIn=SETTINGS&mode=ADDGROUP");
+	List[size++]	= obj;
+
+	obj				= new skip_list();
+	obj.skipname	= SKIP_GROUP_USER;
+	obj.from.cgi	= new part_info(EMPTY,	ADRS_GET_GROUP);
+	obj.from.marker	= new part_info(EMPTY,	EMPTY);
+	obj.from.query	= new part_info(EMPTY,	"?outputSpecifyModeIn=SETTINGS");
+	obj.via.cgi		= new part_info(EMPTY,	ADRS_SET_GROUP);
+	obj.via.marker	= new part_info(EMPTY,	EMPTY);
+	obj.via.query	= new part_info(EMPTY,	"?inputSpecifyModeIn=SESSION");
+	obj.to.cgi		= new part_info(EMPTY,	ADRS_GET_USER);
+	obj.to.marker	= new part_info(EMPTY,	EMPTY);
+	obj.to.query	= new part_info(EMPTY,	"?outputSpecifyModeIn=SETTINGS&mode=ADDUSER");
+	List[size++]	= obj;
+
+	obj				= new skip_list();
+	obj.skipname	= SKIP_USER_PASSWORD;
+	obj.from.cgi	= new part_info(EMPTY,	ADRS_GET_USER);
+	obj.from.marker	= new Array();
+		obj.from.marker[0] = new part_info("LOCAL",		"#AUTH_INFO_C");
+		obj.from.marker[1] = new part_info("SMTP",		"#AUTH_INFO_C");
+		obj.from.marker[2] = new part_info("LDAP",		"#AUTH_INFO_C");
+		obj.from.marker[3] = new part_info("FOLDER",	"#AUTH_INFO_C");
+		obj.from.marker[4] = new part_info("PROTECT",	"#AUTH_PROTECT_C");
+	obj.from.query	= new part_info(EMPTY,	"?outputSpecifyModeIn=SETTINGS");
+	obj.via.cgi		= new part_info(EMPTY,	ADRS_SET_USER);
+	obj.via.marker	= new part_info(EMPTY,	EMPTY);
+	obj.via.query	= new part_info(EMPTY,	"?inputSpecifyModeIn=SESSION");
+	obj.to.cgi		= new part_info(EMPTY,	ADRS_EDIT_PWD);
+	obj.to.marker	= new part_info(EMPTY,	EMPTY);
+	obj.to.query	= new Array();
+		obj.to.query[0] = new part_info("LOCAL",	"?inputSpecifyMode=NONE&kind=LOCAL");
+		obj.to.query[1] = new part_info("SMTP",		"?inputSpecifyMode=NONE&kind=SMTP");
+		obj.to.query[2] = new part_info("LDAP",		"?inputSpecifyMode=NONE&kind=LDAP");
+		obj.to.query[3] = new part_info("FOLDER",	"?inputSpecifyMode=NONE&kind=FOLDER");
+		obj.to.query[4] = new part_info("PROTECT",	"?inputSpecifyMode=NONE&kind=PROTECT");
+	List[size++]	= obj;
+
+	obj				= new skip_list();
+	obj.skipname	= SKIP_USER_ENTRYLIST;
+	obj.from.cgi	= new part_info(EMPTY,	ADRS_GET_USER);
+	obj.from.marker	= new Array();
+		obj.from.marker[0] = new part_info("DEST_ACL",		"#AUTH_PROTECT_C");
+		obj.from.marker[1] = new part_info("DOC_ACL",			"#AUTH_PROTECT_C");
+		obj.from.marker[2] = new part_info("GROUP_ASSIGN",	"#GROUPLIST_C");
+		obj.from.marker[3] = new part_info("ENTRY_ASSIGNED",	"#ENTRYLIST_C");
+	obj.from.query	= new part_info(EMPTY,	"?outputSpecifyModeIn=SETTINGS");
+	obj.via.cgi		= new part_info(EMPTY,	ADRS_SET_USER);
+	obj.via.marker	= new part_info(EMPTY,	EMPTY);
+	obj.via.query	= new part_info(EMPTY,	"?inputSpecifyModeIn=SESSION");
+	obj.to.cgi		= new part_info(EMPTY,	ADRS_EDIT_LIST);
+	obj.to.marker	= new part_info(EMPTY,	EMPTY);
+	obj.to.query	= new Array();
+		obj.to.query[0] = new part_info("DEST_ACL",		"?kind=DEST_ACL");
+		obj.to.query[1] = new part_info("DOC_ACL",		"?kind=DOC_ACL");
+		obj.to.query[2] = new part_info("GROUP_ASSIGN",	"?kind=GROUP_ASSIGN");
+		obj.to.query[3] = new part_info("ENTRY_ASSIGNED",	"?kind=ENTRY_ASSIGNED");
+	List[size++]	= obj;
+
+	obj				= new skip_list();
+	obj.skipname	= SKIP_GROUP_PASSWORD;
+	obj.from.cgi	= new part_info(EMPTY,	ADRS_GET_GROUP);
+	obj.from.marker	= new Array();
+		obj.from.marker[0] = new part_info("LOCAL",	"#AUTH_INFO_C");
+		obj.from.marker[1] = new part_info("SMTP",	"#AUTH_INFO_C");
+		obj.from.marker[2] = new part_info("LDAP",	"#AUTH_INFO_C");
+		obj.from.marker[3] = new part_info("FOLDER",	"#AUTH_INFO_C");
+		obj.from.marker[4] = new part_info("PROTECT",	"#AUTH_PROTECT_C");
+	obj.from.query	= new part_info(EMPTY,	"?outputSpecifyModeIn=SETTINGS");
+	obj.via.cgi		= new part_info(EMPTY,	ADRS_SET_GROUP);
+	obj.via.marker	= new part_info(EMPTY,	EMPTY);
+	obj.via.query	= new part_info(EMPTY,	"?inputSpecifyModeIn=SESSION");
+	obj.to.cgi		= new part_info(EMPTY,	ADRS_EDIT_PWD);
+	obj.to.marker	= new part_info(EMPTY,	EMPTY);
+	obj.to.query	= new Array();
+		obj.to.query[0] = new part_info("LOCAL",	"?inputSpecifyMode=NONE&kind=LOCAL");
+		obj.to.query[1] = new part_info("SMTP",	"?inputSpecifyMode=NONE&kind=SMTP");
+		obj.to.query[2] = new part_info("LDAP",	"?inputSpecifyMode=NONE&kind=LDAP");
+		obj.to.query[3] = new part_info("FOLDER",	"?inputSpecifyMode=NONE&kind=FOLDER");
+		obj.to.query[4] = new part_info("PROTECT","?inputSpecifyMode=NONE&kind=PROTECT");
+	List[size++]	= obj;
+
+	obj				= new skip_list();
+	obj.skipname	= SKIP_GROUP_ENTRYLIST;
+	obj.from.cgi	= new part_info(EMPTY,	ADRS_GET_GROUP);
+	obj.from.marker	= new Array();
+		obj.from.marker[0] = new part_info("DEST_ACL",		"#AUTH_PROTECT_C");
+		obj.from.marker[1] = new part_info("DOC_ACL",			"#AUTH_PROTECT_C");
+		obj.from.marker[2] = new part_info("GROUP_ASSIGN",	"#GROUPLIST_C");
+		obj.from.marker[3] = new part_info("ENTRY_ASSIGNED",	"#ENTRYLIST_C");
+	obj.from.query	= new part_info(EMPTY,	"?outputSpecifyModeIn=SETTINGS");
+	obj.via.cgi		= new part_info(EMPTY,	ADRS_SET_GROUP);
+	obj.via.marker	= new part_info(EMPTY,	EMPTY);
+	obj.via.query	= new part_info(EMPTY,	"?inputSpecifyModeIn=SESSION");
+	obj.to.cgi		= new part_info(EMPTY,	ADRS_EDIT_LIST);
+	obj.to.marker	= new part_info(EMPTY,	EMPTY);
+	obj.to.query	= new Array();
+		obj.to.query[0] = new part_info("DEST_ACL",			"?kind=DEST_ACL");
+		obj.to.query[1] = new part_info("DOC_ACL",			"?kind=DOC_ACL");
+		obj.to.query[2] = new part_info("GROUP_ASSIGN",		"?kind=GROUP_ASSIGN");
+		obj.to.query[3] = new part_info("ENTRY_ASSIGNED",		"?kind=ENTRY_ASSIGNED");
+	List[size++]	= obj;
+
+	obj				= new skip_list();
+	obj.skipname	= SKIP_CONFDELETE_EXEC;
+	obj.from.cgi	= new part_info(EMPTY,	ADRS_CONFDELETE);
+	obj.from.marker	= new part_info(EMPTY,	EMPTY);
+	obj.from.query	= new part_info(EMPTY,	EMPTY);
+	obj.via.cgi		= new part_info(EMPTY,	ADRS_DELETE);
+	obj.via.marker	= new part_info(EMPTY,	EMPTY);
+	obj.via.query	= new part_info(EMPTY,	EMPTY);
+	obj.to.cgi		= new part_info(EMPTY,	ADRS_LIST);
+	obj.to.marker	= new part_info(EMPTY,	EMPTY);
+	List[size++]	= obj;
+
+	obj				= new skip_list();
+	obj.skipname	= SKIP_UPLOAD_RESULT;
+	obj.from.cgi	= new part_info(EMPTY,	ADRS_UPLOAD_FILE);
+	obj.from.marker	= new part_info(EMPTY,	EMPTY);
+	obj.from.query	= new part_info(EMPTY,	EMPTY);
+	obj.via.cgi		= new part_info(EMPTY,	ADRS_UPLOAD);
+	obj.via.marker	= new part_info(EMPTY,	EMPTY);
+	obj.via.query	= new part_info(EMPTY,	EMPTY);
+	obj.to.cgi		= new part_info(EMPTY,	ADRS_UPLOAD_RESULT);
+	obj.to.marker	= new part_info(EMPTY,	EMPTY);
+	obj.to.query	= new part_info(EMPTY,	EMPTY);
+	List[size++]	= obj;
+
+	obj				= new skip_list();
+	obj.skipname	= SKIP_CERTIFICATE_GET;
+	obj.from.cgi	= new part_info(EMPTY,	ADRS_GET_USER);
+	obj.from.marker	= new part_info(EMPTY,	EMPTY);
+	obj.from.query	= new part_info(EMPTY,	"?outputSpecifyModeIn=SETTINGS");
+	obj.via.cgi		= new part_info(EMPTY,	ADRS_SET_USER);
+	obj.via.marker	= new part_info(EMPTY,	EMPTY);
+	obj.via.query	= new part_info(EMPTY,	"?inputSpecifyModeIn=SESSION");
+	obj.to.cgi		= new part_info(EMPTY,	ADRS_GET_CERTIFICATE);
+	obj.to.marker	= new part_info(EMPTY,	EMPTY);
+	obj.to.query	= new part_info(EMPTY,	EMPTY);
+	List[size++]	= obj;
+
+	obj			= new skip_list();
+	obj.skipname	= SKIP_USERTEMPLATE_SET;
+	obj.from.cgi	= new part_info(EMPTY,	ADRS_GET_USER_TEMPLATE);
+	obj.from.marker	= new part_info(EMPTY,	EMPTY);
+	obj.from.query	= new part_info(EMPTY,	"?outputSpecifyModeIn=SETTINGS");
+	obj.via.cgi		= new part_info(EMPTY,	ADRS_SET_USER_TEMPLATE);
+	obj.via.marker	= new part_info(EMPTY,	EMPTY);
+	obj.via.query	= new part_info(EMPTY,	EMPTY);
+	obj.to.cgi		= new part_info(EMPTY,	ADRS_LIST);
+	obj.to.marker	= new part_info(EMPTY,	EMPTY);
+	obj.to.query	= new part_info(EMPTY,	EMPTY);
+	List[size++]	= obj;
+
+	obj			= new skip_list();
+	obj.skipname	= SKIP_LIMITCOUNT_DELETE;
+	obj.from.cgi	= new part_info(EMPTY,	ADRS_GET_USER);
+	obj.from.marker	= new part_info(EMPTY,  "#LIMITCOUNT_RES_SETTING");
+	obj.from.query	= new part_info(EMPTY,	"?outputSpecifyModeIn=SETTINGS");
+	obj.via.cgi		= new part_info(EMPTY,	ADRS_SET_USER);
+	obj.via.marker	= new part_info(EMPTY,	EMPTY);
+	obj.via.query	= new part_info(EMPTY,	EMPTY);
+	obj.to.cgi		= new part_info(EMPTY,	ADRS_DELETE_LIMITCOUNT);
+	obj.to.marker	= new part_info(EMPTY,	EMPTY);
+	obj.to.query	= new part_info(EMPTY,	"?inputSpecifyMode=NONE");
+	List[size++]	= obj;
+
+	return List;
+}
+
+function getSkipInfo(skipname,key,skip_info) {
+	var List;
+
+	for (var i=0; i < SkipList.length; i++) {
+		if (SkipList[i].skipname == skipname) {
+			List = SkipList[i];
+
+			skip_info.from	= getSkipUrlString(key,List.from);
+			skip_info.via	= getSkipUrlString(key,List.via);
+			skip_info.to	= getSkipUrlString(key,List.to);
+
+			break;
+		}
+	}
+}
+
+function getSkipUrlString(key,urlInfo) {
+	var url = EMPTY;
+	var parts = new Array();
+	parts[0] = urlInfo.cgi;
+	parts[1] = urlInfo.marker;
+	parts[2] = urlInfo.query;
+
+	for (var i=0; i < parts.length; i++) {
+		if (parts[i].length) {
+			for (var j=0; j < parts[i].length; j++) {
+				if (parts[i][j].key == key) {
+					url += parts[i][j].value;
+					break;
+				}
+			}
+		}
+		else {
+			if( parts[i].value )
+			{
+				url += parts[i].value;
+			}
+		}
+	}
+	return url;
+}
+function adrsHelp(file){
+	if (BaseForm) {
+		toHelp('..',file);
+	}
+}
+
+function adrsUndo() {
+	var dest;
+	if (BaseForm) {
+		if (MainForm) {
+			if (MainForm.wayFrom) {
+				if (MainForm.wayFrom.value) {
+					dest = MainForm.wayFrom.value;
+
+					if (dest != EMPTY) {
+						if (buttonCheckFlag) { return; }
+						buttonCheckFlag = true;
+						utilExchangeValue(MainForm.wayFrom,MainForm.wayTo);
+						utilSubmitForm(MainForm,dest);
+						utilPageSkipDisabled();
+					}
+					else {
+						adrsListJump();
+					}
+				}
+				else {
+					adrsListJump();
+				}
+			}
+			else {
+				adrsListJump();
+			}
+		}
+		else {
+			adrsListJump();
+		}
+	}
+}
+function adrsACLEditListUndo() {
+	var dest;
+	if (BaseForm) {
+		if (buttonCheckFlag) { return; }
+		buttonCheckFlag = true;
+		MainForm.inputSpecifyMode.value = "NONE";
+		utilSubmitForm(MainForm,ADRS_EDIT_LIST);
+		utilPageSkipDisabled();
+	}
+}
+
+function inputPassword(kind){
+	var cnt = 0;
+	var skip = new skip_info();
+
+	if (BaseForm) {
+		if (CurrentMethod == ADRS_GET_USER) {
+			getSkipInfo(SKIP_USER_PASSWORD,kind,skip);
+		}
+		else {
+			getSkipInfo(SKIP_GROUP_PASSWORD,kind,skip);
+		}
+		MainForm.wayFrom.value = skip.from;
+		MainForm.wayTo.value = skip.to;
+		utilSubmitForm(MainForm,skip.via);
+		utilPageSkipDisabled();
+	}
+}
+
+function deleteLimitCount(){
+	var cnt = 0;
+	var skip = new skip_info();
+
+	if (BaseForm) {
+		if (CurrentMethod == ADRS_GET_USER) {
+			getSkipInfo(SKIP_LIMITCOUNT_DELETE,EMPTY,skip);
+		}
+		MainForm.wayFrom.value = skip.from;
+		MainForm.wayTo.value = skip.to;
+		utilSubmitForm(MainForm,skip.via);
+		utilPageSkipDisabled();
+	}
+}
+
+function adrsSetListPage(dest) {
+	if (BaseForm) {
+		if (dest == "top") {
+			MainForm.pageNumberIn.value = 0;
+		}
+		else if (dest == "pre") {
+			MainForm.pageNumberIn.value--;
+		}
+		else if (dest == "next") {
+			MainForm.pageNumberIn.value++;
+		}
+		else if (dest == "last") {
+			MainForm.pageNumberIn.value = 99999;
+		}
+		else{
+			MainForm.pageNumberIn.value = MainForm.pages.value;
+		}
+	}
+}
+
+function pageSkip() {
+	if (BaseForm) {
+		utilSubmitForm(MainForm,MainForm.wayTo.value);
+	}
+}
+
+function adrsScriptStop(){
+	var aobj = document.getElementsByTagName('A');
+	for(var i=0; i<aobj.length ;i++){
+		ADSARRAYHREF[i] = aobj[i].getAttribute('href');
+		aobj[i].removeAttribute('href');
+	}
+}
+
+function adrsScriptRecover(){
+	var aobj = document.getElementsByTagName('A');
+	for(var i=0; i<ADSARRAYHREF.length ;i++){
+		if( aobj[i] )
+		{
+			aobj[i].setAttribute('href',ADSARRAYHREF[i]);
+		}
+	}
+	ADSARRAYHREF = new Array();
+}
+
+/***********************************************************
+ * ãã¡ã¤ã«ãã¦ã³ã­ã¼ã
+ ***********************************************************/
+function DownloadFile(file) {
+	var key;
+
+	if (BaseForm) {
+		if(MainForm.mainteKeywk){
+			if(MainForm.mainteKeywk.value != EMPTY){
+				key = base64encode(MainForm.mainteKeywk.value);
+				MainForm.mainteKeywk.value = EMPTY;
+				file = file + "?key=" + key;
+			}
+		}
+		location.href = "adrsFileDownload.cgi/" + file;
+	}
+}
+
+function Upload(kind) {
+
+	if (BaseForm) {
+		MainForm.kind.value = kind;
+
+		if(MainForm.mainteKeywk){
+			if(MainForm.mainteKeywk.value != EMPTY){
+				MainForm.mainteKey.value = base64encode(MainForm.mainteKeywk.value);
+				MainForm.mainteKeywk.value = EMPTY;
+			}
+		}
+
+		utilSubmitForm(MainForm,ADRS_UPLOAD_FILE);
+		utilPageSkipDisabled();
+	}
+}
+
+/***********************************************************
+ * ã¨ã³ããªã¼ç·¨é
+ ***********************************************************/
+
+function onUserTemplateStatus() {
+	if (BaseForm) {
+			if(document.mainForm.userTemplateEnabled) {
+				if(document.mainForm.userTemplateIndex) {
+					if(document.mainForm.userTemplateEnabled[1].checked) {
+						document.mainForm.userTemplateIndex.disabled = true;
+					}
+					else{
+						document.mainForm.userTemplateIndex.disabled = false;
+					}
+				}
+			}
+	}
+}
+
+function SelectEntry(kind) {
+	var skip = new skip_info();
+	if (BaseForm) {
+		if (CurrentMethod == ADRS_GET_USER) {
+			getSkipInfo(SKIP_USER_ENTRYLIST,kind,skip);
+		}
+		else {
+			getSkipInfo(SKIP_GROUP_ENTRYLIST,kind,skip);
+		}
+		MainForm.wayFrom.value = skip.from;
+		MainForm.wayTo.value = skip.to;
+		utilSubmitForm(MainForm,skip.via);
+		utilPageSkipDisabled();
+	}
+}
+
+function SwitchEntryKind(){
+	var key, val;
+	var skip = new skip_info();
+	if (BaseForm){
+
+		val = utilGetInputValue(CmdForm,"entryKindIn");
+		if ( val == "KIND_USER_O" ) {
+			key = SKIP_GROUP_USER;
+		}
+		else if ( val == "KIND_GROUP_O" ) {
+			key = SKIP_USER_GROUP;
+		}
+
+		getSkipInfo(key,EMPTY,skip);
+		MainForm.wayFrom.value = skip.from;
+		if ( val == "KIND_USER_O" ) {
+			MainForm.wayTo.value = "adrsGetUser.cgi?outputSpecifyModeIn=RENEW&mode=ADDUSER";
+		}
+		else if ( val == "KIND_GROUP_O" ) {
+			MainForm.wayTo.value = "adrsGetGroup.cgi?outputSpecifyModeIn=RENEW&mode=ADDGROUP";
+		}
+
+		utilSubmitForm(MainForm,skip.via);
+		utilPageSkipDisabled();
+	}
+}
+
+function inputStatus() {
+	var val;
+
+	this.userCode = function () {
+		if (MainForm.userCodeIn) {
+			if (MainForm.userCodeIn.value == EMPTY || MainForm.userCodeIn.disabled)
+				return RESET;
+			return SET;
+		}
+		return NONE;
+	}
+
+	this.localAuthUserName = function () {
+		if (MainForm.localAuthUserNameIn) {
+			if (MainForm.localAuthUserNameIn.value == EMPTY || MainForm.localAuthUserNameIn.disabled)
+				return RESET;
+			return SET;
+		}
+		return NONE;
+	}
+
+	this.IsSmtpAuthOther = function () {
+		if (MainForm.smtpAuthAccountIn) {
+			val = utilGetInputValue(MainForm,"smtpAuthAccountIn");
+			if (val == "AUTH_ASSIGNMENT_O")
+				return SET;
+			return RESET;
+		}
+		return NONE;
+	}
+
+	this.IsLdapAuthOther = function () {
+		if (MainForm.ldapAuthAccountIn) {
+			val = utilGetInputValue(MainForm,"ldapAuthAccountIn");
+			if (val == "AUTH_ASSIGNMENT_O")
+				return SET;
+			return RESET;
+		}
+		return NONE;
+	}
+
+	this.IsFolderAuthOther = function () {
+		if (MainForm.folderAuthAccountIn) {
+			val = utilGetInputValue(MainForm,"folderAuthAccountIn");
+			if (val == "AUTH_ASSIGNMENT_O")
+				return SET;
+			return RESET;
+		}
+		return NONE;
+	}
+
+	this.isLimitCountOfUpper = function () {
+		if (MainForm.isLimitCountOfUpperIn) {
+			val = utilGetInputValue(MainForm,"isLimitCountOfUpperIn");
+			if (MainForm.isLimitCountOfUpperIn.disabled)
+				return RESET;
+			if (val == "true")
+				return SET;
+			return RESET;
+		}
+		return NONE;
+	}
+
+	this.faxDest = function () {
+		if (MainForm.faxDestIn) {
+			if(MainForm.faxDestIn.value == EMPTY || MainForm.faxDestIn.disabled)
+				return RESET;
+			return SET;
+		}
+		return NONE;
+	}
+
+	this.faxFcodeSub = function () {
+		if (MainForm.faxFcodeSubIn) {
+			if (MainForm.faxFcodeSubIn.value == EMPTY || MainForm.faxFcodeSubIn.disabled)
+				return RESET;
+			return SET;
+		}
+		return NONE;
+	}
+
+	this.faxFcodeSep = function () {
+		if (MainForm.faxFcodeSepIn) {
+			if (MainForm.faxFcodeSepIn.value == EMPTY || MainForm.faxFcodeSepIn.disabled)
+				return RESET;
+			return SET;
+		}
+		return NONE;
+	}
+
+	this.IsFaxLabelFuncOn = function () {
+		if (MainForm.faxLabelFuncIn) {
+			val = utilGetInputValue(MainForm,"faxLabelFuncIn");
+			if (val == TRUE)
+				return SET;
+			return RESET;
+		}
+		return NONE;
+	}
+
+	this.IsFaxLabel2CustomMsg = function () {
+		if (MainForm.faxOptionLabel2In) {
+			val = utilGetIndexSelect(MainForm.faxOptionLabel2In);
+			if (val >= 2)
+				return SET;
+			return RESET;
+		}
+		return NONE;
+	}
+
+	this.mailAddress = function () {
+		if (MainForm.mailAddressIn) {
+			if (MainForm.mailAddressIn.value == EMPTY || MainForm.mailAddressIn.disabled)
+				return RESET;
+			return SET;
+		}
+		return NONE;
+	}
+
+	this.IsCertificateExist = function () {
+		if (MainForm.isCertificateExist) {
+			if (MainForm.isCertificateExist.value == "true") {
+				return SET;
+			}
+			else {
+				 return RESET;
+			}
+		}
+		else {
+			return NONE;
+		}
+	}
+
+	this.IsFolderProtocolFtp = function () {
+		if (MainForm.folderProtocolIn) {
+			val = utilGetIndexSelect(MainForm.folderProtocolIn);
+			if (val == 2)
+				return SET;
+			return RESET;
+		}
+		return NONE;
+	}
+
+	this.IsFolderProtocolNcp = function () {
+		if (MainForm.folderProtocolIn) {
+			val = utilGetIndexSelect(MainForm.folderProtocolIn);
+			if (val == 3)
+				return SET;
+			return RESET;
+		}
+		return NONE;
+	}
+
+	this.folderServerName = function () {
+		if (MainForm.folderServerNameIn) {
+			if (MainForm.folderServerNameIn.value == EMPTY || MainForm.folderServerNameIn.disabled)
+				return RESET;
+			return SET;
+		}
+		return NONE;
+	}
+
+	this.folderPathName = function () {
+		if (MainForm.folderPathNameIn) {
+			if (MainForm.folderPathNameIn.value == EMPTY || MainForm.folderPathNameIn.disabled)
+				return RESET;
+			return SET;
+		}
+		return NONE;
+	}
+
+	this.folderPortNo = function () {
+		if (MainForm.folderPortNoIn) {
+			if (MainForm.folderPortNoIn.value == EMPTY || MainForm.folderPortNoIn.disabled)
+				return RESET;
+			return SET;
+		}
+		return NONE;
+	}
+
+	this.IsIfaxDataModeFull = function () {
+		if (MainForm.fullModeIn) {
+			val = utilGetInputValue(MainForm,"fullModeIn");
+			if (val == TRUE)
+				return SET;
+			return RESET;
+		}
+		return NONE;
+	}
+
+}
+
+
+function maskItemArg() {
+	this.name;
+	this.value;
+}
+function maskItem() {
+	this.arg = new maskItemArg();
+	this.disabled = function () {
+		return RESET;
+	}
+	this.func;
+}
+function refreshItemList() {
+	var cnt = 0;
+	var status = new inputStatus();
+	this.item = new Array();
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "availableFuncIn";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.userCode() != NONE) {
+			if (status.userCode() == SET)
+				disabled = RESET;
+		}
+		else if (status.localAuthUserName() != NONE) {
+			if (status.localAuthUserName() == SET) {
+				disabled = RESET;
+			}
+		}
+		else {
+			disabled = RESET;
+		}
+		return disabled;
+	}
+	cnt++;
+	
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "aplBox";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.userCode() != NONE) {
+			if (status.userCode() == SET)
+				disabled = RESET;
+		}
+		else if (status.localAuthUserName() != NONE) {
+			if (status.localAuthUserName() == SET) {
+				disabled = RESET;
+			}
+		}
+		else {
+			disabled = RESET;
+		}
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "acsLimitationIn";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (MainForm.availableFuncIn) {
+			if (document.mainForm.availableFuncIn[0].disabled==RESET) {
+				if (document.mainForm.availableFuncIn[0].value=="COPY_FC" && document.mainForm.availableFuncIn[0].checked==true) {
+				disabled = RESET;
+				}
+			}
+		}
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "docAcl";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.userCode() != NONE) {
+			if (status.userCode() == SET)
+				disabled = RESET;
+		}
+		else if (status.localAuthUserName() != NONE) {
+			if (status.localAuthUserName() == SET) {
+				disabled = RESET;
+			}
+		}
+		else {
+			disabled = RESET;
+		}
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "smtpAuthUserNameIn";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.IsSmtpAuthOther() == SET) {
+			disabled = RESET;
+		}
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "buttonSmtpPassword";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.IsSmtpAuthOther() == SET) {
+			disabled = RESET;
+		}
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "ldapAuthUserNameIn";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.IsLdapAuthOther() == SET) {
+			disabled = RESET;
+		}
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "buttonLdapPassword";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.IsLdapAuthOther() == SET) {
+			disabled = RESET;
+		}
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "folderAuthUserNameIn";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.IsFolderAuthOther() == SET) {
+			disabled = RESET;
+		}
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "buttonFolderPassword";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.IsFolderAuthOther() == SET) {
+			disabled = RESET;
+		}
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "isLimitCountOfUpperIn";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.localAuthUserName() != NONE) {
+			if (status.localAuthUserName() == SET) {
+				disabled = RESET;
+			}
+		}else if(status.userCode() != NONE){
+			if(status.userCode() == SET){
+				disabled = RESET;
+			}
+		}else{}
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "limitCountOfUpperIn";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.localAuthUserName() != NONE) {
+			if (status.localAuthUserName() == SET) {
+				if (status.isLimitCountOfUpper() == SET) {
+					disabled = RESET;
+				}
+			}
+		}
+		if (status.userCode() != NONE) {
+			if (status.userCode() == SET) {
+				if (status.isLimitCountOfUpper() == SET) {
+					disabled = RESET;
+				}
+			}
+		}
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "buttonLimitCountDelete";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.localAuthUserName() != NONE) {
+			if (status.localAuthUserName() == SET) {
+				if (status.isLimitCountOfUpper() == SET) {
+					disabled = RESET;
+				}
+			}
+		}
+		if (status.userCode() != NONE) {
+			if (status.userCode() == SET) {
+				if (status.isLimitCountOfUpper() == SET) {
+					disabled = RESET;
+				}
+			}
+		}
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "faxLineIn";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.faxDest() == SET)
+			disabled = RESET;
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "faxFcodeSubIn";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.faxDest() == SET)
+			disabled = RESET;
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "faxFcodeSidIn";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.faxFcodeSub() == SET)
+			disabled = RESET;
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "faxFcodeSepIn";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.faxDest() == SET)
+			disabled = RESET;
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "faxFcodePwdIn";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.faxFcodeSep() == SET)
+			disabled = RESET;
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "faxSubAddIn";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.faxDest() == SET)
+			disabled = RESET;
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "faxUuiIn";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.faxDest() == SET)
+			disabled = RESET;
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "faxTxModeIn";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.faxDest() == SET)
+			disabled = RESET;
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "faxHeaderIn";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.faxDest() == SET || status.mailAddress() == SET)
+			disabled = RESET;
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "faxLabelFuncIn";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.faxDest() == SET || status.mailAddress() == SET)
+			disabled = RESET;
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "faxOptionLabel2In";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.faxDest() == SET || status.mailAddress() == SET) {
+			if (status.IsFaxLabelFuncOn() == SET) {
+				disabled = RESET;
+			}
+		}
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "faxLabel3In";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.faxDest() == SET || status.mailAddress() == SET) {
+			if (status.IsFaxLabelFuncOn() == SET) {
+				disabled = RESET;
+			}
+		}
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "faxLabel2In";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.faxDest() == SET || status.mailAddress() == SET) {
+			if (status.IsFaxLabelFuncOn() == SET && status.IsFaxLabel2CustomMsg() == SET) {
+				disabled = RESET;
+			}
+		}
+		return disabled;
+	}
+	this.item[cnt].func = function () {
+		if (MainForm.faxLabel2In) {
+			if (status.IsFaxLabel2CustomMsg() == RESET)
+				MainForm.faxLabel2In.value = EMPTY;
+		}
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "directSmtpIn";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.mailAddress() == SET)
+			disabled = RESET;
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "mailUseIn";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.mailAddress() == SET)
+			disabled = RESET;
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "certificate";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.mailAddress() == SET)
+			disabled = RESET;
+		return disabled;
+	}
+	cnt++;
+	
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "isEncryptAlwaysIn";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.mailAddress() == SET && status.IsCertificateExist() == SET){
+			disabled = RESET;
+		}
+		else{
+			disabled = SET;
+		}
+		return disabled;
+	}
+	cnt++;
+	
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "folderPortNoIn";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.IsFolderProtocolFtp() == SET)
+			disabled = RESET;
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "folderLogonModeIn";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.IsFolderProtocolNcp() == SET)
+			disabled = RESET;
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "folderServerNameIn";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.IsFolderProtocolFtp() == SET)
+			disabled = RESET;
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "folderCharCodeIn";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.IsFolderProtocolFtp() == SET)
+			disabled = RESET;
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "fullModeIn";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.mailAddress() == SET)
+			disabled = RESET;
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "_compressTypeIn";
+	this.item[cnt].disabled = function () {
+		return SET;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "_paperSizeIn";
+	this.item[cnt].disabled = function () {
+		return SET;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "_resolutionIn";
+	this.item[cnt].disabled = function () {
+		return SET;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "compressTypeIn";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.mailAddress() == SET && status.IsIfaxDataModeFull() == SET)
+			disabled = RESET;
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "paperSizeIn";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.mailAddress() == SET && status.IsIfaxDataModeFull() == SET)
+			disabled = RESET;
+		return disabled;
+	}
+	cnt++;
+
+	this.item[cnt] = new maskItem();
+	this.item[cnt].arg.name = "resolutionIn";
+	this.item[cnt].disabled = function () {
+		var disabled = SET;
+		if (status.mailAddress() == SET && status.IsIfaxDataModeFull() == SET)
+			disabled = RESET;
+		return disabled;
+	}
+	cnt++;
+
+}
+
+function pageRefresh() {
+
+	var el,item;
+	var items = new refreshItemList();
+
+	for (var i=0; i < MainForm.length; i++) {
+		el = MainForm.elements[i];
+		for (var j=0; j < items.item.length; j++) {
+			item = items.item[j];
+			if (item.arg.name && item.arg.value) {
+				if (item.arg.name == el.name && item.arg.value == el.value) {
+					el.disabled = item.disabled();
+					break;
+				}
+			}
+			else if (item.arg.name) {
+				if (item.arg.name == el.name) {
+					el.disabled = item.disabled();
+					break;
+				}
+			}
+
+			if (item.func) {
+				item.func();
+			}
+		}
+	}
+
+	auth_protect_Refresh();
+
+}
+
+function setFaxLabel2In()
+{
+	var val = 0;
+
+	val = utilGetIndexSelect(MainForm.faxOptionLabel2In);
+	switch(val){
+		case 1:
+			MainForm.faxLabel2In.value = "";
+			MainForm.faxLabel2In.disabled = SET;
+			break;
+		case 2:
+			MainForm.faxLabel2In.disabled = RESET;
+			break;
+		default:
+			MainForm.faxLabel2In.value = MainForm.faxOptionLabel2In.value;
+			MainForm.faxLabel2In.disabled = RESET;
+	}
+}
+
+function auth_protect_Refresh() {
+
+	var val,i;
+	var protectSender,protectFolder
+	var disp1,disp2;
+
+	if((MainForm.entryUseIn)&&(MainForm.protectedUseIn)){
+
+		for (i=0; i < MainForm.length; i++) {
+			if (MainForm.elements[i].name == "protectedUseIn"){
+
+				if (MainForm.elements[i].value == "PROTECT_SENDER_O"){
+					protectSender = MainForm.elements[i];
+
+				}else if (MainForm.elements[i].value == "PROTECT_FOLDER_O"){
+					protectFolder = MainForm.elements[i];
+				}
+			}
+		}
+
+		val = utilGetInputValue(MainForm,"entryUseIn");
+		if (val == "ENTRYUSE_TO_O"){
+			if (protectSender){
+				protectSender.disabled = SET;
+			}
+			if (protectFolder){
+				protectFolder.disabled = CheckFolderEnable();
+			}
+		}else if(val == "ENTRYUSE_FROM_O"){
+			if (protectSender){
+				protectSender.disabled = RESET;
+			}
+			if (protectFolder){
+				protectFolder.disabled = SET;
+			}
+		}else if(val == "ENTRYUSE_TO_O,ENTRYUSE_FROM_O"){
+			if (protectSender){
+				protectSender.disabled = RESET;
+			}
+			if (protectFolder){
+				protectFolder.disabled = CheckFolderEnable();
+			}
+		}else{
+			if (protectSender){
+				protectSender.disabled = SET;
+			}
+			if (protectFolder){
+				protectFolder.disabled = SET;
+			}
+		}
+
+		if(MainForm.buttonProtectCode){
+			if (protectSender){
+				if((protectSender.disabled == RESET)&&(protectSender.checked == SET)){
+					disp1 = SET;
+				}else{
+					disp1 = RESET;
+				}
+			}
+			if (protectFolder){
+				if((protectFolder.disabled == RESET)&&(protectFolder.checked == SET)){
+					disp2 = SET;
+				}else{
+					disp2 = RESET;
+				}
+			}
+			if ((disp1 == SET)||(disp2 == SET)){
+				MainForm.buttonProtectCode.disabled = RESET;
+			}else{
+				MainForm.buttonProtectCode.disabled = SET;
+			}
+		}
+
+	}else if(MainForm.protectedUseIn){
+		if(MainForm.buttonProtectCode){
+			if(MainForm.protectedUseIn.checked == SET){
+				MainForm.buttonProtectCode.disabled = RESET;
+			}else{
+				MainForm.buttonProtectCode.disabled = SET;
+			}
+		}
+	}
+}
+function CheckFolderEnable() {
+
+	var folderProtocol = EMPTY;
+	var servername = EMPTY;
+	var pathname = EMPTY;
+
+	if((MainForm.folderProtocolIn)&&(MainForm.folderServerNameIn)&&(MainForm.folderPathNameIn)){
+		folderProtocol = utilGetInputValue(MainForm,"folderProtocolIn");
+		servername = utilGetInputValue(MainForm,"folderServerNameIn");
+		pathname = utilGetInputValue(MainForm,"folderPathNameIn");
+		if(folderProtocol == "FTP_O"){
+			if(servername != EMPTY){
+				return RESET;
+			}
+		}else if((folderProtocol == "SMB_O")||(folderProtocol == "NCP_O")){
+			if(pathname != EMPTY){
+				return RESET;
+			}
+		}else{
+			alert("unknown Protocol");
+			alert(folderProtocol);
+			return SET;
+		}
+	}
+	return SET;
+}
+
+function changeCertificate(){
+	var skip = new skip_info();
+	if (BaseForm) {
+		MainForm.mode.value = BaseForm.mode.value;
+
+		if (CurrentMethod == ADRS_GET_USER) {
+			getSkipInfo(SKIP_CERTIFICATE_GET,EMPTY,skip);
+		}
+		MainForm.wayFrom.value = skip.from;
+		MainForm.wayTo.value = skip.to;
+		utilSubmitForm(MainForm,skip.via);
+		utilPageSkipDisabled();
+	}
+}
+
+function changeEncrypt(){
+	if(document.mainForm ){
+		var srcValue = utilGetInputValue(MainForm,"isEncryptAlwaysIn");
+		for(var i=0; i<document.mainForm.length; i++){
+			if(document.mainForm.elements[i].name == "isEncryptAlways"){
+				document.mainForm.elements[i].value = srcValue;
+				return;
+			}
+		}
+	}
+}
+
+function handlePageRefresh(name){
+	var value;
+
+	var enableObj = new Object();
+	var disableObj = new Object();
+
+	if( !document.mainForm )
+	{
+		return;
+	}
+
+	switch(name)
+	{
+		case 'userCode':
+			value = document.mainForm.userCodeIn.value;
+			enableObj = usrCodeEnableChanged;
+			disableObj = usrCodeDisableChanged;
+			break;
+		case 'localAuthUserName':
+			value = document.mainForm.localAuthUserNameIn.value;
+			enableObj = localAuthEnableChanged;
+			disableObj = localAuthDisableChanged;
+			break;
+		case 'faxDest':
+			value = document.mainForm.faxDestIn.value;
+			enableObj = faxDestEnableChanged;
+			disableObj = faxDestDisableChanged;
+			break;
+		case 'faxFcodeSub':
+			value = document.mainForm.faxFcodeSubIn.value;
+			enableObj = faxFcodeSubEnableChanged;
+			disableObj = faxFcodeSubDisableChanged;
+			break;
+		case 'faxFcodeSep':
+			value = document.mainForm.faxFcodeSepIn.value;
+			enableObj = faxFcodeSepEnableChanged;
+			disableObj = faxFcodeSepDisableChanged;
+			break;
+		case 'mailAddress':
+			value = document.mainForm.mailAddressIn.value;
+			enableObj = mailAddressEnableChanged;
+			disableObj = mailAddressDisableChanged;
+			break;
+		case 'folderPortNo':
+			value = document.mainForm.folderPortNoIn.value;
+			enableObj = folderPortNoEnableChanged;
+			disableObj = folderPortNoDisableChanged;
+			break;
+		case 'folderServerName':
+			value = document.mainForm.folderServerNameIn.value;
+			enableObj = folderServerNameEnableChanged;
+			disableObj = folderServerNameDisableChanged;
+			break;
+		case 'folderPathName':
+			value = document.mainForm.folderPathNameIn.value;
+			enableObj = folderPathNameEnableChanged;
+			disableObj = folderPathNameDisableChanged;
+			break;
+		case 'limitCountOfUpper':
+			value = document.mainForm.limitCountOfUpperIn.value;
+			enableObj = limitCountOfUpperEnableChanged;
+			disableObj = limitCountOfUpperDisableChanged;
+			break;
+		default:
+			break;
+	}
+	
+	if(value.length > 0)
+	{
+		if(enableObj.value == "false")
+		{
+			pageRefresh();
+			enableObj.value = "true";
+			disableObj.value = "false";
+		}else{
+			auth_protect_Refresh();
+		}
+	}
+	else
+	{
+		if(disableObj.value == "false")
+		{
+			pageRefresh();
+			enableObj.value = "false";
+			disableObj.value = "true";
+		}
+	}
+}
+function pageRefresh_Checked(){
+	var i=0;
+	if (MainForm.entryUseIn) {
+		for(i=0;i < MainForm.entryUseIn.length;i++){
+			if (MainForm.entryUseIn[i].value == "ENTRYUSE_FROM_O") {
+				if (MainForm.userCodeIn) {
+					if ((MainForm.userCodeIn.disabled == false) && (MainForm.userCodeIn.value != EMPTY)) {
+						MainForm.entryUseIn[i].checked = true;
+						break;
+					}
+				}
+				else if (MainForm.localAuthUserNameIn) {
+					if((MainForm.localAuthUserNameIn.disabled == false) && (MainForm.localAuthUserNameIn.value != EMPTY)) {
+						MainForm.entryUseIn[i].checked = true;
+						break;
+					}
+				}
+				else {
+					;
+				}
+			}
+		}
+	}
+}
+function utilSubmitForm(form,dest,marker){
+	var pos = 0;
+	var queryString;
+	var param,name,value;
+	var queryPos = dest.indexOf("?");
+
+	aplAvailSet();
+
+	if (queryPos == -1) {
+		form.action = dest;
+	}
+	else {
+		form.action = dest.substring(0,queryPos);
+
+		queryString = dest.substring(queryPos+1,dest.length);
+		if (queryString.length > 0) {
+			if (queryString.indexOf("&",queryString.length-1) == -1)
+				queryString += "&";
+		}
+
+		while (pos < queryString.length) {
+			param = queryString.substring(pos,queryString.indexOf("&",pos));
+			pos += param.length + 1;
+
+			if (param.indexOf("=") >= 0) {
+				name = param.substring(0,param.indexOf("="));
+				value = param.substring(param.indexOf("=")+1,param.length);
+				for(var i=0; i < form.length; i++) {
+					if (form.elements[i].name == name) {
+						form.elements[i].value = value;
+						break;
+					}
+				}
+			}
+		}
+	}
+	
+	if( marker )
+	{
+		form.action += "#"+marker;
+	}
+
+	form.method = "post";
+	form.target = "_self";
+	formSubmit(form);
+}
+function disableForm()
+{
+	var mainFormElements = document.getElementsByName("mainForm");
+	for(i = 0; i < mainFormElements.length; i++) {
+		for(j = 0; j < mainFormElements[i].length; j++) {
+			if(mainFormElements[i][j].type != "hidden" && mainFormElements[i][j].name != "localPassword") {
+				mainFormElements[i][j].disabled = true;
+			}
+		}
+	}
+}
+/***********************************************************
+ * ã¨ã³ããªã¼é¸æ
+ ***********************************************************/
+ 
+function Back(mode) {
+	var via;
+	if (BaseForm) {
+		if (buttonCheckFlag) { return; }
+		buttonCheckFlag = true;
+		utilExchangeValue(MainForm.wayFrom,MainForm.wayTo);
+		via = ADRS_EDIT_LIST + "?inputSpecifyMode=" + mode;
+		utilSubmitForm(MainForm,via);
+		utilPageSkipDisabled();
+	}
+}
+
+function entryListCtrl(dest) {
+	var dest;
+	if (BaseForm) {
+		MainForm.inputSpecifyMode.value = SESSION;
+		MainForm.pageSpecifiedIn.value = TRUE;
+
+		adrsSetListPage(dest);
+
+		dest = ADRS_EDIT_LIST;
+		utilSubmitForm(MainForm,dest);
+		utilPageSkipDisabled();
+	}
+}
+
+function publicOperation() {
+	var disabled;
+	if (BaseForm) {
+		if (MainForm.permissionPublicIn) {
+			var elem = MainForm.permissionPublicIn;
+			if (elem.length) {
+				for (i = 0; i < elem.length; i++) {
+					disabled = 0;
+					if (elem[i].checked)
+						disabled = 1;
+
+					entryIndicesDisabled(elem[i].value,MainForm,disabled);
+				}
+			}
+			else {
+				entryIndicesDisabled(elem.value,MainForm,disabled);
+			}
+		}
+	}
+}
+
+function entryIndicesDisabled(publicId,form,disabled) {
+	var name;
+	if (publicId == "PUBLIC_READ_O") {
+		name = "readableEntryIndicesIn";
+	}
+	else if (publicId == "PUBLIC_WRITE_O") {
+		name = "writableEntryIndicesIn";
+	}
+	else if (publicId == "PUBLIC_DELETE_O") {
+		name = "deletableEntryIndicesIn";
+	}
+	else if (publicId == "PUBLIC_ACL_O") {
+		name = "aclEditableEntryIndicesIn";
+	}
+
+	if (form) {
+		for(var i=0; i < form.length; i++) {
+			if (form.elements[i].name == name) {
+				form.elements[i].disabled = disabled;
+			}
+		}
+	}
+}
+
+/***********************************************************
+ * ãã¹ã¯ã¼ãå¤æ´
+ ***********************************************************/
+function passwdApply()
+{
+	var via;
+	var pass;
+	if (BaseForm) {
+		if (buttonCheckFlag) { return; }
+		buttonCheckFlag = true;
+		utilExchangeValue(MainForm.wayFrom,MainForm.wayTo);
+		via = ADRS_EDIT_PWD + "?inputSpecifyMode=FIX";
+
+		MainForm.passwordIn.value = base64encode(MainForm.passwordInwk.value);
+		MainForm.passwordInwk.value = EMPTY;
+
+		MainForm.passwordConfirmIn.value = base64encode(MainForm.passwordConfirmInwk.value);
+		MainForm.passwordConfirmInwk.value = EMPTY;
+
+		utilSubmitForm(MainForm,via);
+		utilPageSkipDisabled();
+	}
+}
+
+function passwdCancel()
+{
+	if (BaseForm) {
+		if (buttonCheckFlag) { return; }
+		buttonCheckFlag = true;
+		utilSubmitForm(MainForm,MainForm.wayFrom.value);
+		utilPageSkipDisabled();
+	}
+}
+
+/***********************************************************
+* è¨¼ææ¸é¸æç»é¢
+***********************************************************/
+function uploadCertificate(){
+	if( !document.mainForm )
+	{
+		return;
+	}
+	if (buttonCheckFlag) { return; }
+	buttonCheckFlag = true;
+	document.mainForm.encoding = "multipart/form-data";
+	document.mainForm.action = "adrsUploadCertificate.cgi";
+	document.mainForm.method = "post";
+	document.mainForm.target = "_self";
+	uploadSubmit(document.mainForm);
+}
+function cancelUpload(){
+	if( !document.mainForm )
+	{
+		return;
+	}
+	if (buttonCheckFlag) { return; }
+	buttonCheckFlag = true;
+	document.mainForm.action = "adrsGetUser.cgi?outputSpecifyModeIn=SETTINGS";
+	document.mainForm.method = "post";
+	document.mainForm.target = "_self";
+	utilSubmitForm(document.mainForm,document.mainForm.action,"MAIL_C");
+}
+function deleteCertificate(){
+	if( !document.mainForm )
+	{
+		return;
+	}
+	if (buttonCheckFlag) { return; }
+	buttonCheckFlag = true;
+	document.mainForm.action = "adrsDeleteCertificate.cgi";
+	document.mainForm.method = "post";
+	document.mainForm.target = "_self";
+	formSubmit(document.mainForm);
+}
+
+/***********************************************************
+* ã¡ã³ããã³ã¹ç»é¢
+***********************************************************/
+function OpenMaintenance(session)
+{
+	var wimTokenNum = document.mainForm.wimToken.value;
+	var outputSpecify = "";
+	if( session == 1 )
+	{
+		outputSpecify = "&outputSpecifyModeIn=SETTINGS";
+	}
+	location.href = ADRS_MAINTENANCE + "?mode=BACKUP&wimToken="+wimTokenNum+outputSpecify;
+}
+
+/***********************************************************
+* ã¤ã³ãã¼ã/ãªã¹ãã¢æã®ã¢ããã­ã¼ãé²æè¡¨ç¤ºå°ç»é¢
+***********************************************************/
+function UploadExec() {
+	setTimeout("_UploadExec()",2000);
+}
+function _UploadExec() {
+	if (!self.opener.closed) {
+		self.opener.UploadRequest();
+	}
+}
+
+function dispStatus() {
+	var cnt = 0;
+	var name;
+	var imgArray = document.images;
+
+	for (var i=0; i < imgArray.length; i++) {
+		name = imgArray[i].name;
+		if (name.indexOf("status") == 0)
+			cnt++;
+	}
+	changeStat(0,cnt);
+}
+
+function changeStat(cnt,total) {
+	var arg;
+	var tid;
+	var cntStat = cnt;
+	replaceImg(cntStat);
+	cntStat++;
+	cntStat %= total;
+	arg = cntStat.toString() + "," + total.toString();
+	tid = setTimeout("changeStat("+arg+")",200);
+}
+
+function replaceImg(cnt) {
+	var imgName;
+	var targetImgName = "status" + cnt.toString();
+	var imgArray = document.images;
+
+	for (var i=0; i < imgArray.length; i++) {
+		imgName = imgArray[i].name;
+
+		if (imgName == targetImgName) {
+			imgArray[i].src = "/images/btn03_n.gif";
+		}
+		else if (imgName.indexOf("status") == 0) {
+			imgArray[i].src = "/images/btn03_d.gif";
+		}
+	}
+}
+
+/***********************************************************
+ * è¨¼ææ¸åé¤ç»é¢
+ ***********************************************************/
+function deleteToUser(){
+	if( !document.mainForm )
+	{
+		return;
+	}
+	document.mainForm.action = "adrsGetUser.cgi?outputSpecifyModeIn=SETTINGS";
+	document.mainForm.method = "post";
+	document.mainForm.target = "_self";
+	utilSubmitForm(document.mainForm,document.mainForm.action,"MAIL_C");
+}
+/***********************************************************
+* ä½¿ç¨ã«ã¦ã³ã¿ã¼å¤ã®åé¤ç»é¢
+***********************************************************/
+function limitCountDeleteConfirm()
+{
+	var via;
+	var pass;
+	if (BaseForm) {
+
+	if (buttonCheckFlag) { return; }
+	buttonCheckFlag = true;
+	MainForm.clearConfirmed.value="true";
+	MainForm.inputSpecifyMode.value = "CLEAR";
+
+		utilExchangeValue(MainForm.wayFrom,MainForm.wayTo);
+		via = ADRS_DELETE_LIMITCOUNT + "?outputSpecifyModeIn=SETTINGS";
+
+		utilSubmitForm(MainForm,via);
+		utilPageSkipDisabled();
+	}
+}
+
+function limitCountDeleteCancel()
+{
+	if (BaseForm) {
+		if (buttonCheckFlag) { return; }
+		buttonCheckFlag = true;
+		utilSubmitForm(MainForm,MainForm.wayFrom.value,"LIMITCOUNT_RES_SETTING");
+		utilPageSkipDisabled();
+	}
+}
+
+/***********************************************************
+ * è¨¼ææ¸ã¢ããã­ã¼ãç»é¢
+ ***********************************************************/
+function uploadToUser(){
+	if( !document.mainForm )
+	{
+		return;
+	}
+	document.mainForm.action = "adrsGetUser.cgi?outputSpecifyModeIn=SETTINGS";
+	document.mainForm.method = "post";
+	document.mainForm.target = "_self";
+	utilSubmitForm(document.mainForm,document.mainForm.action,"MAIL_C");
+}
+function adrsCertificateUndo() {
+	var dest;
+	if (BaseForm) {
+		document.mainForm.action = "adrsGetCertificate.cgi";
+		document.mainForm.method = "post";
+		document.mainForm.target = "_self";
+		formSubmit(document.mainForm);
+	}
+}
+
+
+function COPYCheck(n){
+	var i=0;
+	var j=0;
+	if( document.mainForm )
+	{
+		if(document.mainForm.availableFuncIn[n-1].checked==true){
+			if (document.mainForm.availableFuncIn[n-1].value=="COPY_FC") {
+				if (document.mainForm.acsLimitationIn) {
+					for(i=0;i<document.mainForm.acsLimitationIn.length;i++){
+						document.mainForm.acsLimitationIn[i].disabled=false;
+					}
+				}
+		    }
+			for(i=n-1;i<document.mainForm.availableFuncIn.length;i++){
+				if (document.mainForm.availableFuncIn[i].value.indexOf("COPY_")>=0) {
+					document.mainForm.availableFuncIn[i].checked=true;
+			    }
+			}
+		}else{
+			for(i=n-1;i>=0;i--){
+				if (document.mainForm.availableFuncIn[i].value.indexOf("COPY_")>=0) {
+					document.mainForm.availableFuncIn[i].checked=false;
+					if (document.mainForm.availableFuncIn[i].value=="COPY_FC") {
+						if (document.mainForm.acsLimitationIn) {
+							for(j=0;j<document.mainForm.acsLimitationIn.length;j++){
+								document.mainForm.acsLimitationIn[j].disabled=true;
+							}
+						}
+				    }
+			    }
+			}
+		}
+	}
+}
+function PRTCheck(n){
+	var i=0;
+	if( document.mainForm )
+	{
+		if(document.mainForm.availableFuncIn[n-1].checked==true){
+			for(i=n-1;i<document.mainForm.availableFuncIn.length;i++){
+				if (document.mainForm.availableFuncIn[i].value.indexOf("PRT_")>=0) {
+					document.mainForm.availableFuncIn[i].checked=true;
+			    }
+			}
+		}else{
+			for(i=n-1;i>=0;i--){
+				if (document.mainForm.availableFuncIn[i].value.indexOf("PRT_")>=0) {
+					document.mainForm.availableFuncIn[i].checked=false;
+				}
+			}
+		}
+	}
+}
+function Check(n){
+}
+function SDKCheck(n){
+}
+
+/* ================================================================ *
+ * Const(local)			XXX
+ * ================================================================ */
+var CENTRA_SETMODE_CON_TEST = "CONTEST";
+var CENTRA_SETMODE_SET_SERV = "SETSERV";
+var CENTRA_SETMODE_SET_CLIT = "SETCLIT";
+var CENTRA_SETMODE_CLR_CLIT = "CLRCLIT";
+var CENTRA_SETMODE_CLR_SERV = "CLRSERV";
+
+var CENTRA_SETMODE_SRV_SYNC = "SRVSYNC";
+var CENTRA_SETMODE_SRV_DSCN = "SRVDSCN";
+
+var CENTRA_SETMODE_CLI_SYNC = "CLISYNC";
+
+var MODALDIALOG_ID			= "additional";
+var MODALDIALOG_PARENT_ID	= "parentFrame";
+
+var CENTRA_CGI = "adrsCentraSet.cgi";
+
+/* ================================================================ *
+ * Variable(local)		gl_xxx ( global local )
+ * ================================================================ */
+var gl_buttonCheckFlag = false;
+var gl_centraModalDialog = null;
+
+/* ================================================================ *
+ * Function ( external )    adrsCentraXxx
+ * ================================================================ */
+function adrsCentraClientSync()
+{
+	centra_asyncSetReq( CENTRA_SETMODE_CLI_SYNC );
+}
+
+function adrsCentraServerSync()
+{
+	centra_asyncSetReq( CENTRA_SETMODE_SRV_SYNC );
+}
+
+/* ================================================================ *
+ * Function ( internal )    centra_xxx
+ * ================================================================ */
+
+function centra_ajaxSend(url,sendData,recvFunc)
+{
+	ajax_async(
+		url,
+		"POST",
+		sendData,
+		function(recvData)
+		{
+			gl_buttonCheckFlag = false;
+			recvFunc(recvData);
+		},
+		null
+		);
+	
+	gl_centraModalDialog.update($("#div_progress").html());
+	gl_centraModalDialog.show(MODALDIALOG_PARENT_ID);
+}
+
+function centra_recvHtml(html)
+{
+	if( html != "" )
+	{
+		gl_buttonCheckFlag = false;
+	}
+	gl_centraModalDialog.updateBodyOnly(html);
+}
+
+function centra_progressMsg(id)
+{
+	$(".progressMessage").hide();
+	$("#"+id).show();
+}
+
+function centra_asyncSetReq(mode)
+{
+	if( true == gl_buttonCheckFlag )
+	{
+		return;
+	}
+	gl_buttonCheckFlag = true;
+	
+	var confirmMessage = "";
+	var progresMessage = "";
+
+	if( CENTRA_SETMODE_CON_TEST == mode )
+	{
+		confirmMessage = "CENTRA_CONNECT_SERVER_TEST_CONFIRM_G";
+		progresMessage = "CENTRA_CONNECT_SERVER_TEST_PROG_G";
+	}
+	else if( CENTRA_SETMODE_SET_CLIT == mode )
+	{
+		confirmMessage = "CENTRA_CLIENT_CONFIRM_G";
+		progresMessage = "CENTRA_CONNECT_SERVER_PROG_G";
+	}
+	else if( CENTRA_SETMODE_CLR_CLIT == mode )
+	{
+		confirmMessage = "CENTRA_CLIENT_TO_STANDALONE_CONFIRM_G";
+		progresMessage = "CENTRA_CLIENT_TO_STANDALONE_PROGRESS";
+	}
+	else if( CENTRA_SETMODE_CLR_SERV == mode )
+	{
+		confirmMessage = "CENTRA_SERVER_TO_STANDALONE_CONFIRM_G";
+		progresMessage = "CENTRA_SERVER_TO_STANDALONE_PROGRESS";
+	}
+	else if( CENTRA_SETMODE_SRV_SYNC == mode )
+	{
+		confirmMessage = "CENTRA_SERVER_ALL_SYNCHRO_G";
+		progresMessage = "CENTRA_SERVER_SYNCHRO_PROGRESS";
+	}
+	else if( CENTRA_SETMODE_SRV_DSCN == mode )
+	{
+		confirmMessage = "CENTRA_SERVER_DISCONNECT_G";
+		progresMessage = "CENTRA_SERVER_DISCONNECT_PROGRESS";
+	}
+	else if( CENTRA_SETMODE_CLI_SYNC == mode )
+	{
+		confirmMessage = "CENTRA_CLIENT_SYNCHRO_G";
+		progresMessage = "CENTRA_CLIENT_SYNCHRO_PROG_G";
+	}
+	else
+	{
+		return;
+	}
+	
+	gl_centraModalDialog = new obj_modalDialog(MODALDIALOG_ID);
+	
+	var result = window.confirm( $("#"+confirmMessage).val().replace(/<br ?\/>/g,"\r\n") );
+	if( false == result )
+	{
+		gl_buttonCheckFlag = false;
+		return;
+	}
+	
+	centra_progressMsg(progresMessage);
+
+	$("#DELETE_PT").hide();
+	$("#CENTRA_PT").show();
+	
+	var postData = $(document.mainForm).serialize();
+	
+	var wimTokenNum = $("input[name='wimToken']").val()
+	
+	centra_ajaxSend(
+		CENTRA_CGI,
+		"mode="+mode+"&wimToken="+wimTokenNum+"&"+postData,
+		centra_recvHtml
+		);
+}
+
+function WidthCheck(str)
+{
+	var w = 0;
+	var maxlength = 0;
+	var protocol = document.getElementsByName("folderProtocolIn")[0].value;
+
+	if ((protocol == "SMB_O") || (protocol == "FTP_O")){
+	
+		for (var i=0; i<str.value.length; i++) {
+			var c = str.value.charCodeAt(i);
+			if ((c >= 0x0001 && 0x007e >= c) || (c >= 0xff60 && 0xff9f >= c)) {
+				w++;
+			}
+			else {
+				w+=2;
+			}	
+		}
+
+		if (w > 255) {
+			maxlength = i;
+		}
+		else{
+			maxlength = 256;
+		}
+
+	}
+	else
+	{
+		maxlength = 128;
+	}
+
+	$("input[name=folderPathNameIn]").attr("maxlength",maxlength);
+}
+function aplAvailSet()
+{
+	if( MainForm.aplBox )
+	{
+		var checkBox = MainForm.aplBox;
+		var edit = MainForm.aplAvailIn;
+		for (i=0; i<128; i++)
+		{
+			if( checkBox[i] )
+			{
+				if (checkBox[i].type != "hidden")
+				{
+					if (checkBox[i].checked)
+					{
+						edit[i].value="true";
+					}
+					else
+					{
+						edit[i].value="false";
+					}
+				}
+				checkBox[i].disabled = true;
+			}
+		}
+	}
+}
+

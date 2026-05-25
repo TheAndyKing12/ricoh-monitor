@@ -1,0 +1,245 @@
+
+/***********************************************************
+ * AhXê
+ ***********************************************************/
+ 
+function adrsListCtrl(dest){
+	if (BaseForm) {
+		MainForm.pageSpecifiedIn.value = TRUE;
+
+		adrsSetListPage(dest);
+
+		utilSubmitForm(MainForm,ADRS_LIST);
+		adrsListDisabled();
+	}
+}
+
+function adrsListDisabled()
+{
+	if (BaseForm) {
+		utilDisableInput(MainForm.entryFilterIn,TRUE);
+		utilDisableInput(MainForm.listCountIn,TRUE);
+
+		utilPageSkipDisabled();
+	}
+}
+
+function Edit()
+{
+	var index, method, val, el;
+
+	if (BaseForm) {
+		index = 0;
+		val = EMPTY;
+		if (MainForm.totalCount.value > 0) {
+			for (var i=0; i < MainForm.length; i++) {
+				el = MainForm.elements[i];
+				if ((el.name == "entryIndex")&&(el.type == "radio")) {
+					if(el.checked){
+						val = el.value;
+						break;
+					}
+				}
+			}
+			if (val != EMPTY) {
+				index = val.substring(0,val.indexOf(","));
+			}
+		}
+
+		if (index != 0) {
+			method = ADRS_GET_USER;
+			val = utilGetInputValue(MainForm,index);
+			if (val == KIND_ENTRY_GROUP) {
+				method = ADRS_GET_GROUP;
+			}
+
+			MainForm.mode.value = "MODUSER";
+			if (method == ADRS_GET_GROUP){
+				MainForm.mode.value = "MODGROUP";
+			}
+			MainForm.outputSpecifyModeIn.value = "PROGRAMMED";
+			MainForm.entryIndexIn.value = index;
+
+			utilSubmitForm(MainForm,method);
+			adrsListDisabled();
+		}
+		else
+		{
+			alert(document.textForm.NO_ENTRY_E.value);
+		}
+	}
+}
+
+function AddUser(){
+	if (BaseForm) {
+		MainForm.mode.value = "ADDUSER";
+		MainForm.outputSpecifyModeIn.value = "DEFAULT";
+
+		utilSubmitForm(MainForm,ADRS_GET_USER);
+		adrsListDisabled();
+	}
+}
+
+function AddGroup(){
+	if (BaseForm) {
+		MainForm.mode.value = "ADDGROUP";
+		MainForm.outputSpecifyModeIn.value = "DEFAULT";
+
+		utilSubmitForm(MainForm,ADRS_GET_GROUP);
+		adrsListDisabled();
+	}
+}
+
+function ConfDelete()
+{
+	var index, name, val, el;
+
+	if (BaseForm) {
+		index = 0;
+		val = EMPTY;
+		if ( MainForm.totalCount.value > 0 ) {
+			for (var i=0; i < MainForm.length; i++) {
+				el = MainForm.elements[i];
+				if ((el.name == "entryIndex")&&(el.type == "radio")) {
+					if(el.checked){
+						val = el.value;
+						break;
+					}
+				}
+			}
+			if (val != EMPTY) {
+				index = val.substring(0,val.indexOf(","));
+				name = val.substring(val.indexOf(",")+1,val.length);
+			}
+		}
+
+		if (index != 0) {
+			MainForm.mode.value = "DELETE";
+			MainForm.entryIndexIn.value = index;
+			MainForm.entryNameIn.value = name;
+
+			utilSubmitForm(MainForm,ADRS_CONFDELETE);
+			adrsListDisabled();
+		}
+		else
+		{
+			alert(document.textForm.NO_ENTRY_E.value);
+		}
+	}
+}
+
+function Maintenance(mode) {
+	if (BaseForm) {
+		MainForm.mode.value = mode;
+		utilSubmitForm(MainForm,ADRS_MAINTENANCE);
+		adrsListDisabled();
+	}
+}
+
+function AdrsCentra() {
+	if (BaseForm) {
+		MainForm.mode.value = "CENTRA";
+		utilSubmitForm(MainForm,ADRS_CENTRA);
+		adrsListDisabled();
+	}
+}
+
+function adrsAutoBackup() {
+	if (BaseForm) {
+		MainForm.mode.value = "AUTO_BACKUP";
+		utilSubmitForm(MainForm,ADRS_GET_AUTO_BACKUP);
+		adrsListDisabled();
+	}
+}
+
+function UserTemplate(){
+	if (BaseForm) {
+		MainForm.mode.value = "USER_TEMPLATE";
+		MainForm.outputSpecifyModeIn.value = "DEFAULT";
+		utilSubmitForm(MainForm, ADRS_GET_USER_TEMPLATE);
+		adrsListDisabled();
+	}
+}
+
+
+function Reload(){
+	if (CmdForm) {
+		utilSubmitForm(CmdForm,ADRS_LIST);
+		adrsListDisabled();
+	}
+}
+
+function Search() {
+	if (BaseForm) {
+		MainForm.searchSpecifyModeIn.value = "INPUT";
+
+		MainForm.pageSpecifiedIn.value = TRUE;
+		MainForm.pageNumberIn.value = 0;
+
+		utilSubmitForm(MainForm,ADRS_LIST);
+		adrsListDisabled();
+	}
+}
+
+function CancelSearch() {
+	if (BaseForm) {
+		MainForm.searchSpecifyModeIn.value = "NONE";
+
+		MainForm.pageSpecifiedIn.value = TRUE;
+		MainForm.pageNumberIn.value = 0;
+
+		utilSubmitForm(MainForm,ADRS_LIST);
+		adrsListDisabled();
+	}
+}
+
+function switch_search_item(){
+	var value;
+	var disabled = RESET;
+	if (BaseForm){
+		value = utilGetInputValue(MainForm,"searchItemIn");
+		utilDisableInput(MainForm.searchDataIn,disabled);
+	}
+}
+
+function adrsListUndo(){
+	if (BaseForm) {
+		if (buttonCheckFlag) { return; }
+		buttonCheckFlag = true;
+		MainForm.pageSpecifiedIn.value = FALSE;
+		MainForm.searchSpecifyModeIn.value = "NONE";
+		if (BaseForm.returnValue.value == "PAGENUM") {
+			MainForm.searchSpecifyModeIn.value = "";
+		}
+
+		utilSubmitForm(MainForm,ADRS_LIST);
+		utilPageSkipDisabled();
+	}
+}
+function adrsCentraReload()
+{
+	location.href = ADRS_LIST;
+}
+function adrsServerSyncOk()
+{
+	location.href = ADRS_LIST;
+}
+function adrsCliSyncOk()
+{
+	location.href = ADRS_LIST;
+}
+function adrsCentraListJump()
+{
+	adrsCentraModalClose();
+}
+function adrsCentraModalClose()
+{
+	if( gl_centraModalDialog )
+	{
+		gl_centraModalDialog.hidden(MODALDIALOG_PARENT_ID);
+	}
+}
+function jumpButtonURL()
+{
+	adrsCentraModalClose();
+}

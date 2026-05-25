@@ -1,0 +1,63 @@
+﻿from sqlalchemy import Column, Integer, String, Boolean, Float, ForeignKey
+from .database import Base
+class Printer(Base):
+
+    __tablename__ = "printers"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    shared_name = Column(String, nullable=True)
+
+    name = Column(String, nullable=True)
+
+    model = Column(String, nullable=True)
+
+    ip = Column(String, unique=True, index=True)
+
+    serial = Column(String, nullable=True)
+
+    location = Column(String, nullable=True)
+
+    is_color = Column(Boolean, default=False)
+
+    snmp_community = Column(String, default="public")
+ 
+class InventoryItem(Base):
+
+    __tablename__ = "inventory"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    name = Column(String)
+
+    model = Column(String)
+
+    type = Column(String)
+
+    quantity = Column(Integer)
+
+    min_stock = Column(Integer)
+class TonerControl(Base):
+
+    __tablename__ = "toner_control"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    printer_id = Column(Integer, ForeignKey("printers.id"), unique=True)
+
+    check_date = Column(String, nullable=True)
+
+    backup_black = Column(Float, default=0)
+
+    backup_cyan = Column(Float, default=0)
+
+    backup_magenta = Column(Float, default=0)
+
+    backup_yellow = Column(Float, default=0)
+
+    pedido = Column(String, nullable=True)
+
+    work_order = Column(String, nullable=True)
+
+    notas = Column(String, nullable=True)
+  

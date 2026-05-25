@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ricoh Monitor — Iniciar Sesión</title>
+    <link rel="stylesheet" href="bootstrap-icons.min.css">
+    <link rel="stylesheet" href="inter.css">
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: 'Inter', Arial, sans-serif;
+            background: #0a0a1a url('Login.jpg') center center / cover no-repeat fixed;
+            display: flex;
+            flex-direction: column;
+        }
+
+            /* overlay oscuro sobre el fondo */
+            body::before {
+                content: '';
+                position: fixed;
+                inset: 0;
+                background: rgba(5, 5, 20, 0.55);
+                z-index: 0;
+            }
+
+        .login-wrap {
+            position: relative;
+            z-index: 1;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 80px;
+            padding: 40px 60px;
+        }
+
+        /* ── LADO IZQUIERDO ── */
+        .login-brand {
+            flex: 1;
+            max-width: 480px;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .brand-logo {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            border: 2px solid rgba(139,92,246,.5);
+            background: rgba(139,92,246,.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: #a78bfa;
+            margin-bottom: 8px;
+        }
+
+        .brand-title {
+            line-height: 1.1;
+        }
+
+            .brand-title span:first-child {
+                display: block;
+                font-size: 52px;
+                font-weight: 800;
+                color: #fff;
+                letter-spacing: -1px;
+            }
+
+            .brand-title span:last-child {
+                display: block;
+                font-size: 52px;
+                font-weight: 800;
+                color: #8b5cf6;
+                letter-spacing: -1px;
+            }
+
+        .brand-subtitle {
+            font-size: 13px;
+            letter-spacing: 4px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            border-bottom: 2px solid #7c3aed;
+            padding-bottom: 12px;
+            width: fit-content;
+        }
+
+        .brand-desc {
+            font-size: 15px;
+            color: #cbd5e1;
+            line-height: 1.7;
+            max-width: 400px;
+        }
+
+        .brand-features {
+            display: flex;
+            gap: 0;
+            margin-top: 10px;
+        }
+
+        .brand-feature {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 10px;
+            padding: 0 16px;
+            border-right: 1px solid rgba(139,92,246,.25);
+        }
+
+            .brand-feature:last-child {
+                border-right: none;
+            }
+
+        .brand-feature-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            border: 1.5px solid rgba(139,92,246,.4);
+            background: rgba(139,92,246,.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: #a78bfa;
+        }
+
+        .brand-feature-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #e2e8f0;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .brand-feature-desc {
+            font-size: 12px;
+            color: #94a3b8;
+            line-height: 1.5;
+        }
+
+        /* ── CARD LOGIN ── */
+        .login-card {
+            width: 100%;
+            max-width: 420px;
+            background: rgba(15, 15, 40, 0.85);
+            border: 1px solid rgba(139,92,246,.25);
+            border-radius: 20px;
+            padding: 44px 40px;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 25px 60px rgba(0,0,0,.5), 0 0 0 1px rgba(139,92,246,.1);
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .card-lock {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: rgba(139,92,246,.18);
+            border: 1.5px solid rgba(139,92,246,.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: #a78bfa;
+            margin: 0 auto;
+        }
+
+        .card-title {
+            text-align: center;
+        }
+
+            .card-title h2 {
+                font-size: 26px;
+                font-weight: 700;
+                color: #f1f5f9;
+                margin-bottom: 6px;
+            }
+
+            .card-title p {
+                font-size: 13px;
+                color: #64748b;
+            }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+            .field-group label {
+                font-size: 13px;
+                font-weight: 500;
+                color: #cbd5e1;
+            }
+
+        .field-input-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+            .field-input-wrap i.field-icon {
+                position: absolute;
+                left: 14px;
+                color: #64748b;
+                font-size: 16px;
+                pointer-events: none;
+            }
+
+            .field-input-wrap input {
+                width: 100%;
+                background: rgba(255,255,255,.05);
+                border: 1.5px solid rgba(139,92,246,.2);
+                border-radius: 10px;
+                padding: 13px 44px;
+                font-size: 14px;
+                color: #f1f5f9;
+                outline: none;
+                transition: border-color .2s, box-shadow .2s;
+                font-family: inherit;
+            }
+
+                .field-input-wrap input::placeholder {
+                    color: #475569;
+                }
+
+                .field-input-wrap input:focus {
+                    border-color: #8b5cf6;
+                    box-shadow: 0 0 0 3px rgba(139,92,246,.15);
+                }
+
+        .toggle-pass {
+            position: absolute;
+            right: 14px;
+            background: none;
+            border: none;
+            color: #64748b;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+        }
+
+            .toggle-pass:hover {
+                color: #a78bfa;
+            }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: opacity .2s, transform .15s, box-shadow .2s;
+            box-shadow: 0 4px 20px rgba(124,58,237,.4);
+            font-family: inherit;
+        }
+
+            .login-btn:hover {
+                opacity: .92;
+                transform: translateY(-1px);
+                box-shadow: 0 8px 28px rgba(124,58,237,.5);
+            }
+
+            .login-btn:active {
+                transform: translateY(0);
+            }
+
+            .login-btn:disabled {
+                opacity: .6;
+                cursor: not-allowed;
+                transform: none;
+            }
+
+        .login-error {
+            background: rgba(239,68,68,.12);
+            border: 1px solid rgba(239,68,68,.3);
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 13px;
+            color: #fca5a5;
+            display: none;
+            text-align: center;
+        }
+
+        /* ── FOOTER ── */
+        .login-footer {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 20px;
+            border-top: 1px solid rgba(139,92,246,.1);
+        }
+
+        .footer-badges {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+            .footer-badges span {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .footer-badges .sep {
+                color: rgba(139,92,246,.4);
+            }
+
+        .footer-copy {
+            font-size: 12px;
+            color: #475569;
+        }
+
+            .footer-copy em {
+                color: #8b5cf6;
+                font-style: normal;
+            }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 900px) {
+            .login-wrap {
+                flex-direction: column;
+                gap: 40px;
+                padding: 30px 20px;
+            }
+
+            .login-brand {
+                max-width: 100%;
+                align-items: center;
+                text-align: center;
+            }
+
+            .brand-desc {
+                text-align: center;
+            }
+
+            .login-card {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-wrap">
+        <!-- BRANDING -->
+        <div class="login-brand">
+            <div class="brand-logo"><i class="bi bi-printer"></i></div>
+            <div class="brand-title">
+                <span>PRINTER</span>
+                <span>MONITOR</span>
+            </div>
+            <div class="brand-subtitle" id="brandSubtitle">Monitor de Impresora</div>
+            <p class="brand-desc" id="brandDesc">Monitorea el estado, consumibles y contadores de todas tus impresoras Ricoh en tiempo real.</p>
+            <div class="brand-features">
+                <div class="brand-feature">
+                    <div class="brand-feature-icon"><i class="bi bi-activity"></i></div>
+                    <div class="brand-feature-title" id="feat1Title">Estado en tiempo real</div>
+                    <div class="brand-feature-desc" id="feat1Desc">Visualiza el estado de todas tus impresoras al instante.</div>
+                </div>
+                <div class="brand-feature">
+                    <div class="brand-feature-icon"><i class="bi bi-droplet"></i></div>
+                    <div class="brand-feature-title" id="feat2Title">Consumibles</div>
+                    <div class="brand-feature-desc" id="feat2Desc">Controla niveles de tóner y recibe alertas inteligentes.</div>
+                </div>
+                <div class="brand-feature">
+                    <div class="brand-feature-icon"><i class="bi bi-bar-chart-line"></i></div>
+                    <div class="brand-feature-title" id="feat3Title">Reportes</div>
+                    <div class="brand-feature-desc" id="feat3Desc">Genera reportes detallados y estadísticas de tus equipos.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARD LOGIN -->
+        <div class="login-card">
+            <div class="card-lock"><i class="bi bi-lock-fill"></i></div>
+            <div class="card-title">
+                <h2 id="cardTitle">Iniciar Sesión</h2>
+                <p id="cardSubtitle">Ingresa tus credenciales para continuar</p>
+            </div>
+
+            <div class="field-group">
+                <label id="userLabel">Usuario</label>
+                <div class="field-input-wrap">
+                    <i class="bi bi-person field-icon"></i>
+                    <input id="loginUser" type="text" placeholder="Ingresa tu usuario" autocomplete="username" />
+                </div>
+            </div>
+
+            <div class="field-group">
+                <label id="passLabel">Contraseña</label>
+                <div class="field-input-wrap">
+                    <i class="bi bi-lock field-icon"></i>
+                    <input id="loginPass" type="password" placeholder="Ingresa tu contraseña" autocomplete="current-password" />
+                    <button class="toggle-pass" type="button" onclick="togglePass()" id="togglePassBtn">
+                        <i class="bi bi-eye" id="togglePassIcon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="login-error" id="loginError"></div>
+
+            <button class="login-btn" id="loginBtn" onclick="doLogin()">
+                <i class="bi bi-box-arrow-in-right"></i>
+                <span id="loginBtnText">Iniciar Sesión</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="login-footer">
+        <div class="footer-badges">
+            <span><i class="bi bi-shield-check"></i> <span id="badge1">Seguro</span></span>
+            <span class="sep">|</span>
+            <span><i class="bi bi-patch-check"></i> <span id="badge2">Confiable</span></span>
+            <span class="sep">|</span>
+            <span><i class="bi bi-lightning-charge"></i> <span id="badge3">Eficiente</span></span>
+        </div>
+        <div class="footer-copy" id="footerCopy">© <em>2026</em> Printer Monitor. Todos los derechos reservados.</div>
+    </footer>
+
+    <script>
+        // ── i18n ──────────────────────────────────────────────
+        const L = {
+            es: {
+                title: 'Iniciar Sesión',
+                subtitle: 'Ingresa tus credenciales para continuar',
+                user_label: 'Usuario',
+                user_ph: 'Ingresa tu usuario',
+                pass_label: 'Contraseña',
+                pass_ph: 'Ingresa tu contraseña',
+                btn_login: 'Iniciar Sesión',
+                btn_loading: 'Verificando...',
+                err_empty: 'Ingresa usuario y contraseña.',
+                err_server: 'No se pudo conectar con el servidor.',
+                brand_subtitle: 'Monitor de Impresora',
+                brand_desc: 'Monitorea el estado, consumibles y contadores de todas tus impresoras Ricoh en tiempo real.',
+                feat1_title: 'Estado en tiempo real',
+                feat1_desc: 'Visualiza el estado de todas tus impresoras al instante.',
+                feat2_title: 'Consumibles',
+                feat2_desc: 'Controla niveles de tóner y recibe alertas inteligentes.',
+                feat3_title: 'Reportes',
+                feat3_desc: 'Genera reportes detallados y estadísticas de tus equipos.',
+                badge1: 'Seguro', badge2: 'Confiable', badge3: 'Eficiente',
+                copyright: '© <em>2026</em> Printer Monitor. Todos los derechos reservados.'
+            },
+            en: {
+                title: 'Sign In',
+                subtitle: 'Enter your credentials to continue',
+                user_label: 'Username',
+                user_ph: 'Enter your username',
+                pass_label: 'Password',
+                pass_ph: 'Enter your password',
+                btn_login: 'Sign In',
+                btn_loading: 'Verifying...',
+                err_empty: 'Please enter username and password.',
+                err_server: 'Could not connect to the server.',
+                brand_subtitle: 'Printer Monitor',
+                brand_desc: 'Monitor the status, consumables and counters of all your Ricoh printers in real time.',
+                feat1_title: 'Real-time status',
+                feat1_desc: 'View the status of all your printers instantly.',
+                feat2_title: 'Consumables',
+                feat2_desc: 'Track toner levels and receive smart alerts.',
+                feat3_title: 'Reports',
+                feat3_desc: 'Generate detailed reports and statistics for your devices.',
+                badge1: 'Secure', badge2: 'Reliable', badge3: 'Efficient',
+                copyright: '© <em>2026</em> Printer Monitor. All rights reserved.'
+            }
+        };
+
+        function getLang() { return localStorage.getItem('ricoh_language') || 'es'; }
+        function tr(key) { const lang = getLang(); return (L[lang] && L[lang][key]) || L.es[key] || key; }
+
+        function applyLang() {
+            const lang = getLang();
+            document.getElementById('cardTitle').textContent = tr('title');
+            document.getElementById('cardSubtitle').textContent = tr('subtitle');
+            document.getElementById('userLabel').textContent = tr('user_label');
+            document.getElementById('loginUser').placeholder = tr('user_ph');
+            document.getElementById('passLabel').textContent = tr('pass_label');
+            document.getElementById('loginPass').placeholder = tr('pass_ph');
+            document.getElementById('loginBtnText').textContent = tr('btn_login');
+            document.getElementById('brandSubtitle').textContent = tr('brand_subtitle');
+            document.getElementById('brandDesc').textContent = tr('brand_desc');
+            document.getElementById('feat1Title').textContent = tr('feat1_title');
+            document.getElementById('feat1Desc').textContent = tr('feat1_desc');
+            document.getElementById('feat2Title').textContent = tr('feat2_title');
+            document.getElementById('feat2Desc').textContent = tr('feat2_desc');
+            document.getElementById('feat3Title').textContent = tr('feat3_title');
+            document.getElementById('feat3Desc').textContent = tr('feat3_desc');
+            document.getElementById('badge1').textContent = tr('badge1');
+            document.getElementById('badge2').textContent = tr('badge2');
+            document.getElementById('badge3').textContent = tr('badge3');
+            document.getElementById('footerCopy').innerHTML = tr('copyright');
+            // Cambiar imagen de fondo según idioma
+            const bg = lang === 'en' ? 'loginIngles.jpg' : 'Login.jpg';
+            document.body.style.backgroundImage = `url('${bg}')`;
+        
+        
+        }
+
+        // ── init ──────────────────────────────────────────────
+        (function () {
+            if (localStorage.getItem('auth_token')) window.location.href = '/frontend/dashboard.html';
+            applyLang();
+        })();
+
+        function togglePass() {
+            const input = document.getElementById('loginPass');
+            const icon = document.getElementById('togglePassIcon');
+            const isPass = input.type === 'password';
+            input.type = isPass ? 'text' : 'password';
+            icon.className = isPass ? 'bi bi-eye-slash' : 'bi bi-eye';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+            document.getElementById('loginUser').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('loginPass').focus(); });
+        });
+
+        async function doLogin() {
+            const username = document.getElementById('loginUser').value.trim();
+            const password = document.getElementById('loginPass').value;
+            const btn = document.getElementById('loginBtn');
+            const err = document.getElementById('loginError');
+
+            err.style.display = 'none';
+            if (!username || !password) {
+                err.textContent = tr('err_empty');
+                err.style.display = 'block';
+                return;
+            }
+
+            btn.disabled = true;
+            document.getElementById('loginBtnText').textContent = tr('btn_loading');
+
+            try {
+                const res = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    err.textContent = data.detail || tr('err_server');
+                    err.style.display = 'block';
+                    return;
+                }
+                localStorage.setItem('auth_token', data.access_token);
+                localStorage.setItem('auth_user', JSON.stringify({
+                    display_name: data.display_name,
+                    is_admin: data.is_admin,
+                    allowed_tabs: data.allowed_tabs
+                }));
+                window.location.href = '/frontend/dashboard.html';
+            } catch (e) {
+                err.textContent = tr('err_server');
+                err.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                document.getElementById('loginBtnText').textContent = tr('btn_login');
+            }
+        }
+    </script>
+</body>
+</html>

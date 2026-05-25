@@ -1,0 +1,64 @@
+﻿from pydantic import BaseModel
+from typing import Optional
+
+class InventoryCreate(BaseModel):
+    name: str
+    model: str
+    type: str
+    quantity: int
+    min_stock: int
+
+class InventoryUpdate(BaseModel):
+    name: Optional[str] = None
+    model: Optional[str] = None
+    type: Optional[str] = None
+    quantity: Optional[int] = None
+    min_stock: Optional[int] = None
+
+class InventoryResponse(InventoryCreate):
+    id: int
+    class Config:
+        orm_mode = True
+
+class TonerControlUpdate(BaseModel):
+    check_date: str | None = None
+    backup_black: float | None = None
+    backup_cyan: float | None = None
+    backup_magenta: float | None = None
+    backup_yellow: float | None = None
+    pedido: str | None = None
+    work_order: str | None = None
+    notas: str | None = None
+
+class PrinterCreate(BaseModel):
+    shared_name: Optional[str] = None
+    name: Optional[str] = None
+    model: str
+    ip: str
+    serial: Optional[str] = None
+    location: Optional[str] = None
+    is_color: bool = False
+    snmp_community: str = "public"
+
+class PrinterUpdate(BaseModel):
+    shared_name: Optional[str] = None
+    name: Optional[str] = None
+    model: Optional[str] = None
+    ip: Optional[str] = None
+    serial: Optional[str] = None
+    location: Optional[str] = None
+    is_color: Optional[bool] = None
+    snmp_community: Optional[str] = None
+
+class PrinterResponse(BaseModel):
+    id: int
+    shared_name: Optional[str] = None
+    name: Optional[str] = None
+    model: Optional[str] = None
+    ip: str
+    serial: Optional[str] = None
+    location: Optional[str] = None
+    is_color: bool
+    snmp_community: str
+    class Config:
+        orm_mode = True

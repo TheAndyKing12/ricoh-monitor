@@ -1,0 +1,42 @@
+﻿with open('frontend/dashboard.html', encoding='utf-8') as f:
+    content = f.read()
+
+js_start = content.index('<script>') + len('<script>')
+js_end = content.index('</script>')
+js = content[js_start:js_end]
+
+# Find absolute line number offset of <script> in file
+script_line_offset = content[:js_start].count('\n')
+
+balance = 0
+in_str = None
+escape = False
+lines = js.split('\n')
+max_balance = 0
+max_balance_line = 0
+
+for line_idx, line in enumerate(lines):
+    prev = balance
+    for ch in line:
+        if escape:
+            escape = False
+            continue
+        if ch == '\\' and in_str in ('"', "'", '`'):
+            escape = True
+            continue
+        if in_str is None:
+            if ch == '{': balance += 1
+            elif ch == '}': balance -= 1
+            elif ch in ('"', "'", '`'): in_str = ch
+        else:
+            if ch == in_str: in_str = None
+    if balance > max_balance:
+        max_balance = balance
+        max_balance_line = line_idx + 1 + script_line_offset
+
+file_line = max_balance_line
+print(f"Pico de balance ({max_balance}) en linea del archivo: {file_line}")
+# Print surrounding lines
+all_lines = content.split('\n')
+for i in range(max(0, file_line-2), min(len(all_lines), file_line+2)):
+    print(f"  {i+1}: {all_lines[i][:120]}")

@@ -1,0 +1,1565 @@
+/* ================================================================ *
+ * File Name :	adrsListAll.xjs
+ *
+ * Features	 :	ã¢ãã¬ã¹å¸³ä¸è¦§ å¨ä»¶è¡¨ç¤ºæã«ä½¿ç¨ããJavaScript
+ * Designer	 :	Masakatsu Mizuguchi
+ * Include	 :	/scripts/jQuery.xjs
+ *				/xjs/adrsList.xjs
+ *				/xjs/ItemDisable.xjs
+ *				/xjs/ModalDialog.xjs
+ *				/xjs/ReportListCommon.xjs
+ * ---------------------------------------------------------------- *
+ * Copyright (C) 2010 RICOH Co.,Ltd. All rights reserved.
+ * ================================================================ */
+/* ================================================================ *
+ * Const(local)			XXX
+ * ================================================================ */
+var DATAIDX_ENTRYID		= 0;
+
+var REPORTLISTAREA_ID	= "ReportListArea";
+var DATATABLEBODY_ID		= "#"+REPORTLISTAREA_ID+"_TableBody";
+var DATAAREA_ID		= REPORTLISTAREA_ID+"_Data";
+
+/* edit mode */
+var MODE_ADDUSER		= "ADDUSER";
+var MODE_MODUSER		= "MODUSER";
+
+var ENTRYTYPE_USER				= 1;
+var ENTRYTYPE_GROUP				= 2;
+
+var IMAGE_PATH				= "/images/";
+
+/* ================================================================ *
+ * Variable(global)		g_xxx ( global )
+ * ================================================================ */
+/* ã¦ã£ã¶ã¼ãã¢ã¼ã */
+var g_wizardMode	=	MODE_ADDUSER;
+
+/* ================================================================ *
+ * Variable(local)		gl_xxx ( global local )
+ * ================================================================ */
+var gl_entryTypeArray	= new Array();	/* ã¨ã³ããªã¿ã¤ãç»å(åèª­ã¿)	*/
+
+var gl_curEntryType		= ENTRYTYPE_USER;
+
+/* image preload */
+var arrayImagePath	= 
+[
+	"iconUser.gif",
+	"iconGroup.gif",
+	"btnSortDown.gif",
+	"btnSortUp.gif",
+	"btnSortDown-d.gif",
+	"btnSortUp-d.gif",
+	"btnSortDown-r.gif",
+	"btnSortUp-r.gif",
+	"btnSortDown-s.gif",
+	"btnSortUp-s.gif"
+];
+for( var idx = 0; idx < arrayImagePath.length; idx++ )
+{
+	gl_entryTypeArray[idx] = new Image();
+	gl_entryTypeArray[idx].src = IMAGE_PATH+arrayImagePath[idx];
+}
+
+/* ================================================================ *
+ * Object			obj_xxx ( object )
+ * ================================================================ */
+/* --------------------------------------------------------------- *
+ * Connect Machine
+ * --------------------------------------------------------------- */
+function obj_connectMachine()
+{
+	this.ajaxSend	= function(url,reqType,sendData,recvFunc,multipartData)
+	{
+		ajax_async(
+			url,
+			reqType,
+			sendData,
+			function(recvData)
+			{
+				buttonCheckFlag = false;
+				recvFunc(recvData);
+			},
+			multipartData
+			);
+	};
+	
+	this.get		= function(url,postData,recvFunc,multipartData,updateHtml)
+	{
+		/* CSRF */
+		var wimToken = $("input[name='wimToken']").val();
+		var data = "";
+		
+		if( multipartData )
+		{
+			multipartData["wimToken"] = wimToken;
+		}
+		else
+		{
+			data = postData+"&wimToken="+wimToken;
+		}
+		
+		if( updateHtml )
+		{
+			g_objModalDialog.update( updateHtml );
+		}
+		else
+		{
+			g_objModalDialog.update("");
+		}
+
+		this.ajaxSend(
+			url,
+			"POST",
+			data,
+			recvFunc,
+			multipartData
+		);
+		
+		g_objModalDialog.show();
+	};
+	
+	this.set		= function(url,postData,successFunc)
+	{
+		g_objModalDialog.wait(true);
+		this.ajaxSend( 
+			url,
+			"POST",
+			postData,
+			function(recvData)
+			{
+				g_objModalDialog.wait(false);
+				g_objConnectMachine.dataToList(recvData,successFunc,g_objModalDialog.updateBodyOnly);
+			}
+			);
+	};
+	
+	this.dataToList	= function(recvData,recvFunc,errorFunc)
+	{
+		var recvEntryList;
+		/* ãã¼ã¿ãã§ãã¯(åãã"["ãªãã¨ã³ããªä¸è¦§) */
+		if( recvData.indexOf("[") == 0 )
+		{
+			/* evalè©ä¾¡ã§ã¨ã©ã¼ãåºãå ´åãcatchã§ã¨ã©ã¼æ¤åºãã */
+			try
+			{
+				recvEntryList = eval(recvData);
+			}
+			catch(error)
+			{
+				g_objAdrsListLoad.loadPause(true);
+				/* error message */
+				$(".message").append("<span class='meserror'>"+g_textRes_errorMessage+"</span>");
+				return;
+			}
+			/* ã¨ã³ããªåä¿¡å¦ç(Page/All) */
+			recvFunc(recvEntryList);
+		}
+		/* ããä»¥å¤ã¯ã¨ã©ã¼ãã¼ã¸ */
+		else
+		{
+			errorFunc(recvData);
+			return;
+		}
+	};
+	
+	this.errorClear		= function()
+	{
+		$(".meserror").remove();
+	};
+	
+}
+var g_objConnectMachine	= new obj_connectMachine();
+
+/* --------------------------------------------------------------- *
+ * Adrs List Entry
+ * --------------------------------------------------------------- */
+function obj_adrsListEntry()
+{
+	this.entryHash	= new Array();		/* hash( key: entryId, value: entryData )	*/
+	this.entrySortList	= new Array();	/* sortArray( value: entryId )				*/
+	
+	this.focusId	= -1;
+	
+	this.add		= function( entryList )
+	{
+		/* ããã¼è¡ãéè¡¨ç¤ºã« */
+		this.dummryRowHidden();
+		
+		/* ãã¼ã¿è¿½å  */
+		var entryRows = "";
+		jQuery.each(entryList,function()
+		{
+			var entry = this;
+			/* ã¨ã³ããªIDåå¾ */
+			var entryId = this[DATAIDX_ENTRYID];
+			/* åå¾æ¸ã¿IDãªãã°å¤ãæ´æ°ãã¦çµäº */
+			if( g_objListEntry.entryHash[entryId] )
+			{
+				g_objListEntry.entryHash[entryId] = entry;
+				return;
+			}
+			/* ããã·ã¥ã«è¿½å  */
+			g_objListEntry.entryHash[entryId] = entry;
+			/* ã½ã¼ããªã¹ãã«å¥ãã */
+			g_objListEntry.entrySortList.push(entryId);
+			
+			/* è¡é ­ */
+			entryRows += "<tr>";
+			var user = this;
+			/* è¡ã®åå®¹ãã¢ãã¬ã¹å¸³ä¸è¦§ç»é¢è¡¨ç¤ºæã«ãããæå ±ããåæå ±(ä½çªç®ãä½ã®æå ±)ãåå¾ãã¦ãã */
+			/* ãã®åæå ±ãç¨ãã¦ãè¡ã®åå®¹ãä½æãã */
+			jQuery.each(g_columnInfoHash,function(key,value)
+			{
+				entryRows += value['func'](key,value['num'],user);
+			});
+			/* è¡æ« */
+			entryRows += "</tr>";
+		});
+		
+		/* è¡è¿½å  */
+		$(DATATABLEBODY_ID).append(entryRows);
+	};
+	
+	this.edit	= function( entryList )
+	{
+		var editEntryId = entryList[0][DATAIDX_ENTRYID];
+		/* è¿½å åã®ããã·ã¥æ°åå¾ */
+		var oldHashLength = g_objListEntry.entrySortList.length;
+		
+		g_objListEntry.add(entryList);
+		this.focusId = editEntryId;
+
+		/* ã½ã¼ã */
+		g_objListEntry.sort(null);
+
+		/* ãã¼ãã«åå¹ã»ãã¼ãã«å¨ä½ãèª¿ç¯ãã */
+		ReportListCommon_AjustWidth(REPORTLISTAREA_ID,1);
+		
+		$("#syncNotify").show();
+		
+		/* è¿½å åæ°ãè¿ã */
+		return ( g_objListEntry.entrySortList.length - oldHashLength );
+	};
+
+	this.del				= function(deleteEntryArray)
+	{
+		var groupCnt = 0;
+		var userCnt = 0;
+
+		jQuery.each(deleteEntryArray,function()
+		{
+			var entryId = parseInt(this,10);
+			var entryData = g_objListEntry.entryHash[entryId];
+			if( entryData )
+			{
+				var entryType = entryData[dataidx_entry_type];
+
+				delete g_objListEntry.entryHash[entryId];
+				var idx = jQuery.inArray(entryId,g_objListEntry.entrySortList);
+				if( idx >= 0 )
+				{
+					/* æå¾ã®è¡ãåé¤ */
+					$(DATATABLEBODY_ID+" tr:last").remove();
+					g_objListEntry.entrySortList.splice(idx,1);
+				}
+				/* delete count */
+				if( entryType == 1 )
+				{
+					userCnt--;
+				}
+				else
+				{
+					groupCnt--;
+				}
+				/* select delete */
+				g_objAdrsSelectEntry.del( entryId );
+			}
+
+			return true;
+		});
+		
+		$("#syncNotify").show();
+		
+		this.focusId = -1;
+		/* count */
+		g_objAdrsCount.updateEntryCnt( userCnt, groupCnt );
+	};
+	
+	this.sortHandler		= function(leftKey,rightKey)
+	{
+		var valueL = g_objListEntry.entryHash[leftKey][gl_sortIndex];
+		var valueR = g_objListEntry.entryHash[rightKey][gl_sortIndex];
+		var leftId = g_objListEntry.entryHash[leftKey][dataidx_entry_index];
+		var rightId = g_objListEntry.entryHash[rightKey][dataidx_entry_index];
+		
+		if( valueL > valueR )
+		{
+			return g_reportListSortType;
+		}
+		if( valueL < valueR )
+		{
+			return g_reportListSortType*(-1);
+		}
+		if( rightId < leftId )
+		{
+			return g_reportListSortType;
+		}
+		if( rightId > leftId )
+		{
+			return g_reportListSortType*(-1);
+		}
+		return 0;
+	};
+	
+	this.sort				= function(targetCell)
+	{
+		var targetObj = null;
+		if( targetCell )
+		{
+			/* sort index search */
+			var headerCells	= targetCell.parents("tbody").find("th");
+			gl_sortIndex = headerCells.index(targetCell);
+			targetObj = targetCell.get(0);
+		}
+		ReportListCommon_Sort( g_objListEntry.entrySortList, this.sortHandler, targetObj );
+
+		this.redraw();
+	};
+	
+	this.sortAreaClick		= function()
+	{
+		g_objAdrsListLoad.loadCompDisp();
+		g_objListEntry.sort( $(this).parents("th") );
+	};
+	
+	this.redraw				= function()
+	{
+		var dataArea	= document.getElementById(DATAAREA_ID);
+		var rows = $(DATATABLEBODY_ID+" tr");
+		
+		/* è¡¨ç¤ºãããã¼ã¿ãç¡ããã°ãããã¼ãè¡¨ç¤ºãã */
+		if( 0 < this.entrySortList.length )
+		{
+			this.dummryRowHidden();
+		}
+		else
+		{
+			this.dummyRowDisp();
+			return;
+		}
+		
+		for( num = 0;num < g_objListEntry.entrySortList.length; num++ )
+		{
+			var entry = g_objListEntry.entryHash[g_objListEntry.entrySortList[num]];
+
+			if( entry )
+			{
+				var entryRows = "";
+				var focusClass = "bgc-f9cfb2";
+				
+				/* è¡ã®åå®¹ãã¢ãã¬ã¹å¸³ä¸è¦§ç»é¢è¡¨ç¤ºæã«ãããæå ±ããåæå ±(ä½çªç®ãä½ã®æå ±)ãåå¾ãã¦ãã */
+				/* ãã®åæå ±ãç¨ãã¦ãè¡ã®åå®¹ãä½æãã */
+				jQuery.each(g_columnInfoHash,function(key,value)
+				{
+					entryRows += value['func'](key,value['num'],entry);
+				});
+				var row = rows.eq(num+1);
+				if( entry[DATAIDX_ENTRYID] == this.focusId )
+				{
+					row.addClass(focusClass);
+					dataArea.scrollTop = ( row.height() * num );
+				}
+				else
+				{
+					row.removeClass(focusClass);
+				}
+				row.html(entryRows);
+			}
+		}
+	};
+	
+	this.dummryRowHidden	= function()
+	{
+		$(DATATABLEBODY_ID+" .reportListDummyRow").css("display","none");
+		$(DATATABLEBODY_ID+" .reportListDummyRow td").css("border-width","0px");
+	};
+	this.dummyRowDisp		= function()
+	{
+		$(DATATABLEBODY_ID+" .reportListDummyRow").css("display","block");
+		$(DATATABLEBODY_ID+" .reportListDummyRow td").css("border-width","1px");
+	};
+};
+
+var g_objListEntry	= new obj_adrsListEntry();
+
+/* --------------------------------------------------------------- *
+ * Adrs List Load
+ * --------------------------------------------------------------- */
+function obj_adrsListLoad()
+{
+	/*** Entry Load Status ***/
+	/* 0:	Loading				*/
+	/* 1:	Wait for receiving	*/
+	/* 2:	Pause				*/
+	/* 3:	Complete			*/
+
+	/*** member ***/
+	this.loadSts	= 2;
+	
+	/*** method ***/
+	/* Load Start */
+	this.loadStart	= function()
+	{
+		g_objConnectMachine.errorClear();
+		if( ( this.loadSts == 3 )
+		 || ( this.loadSts == 0 )
+		  )
+		{
+			return;
+		}
+		/* display update */
+		$("#button_loadStsChange").val(g_textResArray_cancelButton[0]);
+		$("#span_loadingStatus").html(g_textResArray_loadStatus[0]);
+		
+		/* start */
+		if( 2 == this.loadSts )
+		{
+			if( g_objAdrsCount.getEntryCnt() > 0 )
+			{
+				this.load();
+			}
+			else
+			{
+				this.loadComplate();
+				return;
+			}
+		}
+		/* status update */
+		this.loadSts = 0;
+	};
+	/* next load */
+	this.loadNext	= function()
+	{
+		if( this.loadSts != 0 )
+		{
+			return;
+		}
+		this.load();
+	};
+	/* load */
+	this.load		= function()
+	{
+		/* 50: 1åã®åå¾åæ° */
+		var loadedCount = g_objListEntry.entrySortList.length;
+		var pageNum = Math.floor( loadedCount / 50 ) + 1;
+		
+		var postData = "listCountIn="+50+"&getCountIn="+pageNum;
+		g_objConnectMachine.ajaxSend(
+			ADRS_LIST_LOADENTRY,
+			"GET",
+			postData,
+			this.loadRecv);
+	};
+	/* load recv handler */
+	this.loadRecv	= function(recvData)
+	{
+		if( 1 == g_objAdrsListLoad.loadSts )
+		{
+			g_objAdrsListLoad.loadSts = 2;
+		}
+		g_objConnectMachine.dataToList(recvData,g_objAdrsListLoad.recvEntry,
+			function(recvData)
+			{
+				document.write(recvData);
+				document.close();
+			});
+	};
+	/* recv entry */
+	this.recvEntry	= function(recvEntryList)
+	{
+		/* è¿½å åã®ã¨ã³ããªã¼ãªã¹ãæ°åå¾ */
+		var oldListLength = g_objListEntry.entrySortList.length;
+		
+		/* ã¨ã³ããªãªã¹ãè¿½å æä½ */
+		g_objListEntry.add(recvEntryList);
+		
+		/* ã­ã¼ãæªå®äºãªãã° */
+		if( g_objListEntry.entrySortList.length < g_objAdrsCount.getEntryCnt() )
+		{
+			g_objAdrsListLoad.loadNext();
+			
+			ReportListCommon_AjustWidth(REPORTLISTAREA_ID,oldListLength+1);
+			g_objAdrsCount.updateLoadedCnt();
+		}
+		/* ã­ã¼ãå®äº */
+		else
+		{
+			g_objAdrsListLoad.loadComplate();
+		}
+	};
+	/* load pause */
+	this.loadPause	= function(err)
+	{
+		g_objConnectMachine.errorClear();
+
+		if( ( this.loadSts == 3 )
+		 || ( this.loadSts == 2 )
+		  )
+		{
+			return;
+		}
+		/* display update */
+		$("#button_loadStsChange").val(g_textResArray_cancelButton[1]);
+		$("#span_loadingStatus").html(g_textResArray_loadStatus[1]);
+		/* status update */
+		if( err != true )
+		{
+			this.loadSts = 1;
+		}
+		else
+		{
+			this.loadSts = 2;
+		}
+	};
+	/* load pause button click */
+	this.loadPauseButtonClick	= function()
+	{
+		switch( this.loadSts )
+		{
+			case 0:
+				this.loadPause(false);
+				break;
+			case 1:
+			case 2:
+				this.loadStart();
+				break;
+			default:
+				break;
+		}
+	};
+	/* load complete */
+	this.loadComplate	= function()
+	{
+		if( this.loadSts == 3 )
+		{
+			return;
+		}
+		g_objConnectMachine.errorClear();
+		/* status update */
+		this.loadSts = 3;
+		
+		/* display update */
+		$("#button_loadStsChange").hide();
+		$("#span_loadingStatus").html(g_textResArray_loadStatus[2]);
+		
+		g_objAdrsCount.updateLoadedCnt();
+
+		ReportListCommon_AjustWidth(REPORTLISTAREA_ID,1);
+
+		/* sort start */
+		ReportListCommon_SortInit( REPORTLISTAREA_ID,g_objListEntry.sortAreaClick, gl_sortIndex );
+	};
+	this.loadCompDisp	= function()
+	{
+		if( this.loadSts == 3 )
+		{
+			$("#div_progressDisp").css("display","none");
+		}
+	};
+
+}
+
+var g_objAdrsListLoad	= new obj_adrsListLoad();
+
+/* --------------------------------------------------------------- *
+ * Entry Count
+ * --------------------------------------------------------------- */
+function obj_adrsCount()
+{
+	/* member */
+	this.userCnt	= 0;
+	this.groupCnt	= 0;
+
+	/* method */
+	this.init	= function()
+	{
+		this.userCnt	= Number($("#span_numOfUsers").html());
+		this.groupCnt	= Number($("#span_numOfGroups").html());
+		
+		this.updateEntryCnt( 0, 0 );
+	};
+	this.updateEntryCnt	= function( userAdd, groupAdd )
+	{
+		/* count update */
+		this.userCnt	+= userAdd;
+		this.groupCnt	+= groupAdd;
+		if( this.userCnt < 0 )
+		{
+			this.userCnt = 0;
+		}
+		if( this.groupCnt < 0 )
+		{
+			this.groupCnt = 0;
+		}
+		/* display update */
+		$("#span_numOfUsers").html(this.userCnt);
+		$("#span_numOfGroups").html(this.groupCnt);
+		$("#span_numOfEntrys").html(this.getEntryCnt());
+		
+		this.updateLoadedCnt();
+	};
+	this.updateLoadedCnt	= function()
+	{
+		/* count update */
+		var loadedCnt = g_objListEntry.entrySortList.length;
+		
+		var progre = 0;
+		var entryCnt = this.userCnt + this.groupCnt;
+		if( entryCnt > 0 )
+		{
+			progre = ( loadedCnt / entryCnt );
+		}
+		else
+		{
+			progre = 1;
+		}
+		/* display update */
+		var probarWidth = $("#div_loadingArea").width() - 4;	/* èæ¯ç»åã®æ ã«åããã¦ã-4ãã */
+		$("#img_loading").width( probarWidth * progre );
+		$("#span_numOfLoadedEntrys").html(loadedCnt);
+	};
+	this.getEntryCnt = function()
+	{
+		return this.userCnt + this.groupCnt;
+	};
+	this.updateSelectCnt	= function()
+	{
+		var cnt = g_objAdrsSelectEntry.selectIdList.length;
+		$("#span_selectCount").html(cnt);
+	};
+}
+
+var	g_objAdrsCount	= new obj_adrsCount();
+
+/* --------------------------------------------------------------- *
+ * Select Entry
+ * --------------------------------------------------------------- */
+function obj_adrsSelectEntry()
+{
+	/*** member ***/
+	this.selectIdList = new Array();
+	
+	/*** method ***/
+	this.selectClick	= function( selectBox )
+	{
+		var entryId = Number(selectBox.value);
+		if( selectBox.checked == true )
+		{
+			this.add( entryId );
+		}
+		else
+		{
+			this.del( entryId );
+		}
+	};
+	
+	this.selectAll		= function()
+	{
+		var selects = $(":checkbox[name='entryIndex']");
+		selects.attr("checked","checked");
+		this.selectIdList = new Array();
+		selects.each( function()
+		{
+			g_objAdrsSelectEntry.add( Number($(this).val()) );
+		});
+		g_objAdrsCount.updateSelectCnt();
+	};
+	
+	this.selectClear		= function()
+	{
+		var selects = $(":checkbox[name='entryIndex']");
+		selects.removeAttr("checked");
+		this.selectIdList = new Array();
+		g_objAdrsCount.updateSelectCnt();
+	};
+	
+	this.add			= function( entryId )
+	{
+		var idx = jQuery.inArray( entryId , this.selectIdList );
+		if( idx < 0 )
+		{
+			this.selectIdList.push( entryId );
+		}
+		g_objAdrsCount.updateSelectCnt();
+	};
+	this.del			= function( entryId )
+	{
+		var idx = jQuery.inArray( entryId , this.selectIdList );
+		if( idx >= 0 )
+		{
+			this.selectIdList.splice( idx, 1 );
+		}
+		g_objAdrsCount.updateSelectCnt();
+	};
+};
+
+var g_objAdrsSelectEntry	= new obj_adrsSelectEntry();
+
+/* --------------------------------------------------------------- *
+ * Create Cell
+ * --------------------------------------------------------------- */
+function obj_adrsCellCreate()
+{
+	/*** method ***/
+	this.baseCreate	= function( data )
+	{
+		return "<td class='listData'><nobr>"+data+"</nobr></td>";
+	};
+	
+	this.selectCell	= function(key,num,user)
+	{
+		var entryId = user[DATAIDX_ENTRYID];
+		var checked = "";
+		var idx = jQuery.inArray( entryId , g_objAdrsSelectEntry.selectIdList );
+		if( idx >= 0 )
+		{
+			checked = "checked='true'";
+		}
+		
+		return g_objAdrsCellCreate.baseCreate("<input type='checkbox' value='"+entryId+"' name='entryIndex' onClick='javascript:g_objAdrsSelectEntry.selectClick(this);' "+checked+" style='margin:0'>");
+	};
+	
+	this.textCell	= function(key,num,user)
+	{
+		var text = user[num];
+		
+		if( text == "" )
+		{
+			text = "---";
+		}
+		return g_objAdrsCellCreate.baseCreate(text);
+	};
+	
+	this.textResCell	= function(key,num,user)
+	{
+		var id = user[num];
+		var text = "---";
+		if( id >= 0 )
+		{
+			text = g_textResArray[user[num]];
+			if( !text )
+			{
+				text = "---";
+			}
+		}
+		else if( id == -1 )
+		{
+			text = "****";
+		}
+		return g_objAdrsCellCreate.baseCreate(text);
+	};
+	
+	this.imageCell	= function(key,num,user)
+	{
+		var imageId = user[num];
+
+		var image = gl_entryTypeArray[imageId-1];
+		
+		return g_objAdrsCellCreate.baseCreate("<img src='"+image.src+"'>");
+	};
+	
+	this.numberCell	= function(key,num,user)
+	{
+		var num = user[num];
+		var text = num;
+		
+		if( num < 0 )
+		{
+			text = "---";
+		}
+		return g_objAdrsCellCreate.baseCreate(text);
+	};
+	
+	this.dateCell = function(key,num,user)
+	{
+		var text = "";
+		var dateArray = user[num].split("#");
+		
+		text = dateArray[1];
+		
+		return g_objAdrsCellCreate.baseCreate(text);
+	};
+}
+
+var g_objAdrsCellCreate	= new obj_adrsCellCreate();
+
+/* --------------------------------------------------------------- *
+ * Edit Mode
+ * --------------------------------------------------------------- */
+function obj_adrsEditMode()
+{
+	this.set	= function(pos)
+	{
+		var anchor = $("#current");
+		anchor.removeAttr("id");
+		$(".a_editMode:eq("+pos+")").attr("id","current");
+	}
+	/* true:QUICK,false:NORMAL */
+	this.isQuick	= function()
+	{
+		var anchor = $("#current");
+		var editMode = anchor.attr("editmode");
+		var ret = true;
+		if( editMode != 'EDITMODE_QUICK_RB' )
+		{
+			ret = false;
+		}
+		return ret;
+	};
+}
+var g_objAdrsEditMode	= new obj_adrsEditMode();
+
+/* --------------------------------------------------------------- *
+ * Modal Dialog
+ * --------------------------------------------------------------- */
+function obj_adrsModalDialog()
+{
+	this.modalDialog = null;
+	this.init		= function()
+	{
+		this.modalDialog = new obj_modalDialog(MODALDIALOG_ID);
+	};
+	
+	this.show		= function()
+	{
+		$("a#TOP").remove();
+		this.modalDialog.show(MODALDIALOG_PARENT_ID);
+	};
+	
+	this.hide		= function()
+	{
+		this.modalDialog.hidden(MODALDIALOG_PARENT_ID);
+		this.modalDialog.setResizeHandler(null);
+
+		$("a#TOP").remove();
+		$("body").prepend('<a name="TOP" id="TOP"></a>');
+		var dialog = $("#"+MODALDIALOG_ID);
+		dialog.removeAttr("wizard");
+	};
+	
+	this.update		= function(html)
+	{
+		if( html != "" )
+		{
+			buttonCheckFlag = false;
+		}
+		g_objModalDialog.modalDialog.update(html);
+	};
+	
+	this.updateBodyOnly	= function(html)
+	{
+		if( html != "" )
+		{
+			buttonCheckFlag = false;
+		}
+		g_objModalDialog.modalDialog.updateBodyOnly(html);
+	};
+	
+	this.updateWizard = function(html)
+	{
+		if( html.indexOf("<body") > 0 )
+		{
+			g_objModalDialog.updateBodyOnly(html);
+			return;
+		}
+		var dialog = $("#"+MODALDIALOG_ID);
+		/* classãåé¤ãã */
+		dialog.removeClass("errorMessage");
+		/* modal dialog body(wizard) */
+		dialog.attr("wizard","on");
+		
+		g_objModalDialog.update(html);
+		
+		adrsWizardInit();
+		
+		g_objModalDialog.modalDialog.setResizeHandler(_wizard_resizeHandler);
+		g_objModalDialog.modalDialog.resize();
+	};
+	
+	this.wait	= function( waitSts )
+	{
+		if( true == waitSts )
+		{
+			this.modalDialog.body.css("cursor","wait");
+		}
+		else
+		{
+			this.modalDialog.body.css("cursor","default");
+		}
+	};
+}
+var g_objModalDialog	= new obj_adrsModalDialog();
+
+/* ================================================================ *
+ * Function ( external )	adrsXxxx
+ * ================================================================ */
+/* --------------------------------------------------------------- *
+ * Init
+ * --------------------------------------------------------------- */
+function adrsInit()
+{
+	/* ã¦ã¼ã¶ã¼è¿½å ã»ç·¨éã®å¹èª¿æ´ */
+	var tabs = document.getElementById("settinglist");
+	var btns = document.getElementById("settingBoxButtonArea");
+
+	if( tabs )
+	{
+		if( tabs.offsetWidth > btns.offsetWidth )
+		{
+			btns.style.width = ( tabs.offsetWidth + 10 ) + "px";
+		}
+	}
+	
+	/* é¸ææ°ã®å¹èª¿æ´ */
+	var width = $("#selectCount").width() + 30;
+	$("#selectCount").css("width",width+"px");
+	$("#selectCount").css("min-width",width+"px");
+	
+	/* æ°åæå */
+	g_objAdrsCount.init();
+	
+	/* ã¬ãã¼ããªã¹ãåæå */
+	ReportListCommon_Init(
+		REPORTLISTAREA_ID,
+		30,		/* ãã¼ã¿ã¨ãªã¢å³ä½ç½	*/
+		80,		/* ãã¼ã¿ã¨ãªã¢ä¸ä½ç½	*/
+		null,
+		null,
+		true	/* ã½ã¼ãæç¡			*/
+		);
+
+	/* ã¢ã¼ãã«ãã¤ã¢ã­ã°åæå */
+	g_objModalDialog.init();
+
+	/* testcode , comment out */
+	/* ãã¹ãããã¨ãã¯ãä¸ã®èª­ã¿è¾¼ã¿éå§ã¯comment outãã¦ãã ãã */
+	/* test_add(); */
+
+	/* èª­ã¿è¾¼ã¿éå§ */
+	g_objAdrsListLoad.loadStart();
+}
+/* --------------------------------------------------------------- *
+ * Select All
+ * --------------------------------------------------------------- */
+function adrsListSelectAll()
+{
+	g_objAdrsSelectEntry.selectAll();
+}
+/* --------------------------------------------------------------- *
+ * Select Clear
+ * --------------------------------------------------------------- */
+function adrsListSelectClear()
+{
+	g_objAdrsSelectEntry.selectClear();
+}
+/* --------------------------------------------------------------- *
+ * Cancel Button
+ * --------------------------------------------------------------- */
+function adrsListPauseButtonClick()
+{
+	g_objAdrsListLoad.loadPauseButtonClick();
+}
+/* --------------------------------------------------------------- *
+ * Edit Mode Change
+ * --------------------------------------------------------------- */
+function adrsListEditModeChg(pos)
+{
+	/* ãã­ã°ã¬ã¹ãã¼ãæ¶ã */
+	g_objAdrsListLoad.loadCompDisp();
+	
+	g_objAdrsEditMode.set(pos);
+}
+
+/* >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> *
+ *			[Edit Control]	Edit User/Group
+ * >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+/* >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> *
+ *			[Edit Control]	Add User
+ * >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+/* --------------------------------------------------------------- *
+ * Add User ShowModalDialog
+ * --------------------------------------------------------------- */
+function AddUser()
+{
+	/* ãã­ã°ã¬ã¹ãã¼ãæ¶ã */
+	g_objAdrsListLoad.loadCompDisp();
+	/* åå¾ãä¸­æ­ãã */
+	g_objAdrsListLoad.loadPause();
+	
+	gl_curEntryType = ENTRYTYPE_USER;
+	var isQuick = g_objAdrsEditMode.isQuick();
+	var sendAddr = ADRS_GET_USER_WIZARD;
+	var recvFunc = g_objModalDialog.updateWizard;
+	g_wizardMode = MODE_ADDUSER;
+	if( isQuick != true )
+	{
+		sendAddr = ADRS_GET_USER;
+		recvFunc = g_objModalDialog.updateBodyOnly;
+	}
+	
+	g_objConnectMachine.get(
+		sendAddr,
+		"mode=ADDUSER&outputSpecifyModeIn=DEFAULT",
+		recvFunc
+	);
+
+}
+
+/* >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> *
+ *			[Edit Control]	Add Group
+ * >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+/* --------------------------------------------------------------- *
+ * Add Group ShowModalDialog
+ * --------------------------------------------------------------- */
+function AddGroup()
+{
+	/* ãã­ã°ã¬ã¹ãã¼ãæ¶ã */
+	g_objAdrsListLoad.loadCompDisp();
+	/* åå¾ãä¸­æ­ãã */
+	g_objAdrsListLoad.loadPause();
+	
+	gl_curEntryType = ENTRYTYPE_GROUP;
+	g_wizardMode = MODE_ADDUSER;
+	g_objConnectMachine.get(
+		ADRS_GET_GROUP,
+		"mode=ADDGROUP&outputSpecifyModeIn=DEFAULT",
+		g_objModalDialog.updateBodyOnly
+	);
+
+}
+
+/* --------------------------------------------------------------- *
+ * recv entry list(group)
+ * --------------------------------------------------------------- */
+function _listall_recvEntryListGroup(recvEntryList)
+{
+	/* ã°ã«ã¼ãæå ±ã¨ã¦ã¼ã¶ã¼ã³ã¼ãæå ±ããå¥ãã«å¦çãã */
+
+	/* ã¦ã¼ã¶ã¼ã³ã¼ãæå ±ç¨å¦ç */
+	$("#span_numOfUserCode").html(recvEntryList[1][0]);
+	recvEntryList.splice(1,1);
+
+	/* ã°ã«ã¼ãæå ±ç¨å¦ç */
+	var addNum = g_objListEntry.edit(recvEntryList);
+
+	/* å¤æ´æ° */
+	g_objAdrsCount.updateEntryCnt( 0 , addNum );
+	
+	g_objModalDialog.hide();
+}
+
+/* --------------------------------------------------------------- *
+ * recv entry list(group)
+ * --------------------------------------------------------------- */
+function _listall_recvEntryListGroupContinue(recvEntryList)
+{
+	_listall_recvEntryListGroup(recvEntryList);
+	AddGroup();
+}
+
+
+/* --------------------------------------------------------------- *
+ * Edit ShowModalDialog
+ * --------------------------------------------------------------- */
+function Edit()
+{
+	var isQuick = g_objAdrsEditMode.isQuick();
+	var sendAddr;
+	var recvFunc = g_objModalDialog.updateBodyOnly;
+	var userMode = MODE_MODUSER;
+	
+	/* ãã­ã°ã¬ã¹ãã¼ãæ¶ã */
+	g_objAdrsListLoad.loadCompDisp();
+	
+	/* æªé¸æ */
+	if( g_objAdrsSelectEntry.selectIdList.length == 0 )
+	{
+		alert( g_textRes_guidance_noEntry );
+		return;
+	}
+	/* è¤æ°é¸æ */
+	if( g_objAdrsSelectEntry.selectIdList.length > 1 )
+	{
+		alert( g_textRes_guidance_multiEdit );
+		return;
+	}
+	
+	/* åå¾ãä¸­æ­ãã */
+	g_objAdrsListLoad.loadPause();
+	
+	gl_curEntryType = g_objListEntry.entryHash[g_objAdrsSelectEntry.selectIdList[0]][dataidx_entry_type];
+	var entryIdx = g_objListEntry.entryHash[g_objAdrsSelectEntry.selectIdList[0]][dataidx_entry_index];
+	
+	g_wizardMode = MODE_MODUSER;
+	if( gl_curEntryType == ENTRYTYPE_USER )
+	{
+		if( isQuick != true )
+		{
+			sendAddr = ADRS_GET_USER;
+		}
+		else
+		{
+			sendAddr = ADRS_GET_USER_WIZARD;
+			recvFunc = g_objModalDialog.updateWizard;
+		}
+	}
+	else
+	{
+		sendAddr = ADRS_GET_GROUP;
+		userMode = "MODGROUP";
+	}
+	
+	g_objConnectMachine.get(
+		sendAddr, 
+		"mode="+userMode+"&outputSpecifyModeIn=PROGRAMMED&entryIndexIn="+entryIdx,
+		recvFunc
+	);
+	
+	/* é¸æãå¤ã */
+	adrsListSelectClear();
+	
+}
+
+
+/* --------------------------------------------------------------- *
+ * Edit,Add Group OK
+ * --------------------------------------------------------------- */
+function Apply()
+{
+	var skip = new skip_info();
+	if (BaseForm) {
+		if (buttonCheckFlag) { return; }
+		buttonCheckFlag = true;
+		MainForm.mode.value = BaseForm.mode.value;
+
+		aplAvailSet();
+
+		if (CurrentMethod == ADRS_GET_USER) {
+			getSkipInfo(SKIP_USER_SET,EMPTY,skip);
+		}
+		else if (CurrentMethod == ADRS_GET_GROUP) {
+			getSkipInfo(SKIP_GROUP_SET,EMPTY,skip);
+		}
+ 		else if (CurrentMethod == ADRS_GET_USER_TEMPLATE) {
+			getSkipInfo(SKIP_USERTEMPLATE_SET,EMPTY,skip);
+		}
+
+		MainForm.wayFrom.value = skip.from;
+		MainForm.wayTo.value = skip.to;
+	}
+	else {
+		return;
+	}
+	
+	var postData = "inputSpecifyModeIn=WRITE&listUpdateIn=UPDATE&"+$(MainForm).serialize();
+	
+	if( gl_curEntryType == ENTRYTYPE_USER )
+	{
+		g_objConnectMachine.set(
+			ADRS_SET_USER,
+			postData,
+			_listall_recvEntryListUser
+			);
+	}
+	else
+	{
+		g_objConnectMachine.set( 
+			ADRS_SET_GROUP,
+			postData,
+			_listall_recvEntryListGroup
+			);
+	}
+
+}
+
+/* --------------------------------------------------------------- *
+ * recv entry list(user)
+ * --------------------------------------------------------------- */
+function _listall_recvEntryListUser(recvEntryList)
+{
+	/* ã¦ã¼ã¶ã¼æå ±ã¨ã¦ã¼ã¶ã¼ã³ã¼ãæå ±ããå¥ãã«å¦çãã */
+
+	/* ã¦ã¼ã¶ã¼ã³ã¼ãæå ±ç¨å¦ç */
+	$("#span_numOfUserCode").html(recvEntryList[1][0]);
+	recvEntryList.splice(1,1);
+
+	/* ã¦ã¼ã¶ã¼æå ±ç¨å¦ç */
+	var addNum = g_objListEntry.edit(recvEntryList);
+	
+	g_objAdrsCount.updateEntryCnt( addNum, 0 );
+
+	g_objModalDialog.hide();
+}
+
+/* --------------------------------------------------------------- *
+ * Edit,Add User Continue
+ * --------------------------------------------------------------- */
+function Continue()
+{
+	var skip = new skip_info();
+	if (BaseForm) {
+		if (buttonCheckFlag) {return; }
+		buttonCheckFlag = true;
+		MainForm.mode.value = BaseForm.mode.value;
+
+		aplAvailSet();
+
+		if (CurrentMethod == ADRS_GET_USER) {
+			getSkipInfo(SKIP_USER_CONTINUE,EMPTY,skip);
+		}
+		else if (CurrentMethod == ADRS_GET_GROUP) {
+			getSkipInfo(SKIP_GROUP_CONTINUE,EMPTY,skip);
+		}
+		MainForm.wayFrom.value = skip.from;
+		MainForm.wayTo.value = skip.to;
+	}
+	else {
+		return;
+	}
+
+	var postData = "inputSpecifyModeIn=WRITE&listUpdateIn=UPDATE&"+$(MainForm).serialize();
+	
+	if( gl_curEntryType == ENTRYTYPE_USER )
+	{
+		g_objConnectMachine.set( 
+			ADRS_SET_USER,
+			postData,
+			_listall_recvEntryListUserContinue
+			);
+	}
+	else
+	{
+		g_objConnectMachine.set( 
+			ADRS_SET_GROUP,
+			postData,
+			_listall_recvEntryListGroupContinue
+			);
+	}
+}
+
+/* --------------------------------------------------------------- *
+ * recv entry list(user)
+ * --------------------------------------------------------------- */
+function _listall_recvEntryListUserContinue(recvEntryList)
+{
+	_listall_recvEntryListUser(recvEntryList);
+	AddUser();
+}
+
+
+/* >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> *
+ *			[Edit Control]	Delete
+ * >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+/* --------------------------------------------------------------- *
+ * Delete OK
+ * --------------------------------------------------------------- */
+function Delete()
+{
+	/* ãã­ã°ã¬ã¹ãã¼ãæ¶ã */
+	g_objAdrsListLoad.loadCompDisp();
+	var result = 0;
+	/* æªé¸æ */
+	if( g_objAdrsSelectEntry.selectIdList.length == 0 )
+	{
+		alert( g_textRes_guidance_noEntry );
+		return;
+	}
+
+	result = window.confirm( g_textRes_guidance_confDelete );
+	if( false == result )
+	{
+		return;
+	}
+	
+	$("#DELETE_PT").show();
+	$("#CENTRA_PT").hide();
+	centra_progressMsg("DELETE_PROG_G");
+	
+	/* åå¾ãä¸­æ­ãã */
+	g_objAdrsListLoad.loadPause();
+	
+	var multipartData = new Object();
+	var deleteEntries = "";
+	jQuery.each(g_objAdrsSelectEntry.selectIdList, function()
+	{
+		deleteEntries += this+",";
+	});
+	
+	multipartData["entryIndex"] = deleteEntries;
+	
+	g_objConnectMachine.get(
+		"adrsDeleteEntries.cgi",
+		"",
+		g_objModalDialog.updateBodyOnly,
+		multipartData,
+		$("#div_progress").html()
+	);
+}
+
+/* --------------------------------------------------------------- *
+ * recv entry list(delete)
+ * --------------------------------------------------------------- */
+function adrsListDelete(deleteEntries,userCodeNum)
+{
+	var deleteEntryArray;
+	try
+	{
+		deleteEntryArray = eval("["+deleteEntries+"]");
+	}
+	catch(error)
+	{
+		/* éä¿¡ã¨ã©ã¼ */
+		$(".message").append("<span class='meserror'>"+g_textRes_errorMessage+"</span>");
+		return;
+	}
+
+	/* ã¦ã¼ã¶ã¼ã³ã¼ãæå ±ç¨å¦ç */
+	$("#span_numOfUserCode").html(userCodeNum);
+
+	if( deleteEntryArray.length == 0 )
+	{
+		return;
+	}
+	g_objListEntry.del( deleteEntryArray );
+	
+	/* ã½ã¼ã */
+	g_objListEntry.sort(null);
+}
+
+/* >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> *
+ *			[Add/Edit User/Group]	Common
+ * >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+/* --------------------------------------------------------------- *
+ * submit form
+ * --------------------------------------------------------------- */
+function formSubmit(form)
+{
+	aplAvailSet();
+
+	var postData = $(form).serialize();
+
+	g_objConnectMachine.set(
+		form.action,
+		postData,
+		g_objModalDialog.updateBodyOnly
+	);
+	
+	g_objModalDialog.update("");
+
+	return;
+}
+
+function uploadSubmit(form)
+{
+	ajax_upload( form, g_objModalDialog.updateBodyOnly );
+	g_objModalDialog.update("");
+
+}
+function jumpButtonURL()
+{
+	g_objModalDialog.hide();
+	adrsCentraModalClose();
+}
+
+
+/* >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> *
+ *						List Edit Control
+ * >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+function Maintenance(mode)
+{
+	/* CSRFå¯¾å¿ */
+	var wimTokenNum = $("input[name='wimToken']").val()
+
+	location.href = ADRS_MAINTENANCE + "?mode="+mode+"&wimToken="+wimTokenNum;
+	ItemDisable_PageDisable(document.getElementById(MODALDIALOG_PARENT_ID));
+}
+
+function UserTemplate()
+{
+	/* CSRFå¯¾å¿ */
+	var wimTokenNum = $("input[name='wimToken']").val()
+
+	location.href = ADRS_GET_USER_TEMPLATE + "?mode=USER_TEMPLATE&outputSpecifyModeIn=DEFAULT&wimToken="+wimTokenNum;
+	ItemDisable_PageDisable(document.getElementById(MODALDIALOG_PARENT_ID));
+}
+
+function AdrsCentra()
+{
+	/* CSRFå¯¾å¿ */
+	var wimTokenNum = $("input[name='wimToken']").val()
+
+	location.href = ADRS_CENTRA + "?mode=CENTRA&wimToken="+wimTokenNum;
+	ItemDisable_PageDisable(document.getElementById(MODALDIALOG_PARENT_ID));
+}
+
+function Reload()
+{
+	location.href = ADRS_LIST;
+}
+/* --------------------------------------------------------------- *
+ * Delete Cancel
+ * --------------------------------------------------------------- */
+function adrsListJump()
+{
+	g_objModalDialog.hide();
+}
+
+function adrsGenErrOk()
+{
+	openTopPage();
+}
+
+function adrsServerSyncOk()
+{
+	$("#syncNotify").hide();
+	adrsCentraListJump();
+}
+
+function adrsCliSyncOk()
+{
+	Reload();
+}
+
+function adrsCentraListJump()
+{
+	adrsCentraModalClose();
+}
+function adrsCentraModalClose()
+{
+	if( gl_centraModalDialog )
+	{
+		gl_centraModalDialog.hidden(MODALDIALOG_PARENT_ID);
+	}
+}
+
+/* --------------------------------------------------------------- *
+ * TEST ( Auto Add User/Group )
+ * --------------------------------------------------------------- */
+/*
+var test_entryIndex = 0;	// start entryIndex
+function test_add()
+{
+	test_entryIndex = 2000;
+	test_addUserStart();
+	//test_addGroupStart();
+}
+
+function test_addUser()
+{
+	var sendData;
+	var wimtoken;
+
+	wimtoken = $("input[name='wimToken']").val();
+	test_entryIndex++;
+
+	if(test_entryIndex > 2000)
+	{
+		return;
+	}
+
+	sendData = "inputSpecifyModeIn=WRITE&listUpdateIn=UPDATE&wimToken="+wimtoken+"&mode=MODUSER&pageSpecifiedIn=&pageNumberIn=&searchSpecifyModeIn=&outputSpecifyModeIn=&inputSpecifyModeIn=&wayFrom=adrsGetUser.cgi&wayTo=adrsList.cgi&isSelfPasswordEditMode=false&priorityIn=5&entryIndexIn="+("00000" + test_entryIndex).slice(-5)+"&entryNameIn=testtest&entryReadNameIn=test&entryDisplayNameIn=test&entryTagInfoIn=2&entryTagInfoIn=2&entryTagInfoIn=2&entryTagInfoIn=1&userCodeIn=&smtpAuthAccountIn=AUTH_ASSIGNMENT_O&smtpAuthUserNameIn=test&folderAuthAccountIn=AUTH_ASSIGNMENT_O&folderAuthUserNameIn=test&ldapAuthAccountIn=AUTH_ASSIGNMENT_O&ldapAuthUserNameIn=test&availableFuncIn=MFPBROWSER&entryUseIn=ENTRYUSE_TO_O&entryUseIn=ENTRYUSE_FROM_O&mailAddressIn=test@test&isCertificateExist=false&folderProtocolIn=SMB_O&folderPathNameIn=";
+
+	ajax_async(
+	"adrsSetUser.cgi",
+	"POST",
+	sendData,
+	function(recvData)
+	{
+		if( recvData.indexOf("[") == 0 )
+		{
+			setTimeout(test_addUserStart, 1000 );
+		}
+		else
+		{
+			document.write(recvData);
+			document.close();
+		}
+		
+	}
+	);
+}
+
+function test_addUserStart()
+{
+	var wimtoken = $("input[name='wimToken']").val();
+	
+	var sendData = "mode=ADDUSER&outputSpecifyModeIn=DEFAULT&wimToken="+wimtoken;
+
+	ajax_async(
+	"adrsGetUser.cgi",
+	"POST",
+	sendData,
+	function(recvData)
+	{
+		setTimeout(test_addUser, 1000 );
+	}
+	);
+}
+
+function test_addGroup()
+{
+	var sendData;
+	var wimtoken;
+
+	wimtoken = $("input[name='wimToken']").val();
+	test_entryIndex++;
+
+	if(test_entryIndex > 2100)
+	{
+		return;
+	}
+
+	sendData = "inputSpecifyModeIn=WRITE&listUpdateIn=UPDATE&wimToken="+wimtoken+"&mode=ADDGROUP&priorityIn=5&pageSpecifiedIn=&pageNumberIn=&searchSpecifyModeIn=&outputSpecifyModeIn=&inputSpecifyModeIn=&wayFrom=adrsGetGroup.cgi&wayTo=adrsList.cgi&entryIndexIn="+("00000" + test_entryIndex).slice(-5)+"&entryNameIn=testgroup&entryReadNameIn=&entryDisplayNameIn=&entryTagInfoIn=1&entryTagInfoIn=1&entryTagInfoIn=1&entryTagInfoIn=1";
+
+	ajax_async(
+	"adrsSetGroup.cgi",
+	"POST",
+	sendData,
+	function(recvData)
+	{
+		if( recvData.indexOf("[") == 0 )
+		{
+			setTimeout(test_addGroupStart, 1000 );
+		}
+		else
+		{
+			document.write(recvData);
+			document.close();
+		}
+		
+	}
+	);
+}
+
+function test_addGroupStart()
+{
+	var wimtoken = $("input[name='wimToken']").val();
+
+	var sendData = "mode=ADDGROUP&outputSpecifyModeIn=DEFAULT&wimToken="+wimtoken;
+
+	ajax_async(
+	"adrsGetGroup.cgi",
+	"POST",
+	sendData,
+	function(recvData)
+	{
+		setTimeout(test_addGroup, 1000 );
+	}
+	);
+
+}
+*/
+

@@ -1,0 +1,92 @@
+﻿from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
+import threading
+import time
+from datetime import datetime, timedelta
+
+from fastapi.middleware.cors import CORSMiddleware
+
+from .database import Base, engine
+
+from .routers import printers, inventory, toner_control, address_book
+
+ 
+
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(title="Ricoh Monitor")
+
+_DAILY_SNAPSHOT_STOP_EVENT = threading.Event()
+_DAILY_SNAPSHOT_THREAD: threading.Thread | None = None
+
+
+def _seconds_until_next_daily_capture(now: datetime | None = None) -> float:
+    now = now or datetime.now()
+    target = now.replace(hour=0, minute=5, second=0, microsecond=0)
+    if now >= target:
+        target = target + timedelta(days=1)
+    return max(30.0, (target - now).total_seconds())
+
+
+def _daily_snapshot_worker():
+    while not _DAILY_SNAPSHOT_STOP_EVENT.is_set():
+        wait_seconds = _seconds_until_next_daily_capture()
+        if _DAILY_SNAPSHOT_STOP_EVENT.wait(wait_seconds):
+            break
+        try:
+            printers.capture_counters_snapshot_now()
+        except Exception:
+            pass
+        time.sleep(1)
+
+
+@app.on_event("startup")
+def _start_daily_snapshot_worker():
+    global _DAILY_SNAPSHOT_THREAD
+    if _DAILY_SNAPSHOT_THREAD and _DAILY_SNAPSHOT_THREAD.is_alive():
+        return
+    _DAILY_SNAPSHOT_STOP_EVENT.clear()
+    _DAILY_SNAPSHOT_THREAD = threading.Thread(target=_daily_snapshot_worker, daemon=True)
+    _DAILY_SNAPSHOT_THREAD.start()
+
+
+@app.on_event("shutdown")
+def _stop_daily_snapshot_worker():
+    _DAILY_SNAPSHOT_STOP_EVENT.set()
+    global _DAILY_SNAPSHOT_THREAD
+    if _DAILY_SNAPSHOT_THREAD and _DAILY_SNAPSHOT_THREAD.is_alive():
+        _DAILY_SNAPSHOT_THREAD.join(timeout=2)
+
+app.add_middleware(
+
+    CORSMiddleware,
+
+    allow_origins=["*"],
+
+    allow_credentials=True,
+
+    allow_methods=["*"],
+
+    allow_headers=["*"],
+
+)
+
+app.include_router(printers.router)
+app.include_router(inventory.router)
+app.include_router(toner_control.router)
+app.include_router(address_book.router)
+
+# Mount frontend static files so dashboard can be served at /frontend/dashboard.html
+try:
+    frontend_dir = Path(__file__).resolve().parents[2] / "frontend"
+    if frontend_dir.exists():
+        app.mount("/frontend", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
+except Exception:
+    # ignore mounting errors in environments where filesystem layout differs
+    pass
+@app.get("/")
+
+def root():
+
+    return {"message": "Sistema Ricoh funcionando"}

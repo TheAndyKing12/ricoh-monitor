@@ -1,0 +1,46 @@
+﻿import requests
+
+import re
+
+def get_ricoh_http_counters(ip):
+
+    url = f"http://{ip}/web/guest/es/websys/status/getUnificationCounter.cgi"
+
+    try:
+
+        r = requests.get(url, timeout=5)
+
+        html = r.text
+
+        # buscar contadores
+
+        bw_match = re.search(r"Blanco y Negro.*?(\d+)", html, re.DOTALL)
+
+        color_match = re.search(r"A todo color.*?(\d+)", html, re.DOTALL)
+
+        bw = int(bw_match.group(1)) if bw_match else None
+
+        color = int(color_match.group(1)) if color_match else None
+
+        total = None
+
+        if bw and color:
+
+            total = bw + color
+
+        return {
+
+            "bw_pages": bw,
+
+            "color_pages": color,
+
+            "total_pages": total
+
+        }
+
+    except Exception as e:
+
+        print("HTTP counter error:", e)
+
+        return None
+ 

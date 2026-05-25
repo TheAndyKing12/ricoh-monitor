@@ -1,0 +1,45 @@
+﻿# Copilot Instructions
+
+## General Guidelines
+- Before making any change to files, always describe what the change is and wait for the user's explicit confirmation before applying it.
+- For frontend/dashboard.html: ALWAYS describe exactly which lines will change and wait for explicit confirmation from the user before applying any edits. Limit to one change per message. Verify line count after each edit. The file currently has 843 lines.
+- El usuario exige máxima seguridad en frontend/dashboard.html: cambios mínimos, aislados, con vista previa clara antes de aplicar, sin romper el script ni borrar contenido.
+- El usuario prefiere explicaciones más claras y directas, con pasos concretos antes de aplicar cambios en frontend/dashboard.html; ante fallos de UI, proporcionar diagnóstico paso a paso y opciones de corrección directa.
+- El usuario quiere que todas las pestañas compartan la misma animación y que haya consistencia visual también en filtros y tipografía en el frontend.
+- El usuario prefiere recibir paquetes de varios cambios por paso (no solo un cambio aislado) para el frontend, manteniendo seguridad.
+
+## Frontend: dashboard.html (Estricto)
+- Hacer ediciones mínimas y aisladas solamente.
+- Describe el rango exacto de líneas a cambiar antes de aplicar modificaciones.
+- Limitar a un cambio por mensaje de confirmación a menos que el usuario solicite un pequeño paquete de cambios relacionados.
+- Verifica y reporta el conteo de líneas del archivo después de cada edición.
+- No eliminar contenido ni dejar el frontend vacío.
+- Validar que el orden del dashboard y el comportamiento de aviso de bajo tóner permanezcan sin cambios a menos que el usuario solicite una reparación específica y mínima.
+- Al solucionar problemas de vista previa o renderizado, sincronizar y verificar todas las copias temporales de HTML que puedan existir en el IDE, no solo una.
+- Priorizar correcciones seguras estilo rollback para restaurar la apariencia/orden limpio anterior mientras se preservan los cambios funcionales solicitados recientemente.
+- Confirmar que dashboard.js todavía se carga y que el comportamiento del script se mantiene intacto después de cada edición.
+- Si el usuario reporta que el botón "Buscar impresora en red" sigue sin funcionar:
+  - Proporcionar diagnóstico paso a paso: reproducir el error, revisar la consola del navegador para errores JS, inspeccionar la pestaña Network para solicitudes fallidas, comprobar respuestas del backend y validar handlers de evento en el frontend.
+  - Solicitar explícitamente al usuario que copie/pegue errores de consola y capturas de la pestaña Network.
+  - Ofrecer insertar o reparar la función de validación frontend faltante con cambios mínimos y describir las líneas exactas que se modificarán.
+  - Preferir arreglos directos y mínimos que restauren la funcionalidad; describir el cambio propuesto y esperar confirmación antes de aplicar.
+
+## Project Guidelines
+- Sincronizar automáticamente los nombres compartidos de las impresoras con el hostname real; no requerir un botón de sincronización manual.
+- Cuando la nueva memoria complemente las instrucciones existentes, fusionarlas y mejorarlas en lugar de agregar duplicados.
+- Mantener las ediciones cautelosas y mínimas si el usuario informa roturas pasadas; requerir confirmación explícita para ediciones en archivos de dashboard.
+- Preservar el comportamiento de edición en línea en inventario: mantener el estilo profesional con estados en color y edición en línea con doble clic para "Inv. Impresoras".
+- Hacer que la experiencia de "Generar reporte" en Contadores sea profesional; evitar calendarios flotando o elementos fuera de lugar.
+- Priorizar la restauración de la claridad visual y el orden mientras se preservan los comportamientos funcionales solicitados.
+- Al realizar cambios que afecten el comportamiento de la interfaz de usuario, indicar los archivos y líneas exactos afectados y describir los pasos de verificación para confirmar que no hay regresiones.
+- Ante fallos funcionales reportados en botones o búsquedas de red, preferir diagnóstico y reparación directa: solicitar registros de consola y Network, proponer un arreglo mínimo y ofrecer insertar la validación frontend faltante si aplica.
+
+## Consistencia y Profesionalismo en la UI
+- Asegurarse de que todas las pestañas compartan los mismos patrones de animación y lenguaje visual.
+- Estandarizar filtros y tipografía en toda la aplicación para una apariencia y sensación consistentes.
+- Mantener las interfaces de Reportes e Inventario profesionales y estables (sin controles flotantes, calendarios alineados, estados claros).
+
+## Reglas Operativas para Ediciones
+- Agrupar instrucciones relacionadas bajo encabezados relevantes y mantener las listas concisas.
+- Usar el modo imperativo para las reglas y evitar frases redundantes.
+- Preservar el contenido existente a menos que se está fusionando o desduplicando con nueva memoria.

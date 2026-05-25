@@ -1,0 +1,425 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ricoh Monitor Dashboard</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="bootstrap-icons.min.css">
+<link rel="stylesheet" href="inter.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:'Inter',Arial,sans-serif;background:#111827;color:#f3f4f6}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:64px;background:#0f172a;border-right:1px solid #1f2937;padding:12px 8px;transition:width .28s ease}
+.sidebar:hover{width:240px;padding:20px}
+.sidebar h2{margin:0 0 12px 0;font-size:18px;transition:opacity .18s ease,transform .18s ease}
+.sidebar-title{display:inline-block;opacity:1;transform:none;transition:opacity .18s ease,transform .18s ease}
+.sidebar:not(:hover) .sidebar-title{opacity:0;transform:translateX(-8px)}
+.menu-button{width:100%;display:flex;align-items:center;gap:10px;justify-content:center;background:#111827;color:#e5e7eb;border:1px solid #374151;border-radius:10px;padding:12px 14px;text-align:left;font-size:14px;cursor:pointer;margin-bottom:10px;transition:background .2s ease,border-color .2s ease,box-shadow .2s ease,color .2s ease;position:relative}
+.menu-button:hover{background:#1f2937}
+.sidebar:hover .menu-button{justify-content:flex-start}
+.menu-button.active{background:rgba(37,99,235,0.12);border-color:rgba(59,130,246,0.45);color:#93c5fd;box-shadow:inset 3px 0 0 #3b82f6}
+.menu-button.active .menu-icon i{color:#60a5fa}
+.menu-icon{font-size:18px;flex-shrink:0;width:20px;text-align:center;line-height:1;position:relative}
+.menu-icon i{display:inline-block;transition:transform .22s cubic-bezier(.34,1.56,.64,1),color .18s ease}
+.menu-button:hover .menu-icon i{transform:scale(1.28);color:#60a5fa}
+.menu-badge{position:absolute;top:-7px;right:-9px;background:#ef4444;color:#fff;font-size:9px;font-weight:700;min-width:15px;height:15px;border-radius:999px;display:none;align-items:center;justify-content:center;padding:0 3px;line-height:1;border:1.5px solid #0f172a;animation:badgePop .25s cubic-bezier(.34,1.56,.64,1)}
+.menu-badge.warn{background:#f59e0b}
+@keyframes badgePop{from{transform:scale(0)}to{transform:scale(1)}}
+.menu-label{display:inline-block;transition:opacity .18s ease,transform .18s ease}
+.sidebar:not(:hover) .menu-label{opacity:0;transform:translateX(-6px);width:0;overflow:hidden}
+.content{flex:1;display:flex;flex-direction:column}
+header{padding:14px 20px;background:#0f172a;border-bottom:1px solid #1f2937;display:flex;flex-direction:column;gap:12px}
+.badge{padding:8px 12px;border-radius:999px;background:#1f2937;font-size:13px}
+.tab{display:none;padding:12px}
+.tab.active{display:block;animation:tabFadeIn .18s ease}
+@keyframes tabFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:12px}
+.summary-card{background:#1f2937;border:1px solid #374151;border-radius:14px;padding:18px;position:relative;overflow:hidden;transition:transform .2s ease,box-shadow .2s ease}
+.summary-card:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(255,255,255,.1)}
+.summary-card-total{border-color:#2563eb}
+.summary-card-online{border-color:#22c55e}
+.summary-card-offline{border-color:#ef4444}
+.summary-card-toner{border-color:#eab308}
+.summary-card h3{margin:0 0 8px;font-size:13px;color:#9ca3af;font-weight:normal;display:flex;align-items:center;gap:6px}
+.summary-card .value{font-size:28px;font-weight:bold}
+.summary-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;border-radius:0 0 14px 14px}
+.card-icon-bg{position:absolute;right:14px;bottom:8px;font-size:56px;opacity:.07;pointer-events:none;line-height:1;color:#fff;transition:opacity .2s ease}
+.summary-card:hover .card-icon-bg{opacity:.13}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}
+.card{background:#1f2937;border:1px solid #374151;border-radius:16px;padding:18px;box-shadow:0 2px 12px rgba(0,0,0,.25);transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.4);border-color:#4b5563}
+.card-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+.printer-name{font-size:18px;font-weight:bold;margin:0}
+.printer-model{margin-top:4px;font-size:13px;color:#9ca3af}
+.printer-secondary{margin-top:4px;font-size:13px;color:#d1d5db}
+.status-pill{padding:6px 10px;border-radius:999px;font-size:12px;font-weight:bold;text-transform:uppercase;white-space:nowrap}
+.status-online{background:rgba(34,197,94,.18);color:#22c55e;border:1px solid rgba(34,197,94,.4)}
+.status-offline{background:rgba(239,68,68,.18);color:#ef4444;border:1px solid rgba(239,68,68,.4)}
+.info-row{font-size:13px;color:#d1d5e1;margin-bottom:6px}
+.toner-section{margin-top:16px}
+.toner-title{font-size:13px;color:#9ca3baf;margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em}
+.toner-item{margin-bottom:12px}
+.toner-label-row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+.bar{width:100%;height:12px;background:#111827;border-radius:999px;overflow:hidden;border:1px solid #374151}
+.bar-fill{height:100%;border-radius:999px;transition:width .4s ease}
+.bar-black{background:linear-gradient(90deg,#64748b,#e5e7eb)}
+.bar-cyan{background:linear-gradient(90deg,#0891b2,#22d3ee)}
+.bar-magenta{background:linear-gradient(90deg,#a21caf,#e879f9)}
+.bar-yellow{background:linear-gradient(90deg,#b45309,#fde047)}
+.empty-state{text-align:center;padding:60px 20px;color:#9ca3baf;background:#1f2937;border-radius:16px;border:1px solid #374151}
+.warning-text{color:#f59e0b;font-size:12px;margin-top:8px}
+.critical-text{color:#ef4444;font-size:12px;margin-top:8px}
+.section-title{padding-left:14px;border-left:3px solid #3b82f6}
+.action-row{display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.action-button{background:#2563eb;color:#fff;border:none;border-radius:10px;padding:12px 16px;cursor:pointer;font-size:14px}
+.action-button:hover{background:#1d4ed8}
+.action-button-danger{background:#dc2626}
+.action-button-danger:hover{background:#b91c1c}
+.action-button-secondary{background:#475569}
+.action-button-secondary:hover{background:#334155}
+.action-button-warning{background:#eab308;color:#111827;font-weight:700}
+.action-button-warning:hover{background:#ca8a04}
+.action-button-success{background:#16a34a}
+.action-button-success:hover{background:#15803d}
+.table-wrapper{background:#1f2937;border:1px solid #374151;border-radius:16px;overflow:auto;max-width:100%;max-height:70vh}
+table{width:100%;border-collapse:collapse;min-width:1100px}
+th,td{padding:14px;text-align:left;border-bottom:1px solid #374151;font-size:14px;vertical-align:top}
+th{background:#111827;color:#9ca3af}
+tr:last-child td{border-bottom:none}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.form-grid>div{display:flex;flex-direction:column;gap:6px}
+.form-grid label{display:block;font-size:13px;color:#cbd5e1;font-weight:600}
+input,select{padding:10px;border-radius:8px;border:1px solid #374151;background:#111827;color:white;width:100%}
+.dashboard-title{font-size:24px;font-weight:700;color:#f8fafc;line-height:1.1}
+.dashboard-header{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.dashboard-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.filter-toggle-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-width:220px;min-height:44px;background:linear-gradient(180deg,#1e293b 0%,#162033 100%);border:1px solid #3b4d65;color:#f8fafc;border-radius:999px;padding:10px 16px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.22);transition:.2s ease}
+.filter-toggle-btn:hover{transform:translateY(-1px);background:linear-gradient(180deg,#25344b 0%,#1a2638 100%)}
+.filter-toggle-btn.is-open{background:linear-gradient(180deg,#1d4ed8 0%,#1e40af 100%);border-color:#60a5fa;box-shadow:0 6px 18px rgba(37,99,235,.28)}
+.filter-toggle-btn.is-open .filter-toggle-state{color:#dbeafe}
+.filter-toggle-icon{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:999px;background:#111827;border:1px solid #334155;font-size:12px;color:#cbd5e1;flex:0 0 auto}
+.filter-toggle-btn.is-open .filter-toggle-icon{background:rgba(15,23,42,.6);border-color:#93c5fd;color:#eff6ff}
+.dashboard-filters{display:grid;grid-template-columns:minmax(240px,2fr) repeat(5,minmax(120px,1fr)) minmax(96px,auto);gap:8px;margin:0 0 12px;align-items:center;transition:max-height .25s ease,opacity .2s ease,transform .2s ease;max-height:600px;opacity:1;transform:none;overflow:visible;pointer-events:auto}
+.dashboard-filters.closed{max-height:0;opacity:0;transform:translateY(-8px);margin:0;gap:0;overflow:hidden;pointer-events:none}
+.toolbar-input,.toolbar-select{min-height:34px;padding:7px 10px;border-radius:8px;border:1px solid #374151;background:#0f172a;color:#e5e7eb;font-size:12px;width:100%}
+.toolbar-button{min-height:34px;padding:7px 12px;border-radius:8px;border:1px solid #374151;background:#1f2937;color:#e5e7eb;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+.toolbar-button:hover{background:#273244}
+.warning-text,.error-warn,.toner-low{color:#f59e0b !important;font-weight:700}
+.critical-text,.error-critical,.toner-critical{color:#ef4444 !important;font-weight:700}
+.error-ok{color:#cbd5e1}
+.printer-collapsible{display:none}
+.printer-collapsible.is-open{display:block}
+.discover-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:14px}
+.discover-fields>div{display:flex;flex-direction:column;gap:6px}
+.field-help{font-size:12px;margin-top:4px;color:#9ca3b8}
+.field-help.error{color:#ef4444}
+.field-help.success{color:#22c55e}
+.input-invalid{border-color:#ef4444 !important;box-shadow:0 0 0 1px rgba(239,68,68,.35)}
+.input-valid{border-color:#22c55e !important;box-shadow:0 0 0 1px rgba(34,197,94,.25)}
+.discover-select-col{width:56px;text-align:center}
+.discover-checkbox{width:18px;height:18px;accent-color:#2563eb;cursor:pointer}
+.sortable-th{cursor:pointer;user-select:none;white-space:nowrap}
+.sortable-th:hover{color:#e5e7eb}
+.row-error{background:rgba(239,68,68,.07)}.row-low{background:rgba(234,179,8,.07)}
+.status-badge{padding:4px 8px;border-radius:999px;font-size:12px;font-weight:700}
+.status-badge-online{background:rgba(34,197,94,.18);color:#22c55e}
+.status-badge-offline{background:rgba(239,68,68,.18);color:#ef4444}
+.toner-inline{display:flex;gap:8px;flex-wrap:wrap}
+.toner-mini{display:flex;align-items:center;gap:6px;min-width:80px}.mini-bar{width:42px;height:8px;background:#111827;border:1px solid #374151;border-radius:999px;overflow:hidden}.mini-bar .fill{height:100%}.mini-label{font-size:12px}.tc-muted{color:#94a3b8}
+.sort-ind{font-size:11px;color:inherit;opacity:0.5;margin-left:5px;min-width:10px;display:inline-block;transition:opacity 0.15s,font-weight:600}
+.sort-ind.active{opacity:1;text-shadow:none;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:center;justify-content:center;z-index:1000;padding:16px}
+.modal-overlay.open{display:flex;animation:modalFadeIn .18s ease}
+@keyframes modalFadeIn{from{opacity:0}to{opacity:1}}
+.modal-box{background:#1e293b;border:1px solid #334155;border-radius:20px;padding:28px;width:100%;max-width:560px;max-height:88vh;overflow-y:auto;position:relative;animation:modalSlideUp .22s cubic-bezier(.34,1.56,.64,1)}
+@keyframes modalSlideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-close{position:absolute;top:14px;right:14px;background:none;border:none;color:#64748b;font-size:18px;cursor:pointer;padding:4px 8px;border-radius:8px;line-height:1}
+.modal-close:hover{background:#334155;color:#e2e8f0}
+.modal-title{font-size:20px;font-weight:700;color:#f8fafc;margin:0 0 4px;padding-right:32px}
+.modal-subtitle{font-size:13px;color:#94a3b8;margin:0 0 20px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.modal-section{margin-bottom:20px}
+.modal-section-title{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#475569;margin:0 0 10px;font-weight:700}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.modal-field{background:#111827;border:1px solid #1f2937;border-radius:10px;padding:10px 14px}
+.modal-field-label{font-size:10px;color=#475569;margin-bottom:3px;text-transform:uppercase;letter-spacing:.05em}
+.modal-field-value{font-size:13px;color:#e2e8f0;font-weight:500}
+.modal-toner-item{margin-bottom:12px}
+.modal-toner-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;color:#cbd5e1}
+.modal-bar{width:100%;height:10px;background:#0f172a;border-radius:999px;overflow:hidden;border:1px solid #1f2937}
+.modal-bar-fill{height:100%;border-radius:999px;transition:width .5s ease}
+.modal-actions{display:flex;gap:10px;margin-top:22px;justify-content:flex-end;border-top:1px solid #1f2937;padding-top:18px}
+.clickable-name{cursor:pointer;color:#93c5fd}
+.clickable-name:hover{text-decoration:underline}
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:900;display:none;cursor:pointer;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.drawer-overlay.open{display:block}
+.drawer-panel{position:fixed;top:0;right:0;height:100vh;width:460px;max-width:96vw;background:#1e293b;border-left:1px solid #334155;z-index=901;transform:translateX(110%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-8px 0 40px rgba(0,0,0,.45)}
+.drawer-panel.open{transform:translateX(0);animation:drawerSlideIn .35s cubic-bezier(.34,1.56,.64,1)}
+.drawer-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 16px;border-bottom:1px solid #334155;flex-shrink:0}
+.drawer-title{font-size:16px;font-weight:700;color:#f8fafc;margin:0}
+.drawer-close{background:none;border:none;color:#64748b;font-size:20px;cursor:pointer;padding:4px 8px;border-radius:8px;line-height:1}
+.drawer-close:hover{background:#334155;color:#e2e8f0}
+.drawer-body{flex:1;overflow-y:auto;padding:20px 24px}
+.drawer-footer{padding:16px 24px;border-top:1px solid #334155;display:flex;gap:10px;justify-content:flex-end;flex-shrink:0}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#0f172a}
+::-webkit-scrollbar-thumb{background:#334155;border-radius:999px}
+::-webkit-scrollbar-thumb:hover{background:#475569}
+tbody tr:hover td{background:rgba(255,255,255,.035);transition:background .15s ease}
+.toast{position:fixed;bottom:24px;right:24px;background:#1e293b;border:1px solid #334155;color:#f8fafc;padding:14px 20px;border-radius:12px;font-size:14px;z-index:2000;box-shadow:0 8px 24px rgba(0,0,0,.4);transform:translateY(20px);opacity:0;transition:transform .25s ease,opacity .25s ease;pointer-events:none;max-width:320px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.toast-success{border-color:rgba(34,197,94,.4)}
+.toast.toast-error{border-color:rgba(239,68,68,.4)}
+thead th{position:sticky;top:0;z-index:2;box-shadow:0 1px 0 #374151}
+input:focus,select:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 2px rgba(59,130,246,.18)}
+.section-title{padding-left:14px;border-left:3px solid #3b82f6}
+.drawer-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#2563eb,#60a5fa);z-index:1}
+@keyframes offlinePulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}50%{box-shadow:0 0 0 5px rgba(239,68,68,.13)}}
+.status-offline{animation:offlinePulse 2.8s ease-in-out infinite}
+.action-button:active{transform:scale(.97)}
+.sidebar:not(:hover) .menu-button[data-tooltip]::after{content:attr(data-tooltip);position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);background:#1e293b;color:#f8fafc;padding:6px 12px;border-radius:8px;font-size:12px;white-space:nowrap;pointer-events:none;opacity:0;border:1px solid #334155;box-shadow:0 4px 14px rgba(0,0,0,.35);z-index:9999;transition:opacity .15s ease}
+.sidebar:not(:hover) .menu-button[data-tooltip]:hover::after{opacity:1}
+.status-badge-online::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:#22c55e;margin-right:5px;vertical-align:middle;animation:statusDotPulse 2.2s ease-in-out infinite}
+.status-badge-offline::before{content:'';display:inline-block;width:6px,height:6px;border-radius:50%;background:#ef4444;margin-right:5px;vertical-align:middle}
+@keyframes statusDotPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+@keyframes drawerSlideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes drawerSlideOut{from{transform:translateX(0);opacity:1}to{transform:translateX(100%);opacity:0}}
+.drawer-panel.closing{animation:drawerSlideOut .28s cubic-bezier(.4,0,.2,1) forwards}
+</style>
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <h2><span class="sidebar-title">Ricoh Monitor</span></h2>
+        <button class="menu-button" onclick="showTab('dashboard')" data-tooltip="Dashboard"><span class="menu-icon"><i class="bi bi-display"></i><span class="menu-badge warn" id="badge_toner"></span></span><span class="menu-label">Dashboard</span></button>
+        <button class="menu-button" onclick="showTab('printers')" data-tooltip="Impresoras"><span class="menu-icon"><i class="bi bi-printer"></i><span class="menu-badge" id="badge_offline"></span></span><span class="menu-label">Impresoras</span></button>
+        <button class="menu-button" onclick="showTab('counters')" data-tooltip="Contadores"><span class="menu-icon"><i class="bi bi-clipboard-data"></i></span><span class="menu-label">Contadores</span></button>
+        <button class="menu-button" onclick="showTab('inventory')" data-tooltip="Inventario"><span class="menu-icon"><i class="bi bi-boxes"></i></span><span class="menu-label">Control de Inventario</span></button>
+        <button class="menu-button" onclick="showTab('tonerControl')" data-tooltip="Control de Toner"><span class="menu-icon"><i class="bi bi-layers"></i></span><span class="menu-label">Control de Toner</span></button>
+    </aside>
+
+    <main class="content">
+        <div id="dashboard" class="tab dashboard-shell">
+            <header>
+                <div class="dashboard-header">
+                    <div style="display:flex;flex-direction:column;gap:6px">
+                        <div class="dashboard-title"><i class="bi bi-display" style="margin-right:8px;color:#60a5fa;font-size:22px;vertical-align:middle"></i>Ricoh Monitor Dashboard</div>
+                        <div class="badge" id="lastUpdate" style="padding:6px 10px;font-size:12px">Actualizando...</div>
+                    </div>
+                    <div class="dashboard-actions">
+                        <button id="dashboardFilterBtn" class="filter-toggle-btn" type="button" onclick="toggleDashboardFilters()">
+                            <span class="filter-toggle-icon" id="filterToggleIcon">&#9662;</span>
+                            <span>Filtros del dashboard</span>
+                            <span class="filter-toggle-state" id="filterToggleState">Ocultos</span>
+                        </button>
+                        <button id="fullscreenBtn" class="filter-toggle-btn" type="button" onclick="toggleDashboardFullscreen()" title="Pantalla completa">
+                            <span class="filter-toggle-icon" id="fullscreenBtnIcon">&#9974;</span>
+                            <span id="fullscreenBtnLabel">Pantalla completa</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="summary" style="width:100%;margin:0;">
+                    <div class="summary-card summary-card-total"><h3><i class="bi bi-printer"></i>Total impresoras</h3><div class="value" id="totalPrinters">0</div><span class="card-icon-bg"><i class="bi bi-printer"></i></span></div>
+                    <div class="summary-card summary-card-online"><h3><i class="bi bi-wifi"></i>Online</h3><div class="value" id="onlinePrinters">0</div><span class="card-icon-bg"><i class="bi bi-wifi"></i></span></div>
+                    <div class="summary-card summary-card-offline"><h3><i class="bi bi-wifi-off"></i>Offline</h3><div class="value" id="offlinePrinters">0</div><span class="card-icon-bg"><i class="bi bi-wifi-off"></i></span></div>
+                    <div class="summary-card summary-card-toner"><h3><i class="bi bi-exclamation-triangle"></i>Tóner bajo</h3><div class="value" id="lowTonerPrinters">0</div><span class="card-icon-bg"><i class="bi bi-exclamation-triangle"></i></span></div>
+                </div>
+            </header>
+
+            <div id="dashboardFilters" class="dashboard-filters closed">
+                <input id="searchInput" class="toolbar-input" type="text" placeholder="Buscar por shared name, name, IP, modelo o serie">
+                <select id="viewMode" class="toolbar-select"><option value="table">Vista tabla</option><option value="cards">Vista tarjetas</option></select>
+                <select id="statusFilter" class="toolbar-select"><option value="all">Estado: Todas</option><option value="online">Estado: Online</option><option value="offline">Estado: Offline</option></select>
+                <select id="typeFilter" class="toolbar-select"><option value="all">Tipo: Todas</option><option value="color">Tipo: Color</option><option value="mono">Tipo: Blanco y negro</option></select>
+                <select id="errorFilter" class="toolbar-select"><option value="all">Error: Todos</option><option value="ok">Error: Sin error</option><option value="low">Error: Tóner bajo</option><option value="critical">Error: Tóner crítico</option><option value="other">Error: Otros</option></select>
+                <select id="sortFilter" class="toolbar-select"><option value="relevance_desc">Orden: Relevancia ↓</option><option value="relevance_asc">Orden: Relevancia ↑</option><option value="shared_name_asc">Orden: Shared Name A-Z</option><option value="shared_name_desc">Orden: Shared Name Z-A</option><option value="name_asc">Orden: Name A-Z</option><option value="name_desc">Orden: Name Z-A</option><option value="ip_asc">Orden: IP ↑</option><option value="ip_desc">Orden: IP ↓</option><option value="model_asc">Orden: Modelo A-Z</option><option value="model_desc">Orden: Modelo Z-A</option></select>
+                <button class="toolbar-button" onclick="resetFilters()">Limpiar</button>
+            </div>
+
+            <div id="dashboardCardsView" class="dashboard-view-wrap"><div class="grid" id="printersGrid"></div></div>
+            <div id="dashboardTableView" class="dashboard-view-wrap" style="display:none;">
+                <div class="table-wrapper dashboard-table-wrap">
+                    <table class="dashboard-table">
+                        <thead>
+                            <tr>
+                                <th class="sortable-th" onclick="toggleTableSort('shared_name')">Shared Name <span class="sort-ind" id="dsort_shared_name"></span></th>
+                                <th class="sortable-th" onclick="toggleTableSort('name')">Name <span class="sort-ind" id="dsort_name"></span></th>
+                                <th class="sortable-th" onclick="toggleTableSort('model')">Modelo <span class="sort-ind" id="dsort_model"></span></th>
+                                <th class="sortable-th" onclick="toggleTableSort('serial')">Serie <span class="sort-ind" id="dsort_serial"></span></th>
+                                <th class="sortable-th" onclick="toggleTableSort('ip')">IP <span class="sort-ind" id="dsort_ip"></span></th>
+                                <th class="sortable-th" onclick="toggleTableSort('location')">Ubicación <span class="sort-ind" id="dsort_location"></span></th>
+                                <th class="sortable-th" onclick="toggleTableSort('status')">Status <span class="sort-ind" id="dsort_status"></span></th>
+                                <th class="sortable-th" onclick="toggleTableSort('error_message')">Error <span class="sort-ind" id="dsort_error_message"></span></th>
+                                <th>Tóner</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dashboardTableBody"><tr><td colspan="9">Cargando...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="printers" class="tab">
+            <h2 class="section-title">Gestión de impresoras</h2>
+            <div class="action-row" style="margin-bottom:16px;">
+                <button class="action-button" type="button" onclick="openDrawer(null)">Agregar impresora manualmente</button>
+                <button class="action-button action-button-secondary" type="button" onclick="togglePrinterSection('discoverPrinterCard')">Buscar impresoras en red</button>
+            </div>
+
+            <div id="discoverPrinterCard" class="card printer-collapsible" style="margin-bottom:20px;">
+                <h3 style="margin-top:0;">Buscar impresoras en red</h3>
+                <div class="discover-fields">
+                    <div><label>Buscar por</label><select id="discoverMode" onchange="toggleDiscoverModeFields()"><option value="range">Rango de IP</option><option value="ip">IP específica</option></select></div>
+                    <div id="discoverStartWrap"><label>IP inicial</label><input id="discoverStartIp" placeholder="Ej: 10.131.105.1"><div id="discoverStartIpHelp" class="field-help"></div></div>
+                    <div id="discoverEndWrap"><label>IP final</label><input id="discoverEndIp" placeholder="Ej: 10.131.105.254"><div id="discoverEndIpHelp" class="field-help"></div></div>
+                    <div id="discoverSingleWrap" style="display:none;"><label>IP impresora</label><input id="discoverSingleIp" placeholder="Ej: 10.131.105.25"><div id="discoverSingleIpHelp" class="field-help"></div></div>
+                    <div><label>SNMP Community</label><input id="discoverCommunity" value="public"></div>
+                </div>
+                <div class="action-row">
+                    <button class="action-button" onclick="discoverPrinters()">Buscar impresoras</button>
+                    <button class="action-button" onclick="importPrinters()">Importar encontradas</button>
+                </div>
+                <div class="table-wrapper"><table><thead><tr><th class="discover-select-col"><input id="selectAllDiscovered" class="discover-checkbox" type="checkbox" onchange="toggleAllDiscovered(this.checked)"></th><th>Shared Name</th><th>Nombre</th><th>IP</th><th>Modelo</th><th>Serie</th><th>Tipo</th></tr></thead><tbody id="printersList"><tr><td colspan="7">Configure la búsqueda y presione buscar.</td></tr></tbody></table></div>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-top:0;">Impresoras registradas</h3>
+                <div class="action-row"><input id="printerSearch" placeholder="Buscar impresora..." oninput="filterSavedPrinters()" style="max-width:340px;"></div>
+                <div class="table-wrapper"><table><thead><tr><th class="sortable-th" onclick="toggleSavedPrintersSort('id')">ID <span id="savedPrintersSort_id">&#9650;</span></th><th class="sortable-th" onclick="toggleSavedPrintersSort('shared_name')">Shared Name <span id="savedPrintersSort_shared_name">&#8597;</span></th><th class="sortable-th" onclick="toggleSavedPrintersSort('name')">Nombre <span id="savedPrintersSort_name">&#8597;</span></th><th class="sortable-th" onclick="toggleSavedPrintersSort('ip')">IP <span id="savedPrintersSort_ip">&#8597;</span></th><th>Modelo</th><th>Serie</th><th>Tipo</th><th>Acciones</th></tr></thead><tbody id="savedPrintersList"><tr><td colspan="8">Cargando impresoras...</td></tr></tbody></table></div>
+            </div>
+        </div>
+
+        <div id="addressBook" class="tab">
+            <h2 class="section-title">Libreta de direcciones</h2>
+            <div class="action-row">
+                <button class="action-button action-button-secondary" type="button" onclick="showTab('printers')">Volver a impresoras</button>
+                <button class="action-button action-button-warning" type="button" onclick="createAddressBookEntry()">Agregar usuario</button>
+                <button class="action-button" type="button" onclick="loadAddressBookEntries()">Refrescar</button>
+                <button class="action-button action-button-secondary" type="button" onclick="applyAddressBookChanges()">Aplicar cambios a impresora</button>
+            </div>
+            <div class="card">
+                <h3 id="addressBookPrinterTitle" style="margin-top:0;">Seleccione una impresora</h3>
+                <div id="addressBookPrinterMeta" style="font-size:13px;color:#94a3b8;margin-top:6px;">Abra esta vista desde el botón amarillo en la tabla de acciones.</div>
+                <div id="addressBookStatus" class="field-help" style="margin-top:14px;">Fase segura: esta pantalla usa almacenamiento local aislado.</div>
+            </div>
+            <div class="table-wrapper"><table><thead><tr><th>Registration No.</th><th>Name</th><th>Key Display</th><th>Freq.</th><th>Title 1</th><th>Title 2</th><th>Title 3</th><th>User Code</th><th>E-mail Address</th><th>Folder</th><th>Status</th><th>Acciones</th></tr></thead><tbody id="addressBookList"><tr><td colspan="12">Seleccione una impresora para preparar la libreta de direcciones.</td></tr></tbody></table></div>
+        </div>
+
+        <div id="counters" class="tab"><h2 class="section-title">Contadores de impresión</h2><div class="action-row" style="align-items:center; margin-bottom:8px;"><button class="action-button" onclick="loadCounters()">Refrescar contadores</button><label style="display:inline-flex;align-items:center;gap:8px;margin-left:8px;color:#cbd5e6;font-size:13px"><input type="checkbox" id="countersAuto" onchange="toggleCountersAuto(this.checked)"> Auto <input id="countersAutoInterval" type="number" value="60" style="width:72px;margin-left:6px;padding:6px;border-radius:6px;background:#0f172a;border:1px solid #374151;color:#fff">s</label><input id="countersStartDate" type="date" style="position:absolute;left:-9999px;opacity:0;pointer-events:none;" tabindex="-1" aria-hidden="true"><input id="countersEndDate" type="date" style="position:absolute;left:-9999px;opacity:0;pointer-events:none;" tabindex="-1" aria-hidden="true"><button class="action-button action-button-success" type="button" onclick="generateCountersReport()">Generar reporte</button><div style="margin-left:auto;display:flex;gap:8px;"><span class="badge" id="countersSummaryTotal" style="padding:6px 10px;font-size:12px">Impresoras: 0</span><span class="badge" id="countersLastUpdate" style="padding:6px 10px;font-size:12px">Última: -</span></div></div><div class="table-wrapper"><table class="counters-table"><thead><tr><th>Impresora</th><th>Serie</th><th>IP</th><th>Total páginas</th><th>Copiado B/N</th><th>Copiado Color</th><th>Impresión B/N</th><th>Impresión Color</th><th>Blanco y negro</th><th>Color</th></tr></thead><tbody id="countersList"><tr><td colspan="10">Cargando contadores...</td></tr></tbody></table></div></div>
+        <div id="inventory" class="tab"><h2 class="section-title">Inventario de tóner</h2><div class="card"><div class="form-grid"><input id="invName" placeholder="Nombre (Ej: Toner Black)"><input id="invModel" placeholder="Modelo impresora"><select id="invType"><option value="toner">Toner</option><option value="drum">Drum</option><option value="fuser">Fuser</option></select><input id="invQty" type="number" placeholder="Cantidad"><input id="invMin" type="number" placeholder="Stock mínimo"></div><div style="margin-top:14px;"><button class="action-button" onclick="addInventoryItem()">Agregar</button></div></div><br><div class="table-wrapper"><table><thead><tr><th>ID</th><th>Nombre</th><th>Modelo</th><th>Tipo</th><th>Cantidad</th><th>Mínimo</th><th></th></tr></thead><tbody id="inventoryList"></tbody></table></div></div>
+        <div id="tonerControl" class="tab"><h2 class="section-title">Control de Tóner</h2><div class="action-row"><button class="action-button" onclick="loadTonerControl()">Refrescar</button></div><div class="table-wrapper toner-control-wrapper"><table class="toner-control-table"><thead><tr><th>Shared Name</th><th>Name</th><th>Modelo</th><th>Serie</th><th>Check</th><th>K</th><th>C</th><th>M</th><th>Y</th><th>Backup K</th><th>Backup C</th><th>Backup M</th><th>Backup Y</th><th>Ubicación</th><th>Pedido</th><th>WO</th><th>Notas</th><th>Acción</th></tr></thead><tbody id="tonerControlList"><tr><td colspan="18">Cargando...</td></tr></tbody></table></div></div>
+    </main>
+</div>
+
+<div id="drawerOverlay" class="drawer-overlay" onclick="if(event.target===this)closeDrawer()">
+  <div class="drawer-panel" id="drawerPanel">
+    <div class="drawer-header">
+      <h2 class="drawer-title" id="drawerTitle">Agregar impresora</h2>
+      <button class="drawer-close" onclick="closeDrawer()">&#10005;</button>
+    </div>
+    <div class="drawer-body">
+      <input type="hidden" id="editingPrinterId">
+      <div class="form-grid">
+        <div><label>Shared Name</label><input id="printerSharedName" placeholder="Ej: IMP-FINANZAS"></div>
+        <div><label>Nombre</label><input id="printerName" placeholder="Nombre descriptivo"></div>
+        <div><label>Modelo</label><input id="printerModel" placeholder="Ej: IM C3000"></div>
+        <div><label>IP</label><input id="printerIp" placeholder="192.168.1.x"><div id="printerIpHelp" class="field-help"></div></div>
+        <div><label>Serie</label><input id="printerSerial" placeholder="Número de serie"></div>
+        <div><label>Ubicación</label><input id="printerLocation" placeholder="Ej: Piso 2"></div>
+        <div><label>Tipo</label><select id="printerIsColor"><option value="true">Color</option><option value="false">Blanco y negro</option></select></div>
+        <div><label>SNMP Community</label><input id="printerCommunity" value="public"></div>
+      </div>
+    </div>
+    <div class="drawer-footer">
+      <button class="action-button action-button-secondary" onclick="resetPrinterForm()">Limpiar</button>
+      <button class="action-button action-button-secondary" onclick="closeDrawer()">Cancelar</button>
+      <button class="action-button" onclick="savePrinter()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div id="printerModal" class="modal-overlay" onclick="if(event.target===this)closePrinterModal()">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closePrinterModal()">&#10005;</button>
+    <div class="modal-title" id="modalTitle"></div>
+    <div class="modal-subtitle" id="modalSubtitle"></div>
+    <div class="modal-section">
+      <div class="modal-section-title">Información</div>
+      <div class="modal-grid" id="modalInfoGrid"></div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title">Estado</div>
+      <div id="modalErrorContent" style="font-size:13px;padding:4px 0"></div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title">Consumibles</div>
+      <div id="modalTonerContent"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="action-button action-button-secondary" onclick="closePrinterModal()">Cerrar</button>
+      <button class="action-button action-button-warning" onclick="openAddressBookFromModal()">Libreta de direcciones</button>
+      <button class="action-button" onclick="editFromModal()">Editar</button>
+    </div>
+  </div>
+</div>
+
+<div id="addressBookAuthModal" class="modal-overlay" onclick="if(event.target===this)closeAddressBookAuthModal(false)">
+  <div class="modal-box" style="max-width:460px;">
+    <button class="modal-close" onclick="closeAddressBookAuthModal(false)">&#10005;</button>
+    <div class="modal-title">Acceso a libreta en impresora</div>
+    <div class="modal-subtitle" id="addressBookAuthSubtitle">Ingrese credenciales para continuar.</div>
+    <div class="modal-section">
+      <div class="form-grid">
+        <div><label>Admin</label><input id="addressBookAdmin" placeholder="admin"></div>
+        <div><label>Password</label><input id="addressBookPassword" type="password" placeholder="••••••"></div>
+      </div>
+      <div id="addressBookAuthStatus" class="field-help" style="margin-top:10px;"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="action-button action-button-secondary" type="button" onclick="closeAddressBookAuthModal(false)">Cancelar</button>
+      <button class="action-button" type="button" onclick="confirmAddressBookAuthModal()">Conectar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let dashboardRawData = [];
+let dashboardSortColumn = 'shared_name';
+let dashboardSortDirection = 'asc';
+let printersFetchController = null;
+let printersPollInterval = null;
+const PRINTERS_POLL_MS = 30000;
+let discoveredPrintersCache = [];
+let hostnameLookupController = null;
+let savedPrintersSortColumn = 'id';
+let savedPrintersSortDirection = 'asc';
+let countersAutoTimer = null;
+let currentAddressBookPrinter = null;
+const ADDRESS_BOOK_FORCED_MODE = 'ricoh-real';
+let addressBookAuthByPrinter = {};
+let pendingAddressBookPrinter = null;
+let searchDebounceTimer = null;
+let lastRefreshTimeStr = '';
+let nextRefreshAt = 0;
+let refreshCountdownTimer = null;
+
+function showTab(tabName){const wasAddressBookActive=document.getElementById('addressBook')?.classList.contains('active');if(wasAddressBookActive&&tabName!=='addressBook')logoutAddressBookOnExit();document.querySelectorAll('.tab').forEach(tab=>tab.classList.remove('active'));const selected=document.getElementById(tabName);if(selected)selected.classList.add('active');document.querySelectorAll('.menu-button').forEach(btn=>btn.classList.remove('active'));const activeBtn=document.querySelector(`.menu-button[onclick*="'${tabName}'"]`);if(activeBtn)activeBtn.classList.add('active');if(tabName==='dashboard'){startPrintersPolling();loadPrinters();}else{stopPrintersPolling();}if(tabName==='printers')loadSavedPrinters();if(tabName==='counters')loadCounters();if(tabName==='inventory')loadInventory();if(tabName==='tonerControl')loadTonerControl();}
+function togglePrinterSection(sectionId){['manualPrinterCard','discoverPrinterCard'].forEach(id=>{const el=document.getElementById(id);if(!el)return;if(id===sectionId)el.classList.toggle('is-open');else el.classList.remove('is-open');});}
+function toggleDashboardFilters(){const panel=document.getElementById('dashboardFilters');const icon=document.getElementById('filterToggleIcon');const state=document.getElementById('filterToggleState');const btn=document.getElementById('dashboardFilterBtn');const closed=panel.classList.toggle('closed');if(btn)btn.classList.toggle('is-open',!closed);if(icon)icon.textContent=closed?'▾':'▴';if(state)state.textContent=closed?'Ocultos':'Visibles';}
+function toggleDashboardFullscreen(){const root=document.documentElement;const sidebar=document.querySelector('.sidebar');const btnLabel=document.getElementById('fullscreenBtnLabel');const btnIcon=document.getElementById('fullscreenBtnIcon');const viewMode=document.getElementById('viewMode');const setUi=isFs=>{document.body.classList.toggle('fullscreen',isFs);if(sidebar)sidebar.style.display=isFs?'none':'';if(viewMode&&isFs)viewMode.value='table';if(btnLabel)btnLabel.textContent=isFs?'Salir pantalla':'Pantalla completa';if(btnIcon)btnIcon.textContent=isFs?'🗗':'⛶';if(isFs)loadPrinters();setTimeout(()=>{setTableFullHeight();},80);};if(document.fullscreenElement){document.exitFullscreen().then(()=>setUi(false)).catch(err=>console.error('No se pudo salir de pantalla completa:',err));return;}root.requestFullscreen().then(()=>setUi(true)).catch(err=>console.error('No se pudo activar pantalla completa:',err));}
+document.addEventListener('fullscreenchange',()=>{const isFs=!!document.fullscreenElement;const sidebar=document.querySelector('.sidebar');const btnLabel=document.getElementById('fullscreenBtnLabel');const btnIcon=document.getElementById('fullscreenBtnIcon');const viewMode=document.getElementById('viewMode');document.body.classList.toggle('fullscreen',isFs);if(sidebar)sidebar.style.display=isFs?'none':'';if(viewMode&&isFs)viewMode.value='table';if(btnLabel)btnLabel.textContent=isFs?'Salir pantalla':'Pantalla completa';if(btnIcon)btnIcon.textContent=isFs?'🗗':'⛶';setTimeout(()=>{setTableFullHeight();if(isFs)loadPrinters();},80);});
+function isValidIpv4(ip){return /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/.test((ip||'').trim());}
+function setFieldValidation(inputId,helpId,message='',state=''){const input=document.getElementById(inputId);const help=document.getElementById(helpId);if(!input)return;input.classList.remove('input-valid','input-invalid');if(state==='valid')input.classList.add('input-valid');if(state==='invalid')input.classList.add('input-invalid');if(help){help.textContent=message;help.className=`field-help${state==='invalid'?' error':state==='valid'?' success':''}`;}}
+
+function validatePrinterIpField(){const ip=document.getElementById('printerIp')?.value.trim()||'';if(!ip){setFieldValidation('printerIp','printerIpHelp','');return false;}if(!isValidIpv4(ip)){setFieldValidation('printerIp','printerIpHelp','IP inválida','invalid');return false;}setFieldValidation('printerIp','printerIpHelp','IP válida','valid');return true;}
+
+function toggleDiscoverModeFields(){const mode=document.getElementById('discoverMode')?.value||'range';const startWrap=document.getElementById('discoverStartWrap');const endWrap=document.getElementById('discoverEndWrap');const singleWrap=document.getElementById('discoverSingleWrap');if(startWrap)startWrap.style.display=mode==='range'?'':'none';if(endWrap)endWrap.style.display=mode==='range'?'':'none';if(singleWrap)singleWrap.style.display=mode==='ip'?'':'none';}
+
+function validateDiscoverFields(){const mode=document.getElementById('discoverMode')?.value||'range';const startIp=document.getElementById('discoverStartIp')?.value.trim()||'';const endIp=document.getElementById('discoverEndIp')?.value.trim()||'';const singleIp=document.getElementById('discoverSingleIp')?.value.trim()||'';let valid=true;if(mode==='range'){if(!startIp||!isValidIpv4(startIp)){setFieldValidation('discoverStartIp','discoverStartIpHelp','IP inicial inválida','invalid');valid=false;}else setFieldValidation('discoverStartIp','discoverStartIpHelp','OK','valid');if(!endIp||!isValidIpv4(endIp)){setFieldValidation('discoverEndIp','discoverEndIpHelp','IP final inválida','invalid');valid=false;}else setFieldValidation('discoverEndIp','discoverEndIpHelp','OK','valid');}else{setFieldValidation('discoverStartIp','discoverStartIpHelp','');setFieldValidation('discoverEndIp','discoverEndIpHelp','');if(!singleIp||!isValidIpv4(singleIp)){setFieldValidation('discoverSingleIp','discoverSingleIpHelp','IP inválida','invalid');valid=false;}else setFieldValidation('discoverSingleIp','discoverSingleIpHelp','OK','valid');}return valid;}
+async function autofillPrinterNameFromIp(){const ipEl=document.getElementById('printerIp');const nameEl=document.getElementById('printerName');const communityEl=document.getElementById('printerCommunity');if(!ipEl||!nameEl)return;const ip=ipEl.value.trim();const community=(communityEl?.value||'public').trim()||'public';if(!isValidIpv4(ip))return;if(hostnameLookupController){try{hostnameLookupController.abort();}catch(e){}}hostnameLookupController=new AbortController();try{const response=await fetch(`/printers/resolve-hostname?ip=${encodeURIComponent(ip)}&community=${encodeURIComponent(community)}`,{signal:hostnameLookupController.signal});const data=await response.json();if(data?.hostname&&!nameEl.value.trim()){nameEl.value=data.hostname;nameEl.dataset.autoFilled='true';}}catch(error){if(error.name!=='AbortError')console.warn('No se pudo resolver el hostname.',error);}finally{hostnameLookupController=null;}}
+function safeValue(value){if(value===null||value===undefined||value==='')return null;const n=Number(value);return Number.isNaN(n)?null:n;}
+function tonerAlertText(value){if(value===null)return '';if(value<10)return '<div class="critical-text">Crítico: tóner muy bajo</div>';if(value<30)return '<div class="warning-text">Advertencia: tóner bajo</div>';return '';}
+function renderTonerBar(label,value,cssClass){const numeric=safeValue(value);const display=numeric===null?'-':`${numeric}%`;const width=numeric===null?0:Math.max(0,Math.min(100,numeric));return `<div class="toner-item"><div class="toner-label-row"><span>${label}</span><span>${display}</span></div><div class="bar"><div class="bar-fill ${cssClass}" style="width:${width}%"></div></div>${label==='Black'?tonerAlertText(numeric):''}</div>`;}
+function renderTonerMini(label,value,cssClass){const numeric=safeValue(value);if(numeric===null)return `<span class="tc-muted">-</span>`;const width=Math.max(0,Math.min(100,numeric));return `<div class="toner-mini" title="${label}: ${numeric}%"><div class="mini-bar"><div class="fill ${cssClass}" style="width:${width}%"></div></div><span class="mini-label">${numeric}%</span></div>`;}
+function normalizeError->

@@ -1,0 +1,13 @@
+﻿# Copilot Instructions
+
+## General Guidelines
+- Before making any change to files, always describe what the change is and wait for the user's explicit confirmation before applying it.
+
+## Project Guidelines
+- El usuario quiere que el nombre de las impresoras se sincronice automáticamente con el hostname real, sin necesidad de un botón manual para sincronizar.
+- Si el usuario indica que canceló cambios, revisar el código actual sin modificar archivos. Proceed with very cautious, small, isolated edits only after explicit confirmation, especially with frontend/dashboard.html, as it has been damaged multiple times. El usuario corrige que el frontend se rompe fácilmente; espera cambios mínimos y aislados con confirmación explícita antes de editar, especialmente en dashboard.
+- El usuario espera cambios pequeños y seguros en frontend sin romper el script; validar que dashboard.js siga cargando tras cada edición.
+- El usuario quiere cambios pequeños y aislados en el frontend para no dañar el script existente.
+- Cuando se solucionen problemas de vista previa en el frontend, verificar y sincronizar todas las copias temporales de HTML activas, no solo una, porque el IDE puede cambiar los nombres de los archivos temporales.
+- User reports that dashboard ordering and low-toner display were broken; apply only minimal isolated fixes in frontend/dashboard.html and preserve original dashboard sort/order behavior.
+- User wants dashboard restored to previous clean appearance/ordering while preserving the recently requested functional changes; prioritize safe rollback-style frontend fixes.

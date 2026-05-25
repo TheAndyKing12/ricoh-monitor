@@ -1,0 +1,164 @@
+﻿from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+from pathlib import Path
+import json
+import threading
+
+from ..database import SessionLocal
+from .. import crud
+
+router = APIRouter(prefix="/printers", tags=["AddressBook"])
+
+STORE_LOCK = threading.Lock()
+STORE_PATH = Path(__file__).resolve().parents[2] / "data" / "address_book_store.json"
+
+
+class AddressBookEntryBase(BaseModel):
+    name: str
+    key_display: str | None = None
+    freq: bool = True
+    title1: str | None = None
+    title2: str | None = None
+    title3: str | None = None
+    user_code: str | None = None
+    email_address: str | None = None
+    folder: str | None = None
+    status: str | None = "Activo"
+
+
+class AddressBookEntryCreate(AddressBookEntryBase):
+    registration_no: str | None = None
+
+
+class AddressBookEntryUpdate(BaseModel):
+    name: str | None = None
+    key_display: str | None = None
+    freq: bool | None = None
+    title1: str | None = None
+    title2: str | None = None
+    title3: str | None = None
+    user_code: str | None = None
+    email_address: str | None = None
+    folder: str | None = None
+    status: str | None = None
+
+
+class AddressBookEntry(AddressBookEntryBase):
+    registration_no: str
+
+
+class AddressBookListResponse(BaseModel):
+    printer_id: int
+    printer_ip: str
+    storage_mode: str
+    entries: list[AddressBookEntry]
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+def _ensure_store_dir():
+    STORE_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+
+def _load_store() -> dict:
+    _ensure_store_dir()
+    if not STORE_PATH.exists():
+        return {}
+    try:
+        return json.loads(STORE_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _save_store(data: dict):
+    _ensure_store_dir()
+    STORE_PATH.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _get_printer_or_404(db: Session, printer_id: int):
+    printer = crud.get_printer_by_id(db, printer_id)
+    if not printer:
+        raise HTTPException(status_code=404, detail="Printer not found")
+    return printer
+
+
+def _sort_entries(entries: list[dict]) -> list[dict]:
+    return sorted(entries, key=lambda item: int(str(item.get("registration_no") or "0")))
+
+
+def _next_registration_no(entries: list[dict]) -> str:
+    max_value = 0
+    for entry in entries:
+        try:
+            max_value = max(max_value, int(str(entry.get("registration_no") or "0")))
+        except Exception:
+            continue
+    return str(max_value + 1).zfill(5)
+
+
+@router.get("/{printer_id}/address-book", response_model=AddressBookListResponse)
+def list_address_book(printer_id: int, db: Session = Depends(get_db)):
+    printer = _get_printer_or_404(db, printer_id)
+    with STORE_LOCK:
+        store = _load_store()
+        entries = _sort_entries(store.get(str(printer_id), []))
+    return {
+        "printer_id": printer.id,
+        "printer_ip": printer.ip,
+        "storage_mode": "local-safe",
+        "entries": entries,
+    }
+
+
+@router.post("/{printer_id}/address-book", response_model=AddressBookEntry)
+def create_address_book_entry(printer_id: int, payload: AddressBookEntryCreate, db: Session = Depends(get_db)):
+    _get_printer_or_404(db, printer_id)
+    with STORE_LOCK:
+        store = _load_store()
+        entries = store.setdefault(str(printer_id), [])
+        registration_no = (payload.registration_no or "").strip() or _next_registration_no(entries)
+        if any(str(item.get("registration_no")) == registration_no for item in entries):
+            raise HTTPException(status_code=400, detail="Registration number already exists")
+        entry = payload.dict()
+        entry["registration_no"] = registration_no
+        entries.append(entry)
+        store[str(printer_id)] = _sort_entries(entries)
+        _save_store(store)
+    return entry
+
+
+@router.put("/{printer_id}/address-book/{registration_no}", response_model=AddressBookEntry)
+def update_address_book_entry(printer_id: int, registration_no: str, payload: AddressBookEntryUpdate, db: Session = Depends(get_db)):
+    _get_printer_or_404(db, printer_id)
+    with STORE_LOCK:
+        store = _load_store()
+        entries = store.get(str(printer_id), [])
+        target = next((item for item in entries if str(item.get("registration_no")) == registration_no), None)
+        if not target:
+            raise HTTPException(status_code=404, detail="Address book entry not found")
+        for key, value in payload.dict(exclude_unset=True).items():
+            target[key] = value
+        store[str(printer_id)] = _sort_entries(entries)
+        _save_store(store)
+    return target
+
+
+@router.delete("/{printer_id}/address-book/{registration_no}")
+def delete_address_book_entry(printer_id: int, registration_no: str, db: Session = Depends(get_db)):
+    _get_printer_or_404(db, printer_id)
+    with STORE_LOCK:
+        store = _load_store()
+        entries = store.get(str(printer_id), [])
+        new_entries = [item for item in entries if str(item.get("registration_no")) != registration_no]
+        if len(new_entries) == len(entries):
+            raise HTTPException(status_code=404, detail="Address book entry not found")
+        store[str(printer_id)] = _sort_entries(new_entries)
+        _save_store(store)
+    return {"message": "Address book entry deleted"}

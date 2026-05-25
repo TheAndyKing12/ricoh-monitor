@@ -1,0 +1,11 @@
+﻿# Copilot Instructions
+
+## General Guidelines
+- Before making any change to files, always describe what the change is and wait for the user's explicit confirmation before applying it.
+
+## Project Guidelines
+- El usuario quiere que el nombre de las impresoras se sincronice automáticamente con el hostname real, sin necesidad de un botón manual para sincronizar.
+- Si el usuario indica que canceló cambios, revisar el código actual sin modificar archivos.
+- El usuario espera cambios pequeños y seguros en frontend sin romper el script; validar que dashboard.js siga cargando tras cada edición.
+- El usuario quiere cambios pequeños y aislados en el frontend para no dañar el script existente.
+- When fixing frontend preview issues, verify and sync all active temporary HTML copies, not just one, because the IDE may switch temp file names.
