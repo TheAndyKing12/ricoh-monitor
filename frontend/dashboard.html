@@ -4211,8 +4211,9 @@
         }
 
     </style>
+    <link rel="stylesheet" href="design-system.css">
 </head>
-<body>
+<body class="app-dashboard">
     <div class="layout">
         <aside class="sidebar">
             <h2><span class="sidebar-title">Ricoh Monitor</span></h2>
@@ -4306,12 +4307,21 @@
 
             <div id="printers" class="tab">
                 <h2 class="section-title" data-i18n="printer_management">Gestión de impresoras</h2>                <div class="action-row" style="margin-bottom:16px;">
-                    <button class="action-button" type="button" onclick="openDrawer(null)" data-i18n="add_printer_manual">Agregar impresora manualmente</button>
-                    <button class="action-button action-button-secondary" type="button" onclick="togglePrinterSection('discoverPrinterCard')" data-i18n="search_printers_network">Buscar impresoras en red</button>
+                    <button class="action-button" type="button" onclick="openDrawer(null)"><i class="bi bi-plus-lg"></i><span data-i18n="add_printer_manual">Agregar impresora manualmente</span></button>
+                    <button id="toggleDiscoverPrintersBtn" class="action-button action-button-secondary" type="button" onclick="togglePrinterSection('discoverPrinterCard')" aria-expanded="false"><i class="bi bi-broadcast-pin"></i><span data-i18n="search_printers_network">Buscar impresoras en red</span></button>
                 </div>
 
-                <div id="discoverPrinterCard" class="card printer-collapsible" style="margin-bottom:20px;">
-                    <h3 style="margin-top:0;" data-i18n="search_printers_network">Buscar impresoras en red</h3>
+                <div id="discoverPrinterCard" class="modal-overlay printer-collapsible discovery-panel discovery-modal-overlay" onclick="if(event.target===this)closeDiscoverPrintersModal()">
+                    <div class="modal-box discovery-modal-box">
+                        <button class="modal-close" type="button" onclick="closeDiscoverPrintersModal()">&#10005;</button>
+                    <div class="discover-card-header">
+                        <div>
+                            <div class="modal-title" data-i18n="search_printers_network">Buscar impresoras en red</div>
+                            <div class="modal-subtitle">Escanea un rango pequeno de IPs y selecciona los equipos encontrados para importarlos.</div>
+                        </div>
+                        <span class="soft-badge"><i class="bi bi-router"></i> SNMP</span>
+                    </div>
+                    <div class="modal-section discovery-modal-section">
                     <div class="discover-fields">
                         <div><label data-i18n="search_by">Buscar por</label><select id="discoverMode" onchange="toggleDiscoverModeFields()"><option value="range" data-i18n="ip_range">Rango de IP</option><option value="ip" data-i18n="specific_ip">IP específica</option></select></div>
                         <div id="discoverStartWrap"><label data-i18n="start_ip">IP inicial</label><input id="discoverStartIp" placeholder="Ej: 10.131.105.1"><div id="discoverStartIpHelp" class="field-help"></div></div>
@@ -4319,16 +4329,20 @@
                         <div id="discoverSingleWrap" style="display:none;"><label data-i18n="printer_ip_label">IP impresora</label><input id="discoverSingleIp" placeholder="Ej: 10.131.105.25"><div id="discoverSingleIpHelp" class="field-help"></div></div>
                         <div><label>SNMP Community</label><input id="discoverCommunity" value="public"></div>
                     </div>
-                    <div class="action-row">
-                        <button class="action-button" onclick="discoverPrinters()" data-i18n="btn_search_printers">Buscar impresoras</button>
-                        <button class="action-button" onclick="importPrinters()" data-i18n="btn_import_found">Importar encontradas</button>
+                    <div class="action-row form-actions-inline">
+                        <button class="action-button" onclick="discoverPrinters()"><i class="bi bi-search"></i><span data-i18n="btn_search_printers">Buscar impresoras</span></button>
+                        <button class="action-button action-button-secondary" onclick="importPrinters()"><i class="bi bi-box-arrow-in-down"></i><span data-i18n="btn_import_found">Importar encontradas</span></button>
                     </div>
-                    <div class="table-wrapper"><table><thead><tr><th>IP</th><th>Shared Name</th><th data-i18n="th_model">Modelo</th><th data-i18n="th_serial">Serie</th><th>SNMP</th><th data-i18n="th_status">Estado</th></tr></thead><tbody id="discoverPrintersList"><tr><td colspan="6" data-i18n="discover_hint">Ingrese rango y presione buscar.</td></tr></tbody></table></div>
+                    <div class="table-wrapper discovery-results-table"><table><thead><tr><th></th><th>Shared Name</th><th data-i18n="th_name">Nombre</th><th>IP</th><th data-i18n="th_model">Modelo</th><th data-i18n="th_serial">Serie</th><th data-i18n="th_status">Tipo</th></tr></thead><tbody id="discoverPrintersList"><tr><td colspan="7" data-i18n="discover_hint">Ingrese rango y presione buscar.</td></tr></tbody></table></div>
+                    </div>
+                    </div>
                 </div>
 
                 <div class="card">
-                    <h3 style="margin-top:0;" data-i18n="registered_printers">Impresoras registradas</h3>
-                    <div class="action-row"><input id="printerSearch" placeholder="Buscar impresora..." data-i18n-ph="search_printer_ph" oninput="filterSavedPrinters()" style="max-width:340px;"></div>
+                    <div class="list-card-header">
+                        <h3 class="section-card-title" data-i18n="registered_printers">Impresoras registradas</h3>
+                        <div class="table-search"><i class="bi bi-search"></i><input id="printerSearch" placeholder="Buscar impresora..." data-i18n-ph="search_printer_ph" oninput="filterSavedPrinters()"></div>
+                    </div>
                     <div class="table-wrapper"><table><thead><tr><th class="sortable-th" onclick="toggleSavedPrintersSort('id')"><span>ID</span> <span class="sort-ind" id="savedPrintersSort_id"></span></th><th class="sortable-th" onclick="toggleSavedPrintersSort('shared_name')"><span>Shared Name</span> <span class="sort-ind" id="savedPrintersSort_shared_name"></span></th><th class="sortable-th" onclick="toggleSavedPrintersSort('name')"><span>Nombre</span> <span class="sort-ind" id="savedPrintersSort_name"></span></th><th class="sortable-th" onclick="toggleSavedPrintersSort('ip')"><span>IP</span> <span class="sort-ind" id="savedPrintersSort_ip"></span></th><th>Modelo</th><th>Serie</th><th>Tipo</th><th data-i18n="th_actions">Acciones</th></tr></thead><tbody id="savedPrintersList"><tr><td colspan="8" data-i18n="loading_printers">Cargando impresoras...</td></tr></tbody></table></div>
                 </div>
             </div>
@@ -4448,17 +4462,17 @@
 
                     <!-- Sidebar izquierdo -->
                     <div style="width:220px;min-width:180px;background:#0f172a;border-right:1px solid #1e293b;display:flex;flex-direction:column;padding:12px 0;">
-                        <div style="padding:14px 18px 10px;font-size:11px;font-weight:700;color:#475569;letter-spacing:.08em;text-transform:uppercase;">Sistema</div>
-                        <button class="cfg-nav-btn active" onclick="showConfigSection('cfgAppearance',this)"><i class="bi bi-moon-stars"></i> Apariencia</button>
-                        <button class="cfg-nav-btn" onclick="showConfigSection('cfgLanguage',this)"><i class="bi bi-translate"></i> Idioma</button>
-                        <button class="cfg-nav-btn" onclick="showConfigSection('cfgCache',this)"><i class="bi bi-database"></i> Caché</button>
-                        <button class="cfg-nav-btn" onclick="showConfigSection('cfgShortcuts',this)"><i class="bi bi-keyboard"></i> Atajos</button>
-                        <div style="padding:14px 18px 10px;margin-top:8px;font-size:11px;font-weight:700;color:#475569;letter-spacing:.08em;text-transform:uppercase;border-top:1px solid #1e293b;">Seguridad</div>
+                        <div style="padding:14px 18px 10px;font-size:11px;font-weight:700;color:#475569;letter-spacing:.08em;text-transform:uppercase;" data-i18n="config_nav_system">Sistema</div>
+                        <button class="cfg-nav-btn active" onclick="showConfigSection('cfgAppearance',this)"><i class="bi bi-moon-stars"></i> <span data-i18n="config_nav_appearance">Apariencia</span></button>
+                        <button class="cfg-nav-btn" onclick="showConfigSection('cfgLanguage',this)"><i class="bi bi-translate"></i> <span data-i18n="config_nav_language">Idioma</span></button>
+                        <button class="cfg-nav-btn" onclick="showConfigSection('cfgCache',this)"><i class="bi bi-database"></i> <span data-i18n="config_nav_cache">Caché</span></button>
+                        <button class="cfg-nav-btn" onclick="showConfigSection('cfgShortcuts',this)"><i class="bi bi-keyboard"></i> <span data-i18n="config_nav_shortcuts">Atajos</span></button>
+                        <div style="padding:14px 18px 10px;margin-top:8px;font-size:11px;font-weight:700;color:#475569;letter-spacing:.08em;text-transform:uppercase;border-top:1px solid #1e293b;" data-i18n="config_nav_security">Seguridad</div>
                         <button class="cfg-nav-btn" onclick="showConfigSection('cfgAD',this)"><i class="bi bi-diagram-3"></i> Active Directory</button>
-                        <button class="cfg-nav-btn" onclick="showConfigSection('cfgUsers',this)"><i class="bi bi-people"></i> Usuarios</button>
-                        <div style="padding:14px 18px 10px;margin-top:8px;font-size:11px;font-weight:700;color:#475569;letter-spacing:.08em;text-transform:uppercase;border-top:1px solid #1e293b;">Diagnóstico</div>
+                        <button class="cfg-nav-btn" onclick="showConfigSection('cfgUsers',this)"><i class="bi bi-people"></i> <span data-i18n="config_nav_users">Usuarios</span></button>
+                        <div style="padding:14px 18px 10px;margin-top:8px;font-size:11px;font-weight:700;color:#475569;letter-spacing:.08em;text-transform:uppercase;border-top:1px solid #1e293b;" data-i18n="config_nav_diagnostics">Diagnóstico</div>
                         <button class="cfg-nav-btn" onclick="showConfigSection('cfgLogs',this)"><i class="bi bi-journal-text"></i> Logs</button>
-                        <button class="cfg-nav-btn" onclick="showConfigSection('cfgAbout',this)"><i class="bi bi-info-circle"></i> Acerca de</button>
+                        <button class="cfg-nav-btn" onclick="showConfigSection('cfgAbout',this)"><i class="bi bi-info-circle"></i> <span data-i18n="config_nav_about">Acerca de</span></button>
                     </div>
 
                     <!-- Panel derecho -->
@@ -4470,7 +4484,8 @@
                             <div style="display:flex;gap:12px;margin-top:20px;">
                                 <button class="action-button" id="themeDarkBtn" onclick="setTheme('dark')" style="flex:1;max-width:180px"><i class="bi bi-moon-fill"></i> <span data-i18n="config_theme_dark">Oscuro</span></button>
                                 <button class="action-button action-button-secondary" id="themeLightBtn" onclick="setTheme('light')" style="flex:1;max-width:180px"><i class="bi bi-sun-fill"></i> <span data-i18n="config_theme_light">Claro</span></button>
-                                <button class="action-button action-button-secondary" id="themePurpleBtn" onclick="setTheme('purple')" style="flex:1;max-width:180px;background:#7c3aed;border-color:#a855f7"><i class="bi bi-stars"></i> Morado</button>
+                                <button class="action-button action-button-secondary" id="themePurpleBtn" onclick="setTheme('purple')" style="flex:1;max-width:180px"><i class="bi bi-stars"></i> <span data-i18n="config_theme_indigo">Índigo</span></button>
+                                <button class="action-button action-button-secondary" id="themeContrastBtn" onclick="setTheme('contrast')" style="flex:1;max-width:180px"><i class="bi bi-circle-half"></i> <span data-i18n="config_theme_contrast">Alto contraste</span></button>
                             </div>
                             <div id="configThemeStatus" class="field-help" style="margin-top:10px;color:#22c55e"></div>
                         </div>
@@ -4489,6 +4504,7 @@
                         <div id="cfgCache" class="cfg-section">
                             <div class="cfg-section-header"><i class="bi bi-database" style="color:#f87171"></i><div><div class="cfg-section-title" data-i18n="config_cache">Caché y datos locales</div><div class="cfg-section-desc" data-i18n="config_cache_desc">Datos almacenados en localStorage del navegador.</div></div></div>
                             <div id="configCacheInfo" style="font-size:13px;color:#cbd5e1;margin:18px 0 14px;padding:14px;background:#1e293b;border-radius:10px;border:1px solid #334155;">Calculando...</div>
+                            <div id="schedulerStatusBox" style="font-size:13px;color:#cbd5e1;margin:0 0 14px;padding:14px;background:#1e293b;border-radius:10px;border:1px solid #334155;">Cargando scheduler...</div>
                             <div style="display:flex;gap:10px;">
                                 <button class="action-button action-button-danger" type="button" onclick="resetConfigDefaults()"><i class="bi bi-trash3"></i> <span data-i18n="config_clear_cache">Limpiar toda la caché</span></button>
                                 <button class="action-button action-button-secondary" type="button" onclick="loadConfig()"><i class="bi bi-arrow-clockwise"></i> <span data-i18n="config_refresh">Refrescar info</span></button>
@@ -4568,6 +4584,8 @@
                                     <option value="toner">🎨 Tóner</option>
                                 </select>
                                 <button class="action-button action-button-secondary" type="button" onclick="loadActivityLogs()" style="padding:8px 14px;font-size:13px;"><i class="bi bi-arrow-clockwise"></i> Refrescar</button>
+                                <button class="action-button action-button-secondary" type="button" onclick="exportActivityLogs()" style="padding:8px 14px;font-size:13px;"><i class="bi bi-filetype-csv"></i> Exportar CSV</button>
+                                <button class="action-button action-button-secondary" type="button" onclick="sendTestNotification()" style="padding:8px 14px;font-size:13px;"><i class="bi bi-bell"></i> Probar alerta</button>
                             </div>
                             <div class="table-wrapper" style="max-height:400px;">
                                 <table>
@@ -4638,20 +4656,30 @@
             <div class="modal-subtitle" id="invFormSubtitle">Complete los campos para registrar un nuevo item.</div>
             <div class="modal-section app-modal-form">
                 <input type="hidden" id="invEditId">
-                <div class="form-grid">
-                    <div><label data-i18n="ml_type">Tipo *</label><select id="invType" onchange="onInvTypeChange()"><option value="toner">Toner</option><option value="drum">Drum</option><option value="fuser">Fuser</option></select></div>
-                    <div><label data-i18n="ml_name">Nombre *</label><div id="invNameWrapper"><select id="invName"><option value="Toner Negro">Toner Negro</option><option value="Toner Cyan">Toner Cyan</option><option value="Toner Amarillo">Toner Amarillo</option><option value="Toner Magenta">Toner Magenta</option></select></div></div>
-                    <div><label data-i18n="ml_printer_model">Modelo impresora *</label><input id="invModel" placeholder="Ej: IM C3000"></div>
-                    <div><label data-i18n="ml_part_number">N° de parte</label><input id="invPartNumber" placeholder="Ej: 842251"></div>
-                    <div><label data-i18n="ml_quantity">Cantidad *</label><input id="invQty" type="number" value="0" min="0"></div>
-                    <div><label data-i18n="ml_min_stock">Stock mínimo *</label><input id="invMin" type="number" value="1" min="0"></div>
-                    <div><label data-i18n="ml_location">Ubicación</label><input id="invLocation" placeholder="Ej: Bodega A"></div>
-                    <div style="grid-column:1/-1"><label data-i18n="ml_notes">Notas</label><input id="invNotes" placeholder="Observaciones opcionales"></div>
+                <div class="form-stack">
+                    <section class="form-section">
+                        <div class="form-section-title"><i class="bi bi-box-seam"></i><span>Articulo</span></div>
+                        <div class="form-grid">
+                            <div><label data-i18n="ml_type">Tipo *</label><select id="invType" onchange="onInvTypeChange()"><option value="toner">Toner</option><option value="drum">Drum</option><option value="fuser">Fuser</option></select></div>
+                            <div><label data-i18n="ml_name">Nombre *</label><div id="invNameWrapper"><select id="invName"><option value="Toner Negro">Toner Negro</option><option value="Toner Cyan">Toner Cyan</option><option value="Toner Amarillo">Toner Amarillo</option><option value="Toner Magenta">Toner Magenta</option></select></div></div>
+                            <div><label data-i18n="ml_printer_model">Modelo impresora *</label><input id="invModel" placeholder="Ej: IM C3000"></div>
+                            <div><label data-i18n="ml_part_number">N° de parte</label><input id="invPartNumber" placeholder="Ej: 842251"></div>
+                        </div>
+                    </section>
+                    <section class="form-section">
+                        <div class="form-section-title"><i class="bi bi-clipboard-check"></i><span>Stock y ubicacion</span></div>
+                        <div class="form-grid">
+                            <div><label data-i18n="ml_quantity">Cantidad *</label><input id="invQty" type="number" value="0" min="0"></div>
+                            <div><label data-i18n="ml_min_stock">Stock minimo *</label><input id="invMin" type="number" value="1" min="0"></div>
+                            <div><label data-i18n="ml_location">Ubicacion</label><input id="invLocation" placeholder="Ej: Bodega A"></div>
+                            <div class="field-span-all"><label data-i18n="ml_notes">Notas</label><input id="invNotes" placeholder="Observaciones opcionales"></div>
+                        </div>
+                    </section>
                 </div>
             </div>
             <div class="modal-actions">
-                <button class="action-button action-button-secondary" type="button" onclick="resetInventoryForm()" data-i18n="btn_cancel">Cancelar</button>
-                <button class="action-button" type="button" onclick="addInventoryItem()" data-i18n="ml_save_item">Guardar item</button>
+                <button class="action-button action-button-secondary" type="button" onclick="resetInventoryForm()"><span data-i18n="btn_cancel">Cancelar</span></button>
+                <button class="action-button" type="button" onclick="addInventoryItem()"><i class="bi bi-check2"></i><span data-i18n="ml_save_item">Guardar item</span></button>
             </div>
         </div>
     </div>
@@ -4664,21 +4692,31 @@
             </div>
             <div class="drawer-body">
                 <input type="hidden" id="editingPrinterId">
-                <div class="form-grid">
-                    <div><label data-i18n="th_shared_name">Shared Name</label><input id="printerSharedName" placeholder="Ej: IMP-FINANZAS"></div>
-                    <div><label data-i18n="th_name">Nombre</label><input id="printerName" placeholder="Nombre descriptivo"></div>
-                    <div><label data-i18n="th_model">Modelo</label><input id="printerModel" placeholder="Ej: IM C3000"></div>
-                    <div><label data-i18n="th_ip">IP</label><input id="printerIp" placeholder="192.168.1.x"><div id="printerIpHelp" class="field-help"></div></div>
-                    <div><label data-i18n="th_serial">Serie</label><input id="printerSerial" placeholder="Número de serie"></div>
-                    <div><label data-i18n="th_location">Ubicación</label><input id="printerLocation" placeholder="Ej: Piso 2"></div>
-                    <div><label data-i18n="ml_tipo">Tipo</label><select id="printerIsColor"><option value="true" data-i18n="color_type">Color</option><option value="false" data-i18n="bw_type">Blanco y negro</option></select></div>
-                    <div><label>SNMP Community</label><input id="printerCommunity" value="public"></div>
+                <div class="form-stack">
+                    <section class="form-section">
+                        <div class="form-section-title"><i class="bi bi-printer"></i><span>Identidad</span></div>
+                        <div class="form-grid">
+                            <div><label data-i18n="th_shared_name">Shared Name</label><input id="printerSharedName" placeholder="Ej: IMP-FINANZAS"></div>
+                            <div><label data-i18n="th_name">Nombre</label><input id="printerName" placeholder="Nombre descriptivo"></div>
+                            <div><label data-i18n="th_model">Modelo</label><input id="printerModel" placeholder="Ej: IM C3000"></div>
+                            <div><label data-i18n="th_serial">Serie</label><input id="printerSerial" placeholder="Numero de serie"></div>
+                        </div>
+                    </section>
+                    <section class="form-section">
+                        <div class="form-section-title"><i class="bi bi-ethernet"></i><span>Red y ubicacion</span></div>
+                        <div class="form-grid">
+                            <div><label data-i18n="th_ip">IP</label><input id="printerIp" placeholder="192.168.1.x"><div id="printerIpHelp" class="field-help"></div></div>
+                            <div><label>SNMP Community</label><input id="printerCommunity" value="public"></div>
+                            <div><label data-i18n="th_location">Ubicacion</label><input id="printerLocation" placeholder="Ej: Piso 2"></div>
+                            <div><label data-i18n="ml_tipo">Tipo</label><select id="printerIsColor"><option value="true" data-i18n="color_type">Color</option><option value="false" data-i18n="bw_type">Blanco y negro</option></select></div>
+                        </div>
+                    </section>
                 </div>
             </div>
             <div class="drawer-footer">
-                <button class="action-button action-button-secondary" onclick="resetPrinterForm()" data-i18n="btn_clean">Limpiar</button>
-                <button class="action-button action-button-secondary" onclick="closeDrawer()" data-i18n="btn_cancel">Cancelar</button>
-                <button class="action-button" onclick="savePrinter()" data-i18n="btn_save">Guardar</button>
+                <button class="action-button action-button-secondary" onclick="resetPrinterForm()"><i class="bi bi-eraser"></i><span data-i18n="btn_clean">Limpiar</span></button>
+                <button class="action-button action-button-secondary" onclick="closeDrawer()"><span data-i18n="btn_cancel">Cancelar</span></button>
+                <button class="action-button" onclick="savePrinter()"><i class="bi bi-check2"></i><span data-i18n="btn_save">Guardar</span></button>
             </div>
         </div>
     </div>
@@ -4831,26 +4869,42 @@
             <div class="modal-subtitle" id="paFormSubtitle" data-i18n="pa_form_subtitle">Complete los campos del activo de impresora.</div>
             <div class="modal-section app-modal-form">
                 <input type="hidden" id="paEditId">
-                <div class="form-grid">
-                    <div><label data-i18n="th_model">Modelo</label><input id="paModel" placeholder="Ej: IM C3000"></div>
-                    <div><label data-i18n="th_serial">Serie</label><input id="paSerial" placeholder="Serial"></div>
-                    <div><label data-i18n="th_shared_name">Shared Name</label><input id="paSharedName" placeholder="Shared Name"></div>
-                    <div><label data-i18n="th_location">Ubicación</label><input id="paLocation" placeholder="Ubicación"></div>
-                    <div><label data-i18n="th_status">Estado</label><select id="paStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option><option value="En reparación">En reparación</option><option value="Retirada">Retirada</option></select></div>
-                    <div><label>Vol N</label><input id="paVolumeNumber" placeholder="Volume Number"></div>
-                    <div><label>Static IP</label><input id="paStaticIp" placeholder="10.x.x.x"></div>
-                    <div><label>Switch</label><input id="paSwitch" placeholder="Switch Name"></div>
-                    <div><label>Physical Port</label><input id="paPhysicalPort" placeholder="Physical Port"></div>                    <div><label>BPCs</label><input id="paBpcs" placeholder="BPCs Code"></div>
-                    <div><label>Host Name</label><input id="paHostName" placeholder="Host Name"></div>
-                    <div><label>MAC Address</label><input id="paMac" placeholder="XX:XX:XX:XX:XX:XX"></div>
-                    <div><label data-i18n="pa_arrival">Fecha llegada</label><input id="paArrival" type="date"></div>
-                    <div><label>Asset Tag</label><input id="paAssetTag" placeholder="Asset Tag"></div>
-                    <div style="grid-column:1/-1"><label data-i18n="ml_notes">Notas</label><input id="paNotes" placeholder="Notas"></div>
+                <div class="form-stack">
+                    <section class="form-section">
+                        <div class="form-section-title"><i class="bi bi-printer"></i><span>Equipo</span></div>
+                        <div class="form-grid">
+                            <div><label data-i18n="th_model">Modelo</label><input id="paModel" placeholder="Ej: IM C3000"></div>
+                            <div><label data-i18n="th_serial">Serie</label><input id="paSerial" placeholder="Serial"></div>
+                            <div><label data-i18n="th_shared_name">Shared Name</label><input id="paSharedName" placeholder="Shared Name"></div>
+                            <div><label data-i18n="th_status">Estado</label><select id="paStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option><option value="En reparación">En reparación</option><option value="Retirada">Retirada</option></select></div>
+                        </div>
+                    </section>
+                    <section class="form-section">
+                        <div class="form-section-title"><i class="bi bi-hdd-network"></i><span>Red y ubicacion</span></div>
+                        <div class="form-grid">
+                            <div><label>Static IP</label><input id="paStaticIp" placeholder="10.x.x.x"></div>
+                            <div><label>Host Name</label><input id="paHostName" placeholder="Host Name"></div>
+                            <div><label>MAC Address</label><input id="paMac" placeholder="XX:XX:XX:XX:XX:XX"></div>
+                            <div><label data-i18n="th_location">Ubicacion</label><input id="paLocation" placeholder="Ubicacion"></div>
+                            <div><label>Switch</label><input id="paSwitch" placeholder="Switch Name"></div>
+                            <div><label>Physical Port</label><input id="paPhysicalPort" placeholder="Physical Port"></div>
+                        </div>
+                    </section>
+                    <section class="form-section">
+                        <div class="form-section-title"><i class="bi bi-upc-scan"></i><span>Activo</span></div>
+                        <div class="form-grid">
+                            <div><label>Vol N</label><input id="paVolumeNumber" placeholder="Volume Number"></div>
+                            <div><label>BPCs</label><input id="paBpcs" placeholder="BPCs Code"></div>
+                            <div><label data-i18n="pa_arrival">Fecha llegada</label><input id="paArrival" type="date"></div>
+                            <div><label>Asset Tag</label><input id="paAssetTag" placeholder="Asset Tag"></div>
+                            <div class="field-span-all"><label data-i18n="ml_notes">Notas</label><input id="paNotes" placeholder="Notas"></div>
+                        </div>
+                    </section>
                 </div>
             </div>
             <div class="modal-actions">
-                <button class="action-button action-button-secondary" type="button" onclick="closePrinterAssetForm()" data-i18n="btn_cancel">Cancelar</button>
-                <button class="action-button" type="button" onclick="savePrinterAsset()" data-i18n="btn_save">Guardar</button>
+                <button class="action-button action-button-secondary" type="button" onclick="closePrinterAssetForm()"><span data-i18n="btn_cancel">Cancelar</span></button>
+                <button class="action-button" type="button" onclick="savePrinterAsset()"><i class="bi bi-check2"></i><span data-i18n="btn_save">Guardar</span></button>
             </div>
         </div>
     </div>
@@ -4951,23 +5005,23 @@
     <nav class="mobile-nav" style="display:none;">
         <button class="mobile-nav-btn active" onclick="showTab('dashboard')" id="mnav-dashboard">
             <i class="bi bi-display"></i>
-            <span>Dashboard</span>
+            <span data-i18n="menu_dashboard">Dashboard</span>
         </button>
         <button class="mobile-nav-btn" onclick="showTab('printers')" id="mnav-printers">
             <i class="bi bi-printer"></i>
-            <span>Impresoras</span>
+            <span data-i18n="menu_printers">Impresoras</span>
         </button>
         <button class="mobile-nav-btn" onclick="showTab('counters')" id="mnav-counters">
             <i class="bi bi-clipboard-data"></i>
-            <span>Contadores</span>
+            <span data-i18n="menu_counters">Contadores</span>
         </button>
         <button class="mobile-nav-btn" onclick="showTab('inventory')" id="mnav-inventory">
             <i class="bi bi-boxes"></i>
-            <span>Inventario</span>
+            <span data-i18n="menu_inventory">Inventario</span>
         </button>
         <button class="mobile-nav-btn" onclick="showTab('config')" id="mnav-config">
             <i class="bi bi-gear"></i>
-            <span>Config</span>
+            <span data-i18n="menu_config">Config</span>
         </button>
     </nav>
     <script>
@@ -5030,6 +5084,8 @@
         let countersSortDirection = 'asc';
         let countersRawData = [];
         let currentAddressBookPrinter = null;
+        let abSessionToken = null;
+        let abCredentials = { admin: null };
         let currentModalPrinter = null;
         let currentTonerControlPrinterId = null;
         let tonerControlRawData = [];
@@ -5061,7 +5117,11 @@
                 btn_clean: 'Limpiar',
                 printer_management: 'Gestión de impresoras', counters_title: 'Contadores de impresión', inventory_title: 'Control de Inventario', toner_control_title: 'Control de Tóner', config_title: 'Configuración',
                 config_theme: 'Tema visual', config_theme_desc: 'Seleccione el esquema de colores de la interfaz.', config_theme_dark: 'Oscuro', config_theme_light: 'Claro',
+                config_theme_indigo: 'Índigo', config_theme_contrast: 'Alto contraste',
                 config_lang: 'Idioma', config_lang_desc: 'Idioma de la interfaz.',
+                config_nav_system: 'Sistema', config_nav_appearance: 'Apariencia', config_nav_language: 'Idioma',
+                config_nav_cache: 'Caché', config_nav_shortcuts: 'Atajos', config_nav_security: 'Seguridad',
+                config_nav_users: 'Usuarios', config_nav_diagnostics: 'Diagnóstico', config_nav_about: 'Acerca de',
                 config_about: 'Acerca de', config_shortcuts: 'Atajos de teclado', config_cache: 'Cache y datos locales', config_cache_desc: 'Datos almacenados en localStorage del navegador.', config_clear_cache: 'Limpiar toda la cache', config_refresh: 'Refrescar info', config_api_status: 'Estado del API',
                 shortcut_col: 'Atajo', action_col: 'Acción', shortcut_search: 'Abrir búsqueda rápida', shortcut_close: 'Cerrar modal / drawer activo',
                 theme_changed_to: 'Tema cambiado a', lang_set: 'Idioma configurado:',
@@ -5199,7 +5259,11 @@
                 btn_clean: 'Clear',
                 printer_management: 'Printer Management', counters_title: 'Print Counters', inventory_title: 'Inventory Control', toner_control_title: 'Toner Control', config_title: 'Settings',
                 config_theme: 'Visual Theme', config_theme_desc: 'Select the interface color scheme.', config_theme_dark: 'Dark', config_theme_light: 'Light',
+                config_theme_indigo: 'Indigo', config_theme_contrast: 'High contrast',
                 config_lang: 'Language', config_lang_desc: 'Interface language.',
+                config_nav_system: 'System', config_nav_appearance: 'Appearance', config_nav_language: 'Language',
+                config_nav_cache: 'Cache', config_nav_shortcuts: 'Shortcuts', config_nav_security: 'Security',
+                config_nav_users: 'Users', config_nav_diagnostics: 'Diagnostics', config_nav_about: 'About',
                 config_about: 'About', config_shortcuts: 'Keyboard Shortcuts', config_cache: 'Cache & Local Data', config_cache_desc: 'Data stored in browser localStorage.', config_clear_cache: 'Clear all cache', config_refresh: 'Refresh info', config_api_status: 'API Status',
                 shortcut_col: 'Shortcut', action_col: 'Action', shortcut_search: 'Open quick search', shortcut_close: 'Close active modal / drawer',
                 theme_changed_to: 'Theme changed to', lang_set: 'Language set:',
@@ -5326,8 +5390,67 @@
                 pa_search_ph: 'Search serial, shared name, IP, host...', pa_physical_port: 'Physical Port', pa_arrival: 'Arrival date',
             }
         };
-        function t(key) { const lang = localStorage.getItem('ricoh_language') || 'es'; return (I18N[lang] && I18N[lang][key]) || (I18N.es[key]) || key; }
-        function applyLanguage() { document.querySelectorAll('[data-i18n]').forEach(function (el) { var v = t(el.getAttribute('data-i18n')); if (v) el.textContent = v; }); document.querySelectorAll('[data-i18n-ph]').forEach(function (el) { var v = t(el.getAttribute('data-i18n-ph')); if (v) el.placeholder = v; }); document.querySelectorAll('[data-i18n-tt]').forEach(function (el) { var v = t(el.getAttribute('data-i18n-tt')); if (v) el.setAttribute('data-tooltip', v); }); }
+        function getCurrentLanguage() {
+            const saved = localStorage.getItem('ricoh_language') || 'es';
+            return I18N[saved] ? saved : 'es';
+        }
+        function t(key) {
+            const lang = getCurrentLanguage();
+            return (I18N[lang] && I18N[lang][key]) || (I18N.es[key]) || key;
+        }
+        function applyLanguage() {
+            const lang = getCurrentLanguage();
+            document.documentElement.lang = lang;
+            document.querySelectorAll('[data-i18n]').forEach(function (el) {
+                const value = t(el.getAttribute('data-i18n'));
+                if (value) el.textContent = value;
+            });
+            document.querySelectorAll('[data-i18n-html]').forEach(function (el) {
+                const value = t(el.getAttribute('data-i18n-html'));
+                if (value) el.innerHTML = value;
+            });
+            document.querySelectorAll('[data-i18n-ph]').forEach(function (el) {
+                const value = t(el.getAttribute('data-i18n-ph'));
+                if (value) el.placeholder = value;
+            });
+            document.querySelectorAll('[data-i18n-tt]').forEach(function (el) {
+                const value = t(el.getAttribute('data-i18n-tt'));
+                if (value) el.setAttribute('data-tooltip', value);
+            });
+            refreshConfigLangButtons();
+        }
+        function refreshConfigLangButtons() {
+            const current = getCurrentLanguage();
+            const esBtn = document.getElementById('langEsBtn');
+            const enBtn = document.getElementById('langEnBtn');
+            if (esBtn) {
+                esBtn.className = current === 'es' ? 'action-button' : 'action-button action-button-secondary';
+                esBtn.setAttribute('aria-pressed', String(current === 'es'));
+            }
+            if (enBtn) {
+                enBtn.className = current === 'en' ? 'action-button' : 'action-button action-button-secondary';
+                enBtn.setAttribute('aria-pressed', String(current === 'en'));
+            }
+            const status = document.getElementById('configLangStatus');
+            if (status) status.textContent = t('lang_set') + ' ' + (current === 'en' ? 'English' : 'Español');
+        }
+        function refreshLanguageRenderedViews() {
+            const activeTab = document.querySelector('.tab.active')?.id || 'dashboard';
+            if (activeTab === 'dashboard' && typeof loadPrinters === 'function') loadPrinters();
+            else if (activeTab === 'printers' && typeof renderSavedPrinters === 'function') renderSavedPrinters();
+            else if (activeTab === 'counters' && typeof loadCounters === 'function') loadCounters();
+            else if (activeTab === 'inventory' && typeof renderInventoryTable === 'function') renderInventoryTable();
+            else if (activeTab === 'tonerControl' && typeof renderTonerControlTable === 'function') renderTonerControlTable();
+            else if (activeTab === 'printerAssets' && typeof renderPrinterAssetsTable === 'function') renderPrinterAssetsTable();
+            else if (activeTab === 'config' && typeof refreshCacheInfo === 'function') refreshCacheInfo();
+        }
+        function setLanguage(lang) {
+            const nextLang = I18N[lang] ? lang : 'es';
+            localStorage.setItem('ricoh_language', nextLang);
+            applyLanguage();
+            refreshLanguageRenderedViews();
+            showToast(t('lang_set') + ' ' + (nextLang === 'en' ? 'English' : 'Español'), 'success');
+        }
         function highlightText(text, search) { if (!search || !text) return text; const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); return String(text).replace(new RegExp('(' + escaped + ')', 'gi'), '<span class="search-highlight">$1</span>'); }
         function appConfirm(title, message) { return new Promise(resolve => { _appConfirmResolve = resolve; const modal = document.getElementById('appConfirmModal'); const t = document.getElementById('appConfirmTitle'); const m = document.getElementById('appConfirmMessage'); if (t) t.textContent = title || 'Confirmar'; if (m) m.textContent = message || '¿Está seguro?'; if (modal) modal.classList.add('open'); }); }
         function resolveAppConfirm(value) { document.getElementById('appConfirmModal')?.classList.remove('open'); if (_appConfirmResolve) { _appConfirmResolve(value); _appConfirmResolve = null; } }
@@ -5414,7 +5537,8 @@
             document.getElementById('addressBookAuthModal')?.classList.remove('open');
             if (!confirmed) {
                 currentAddressBookPrinter = null;
-                abCredentials = { admin: null, password: null };
+                abCredentials = { admin: null };
+                abSessionToken = null;
             }
         }
         function clearDiscoveredPrinters() { discoveredPrintersCache = []; const list = document.getElementById('discoverPrintersList'); const selectAll = document.getElementById('selectAllDiscovered'); if (list) list.innerHTML = '<tr><td colspan="7">Configure la búsqueda y presione buscar.</td></tr>'; if (selectAll) selectAll.checked = false; }
@@ -5422,7 +5546,8 @@
 
         function openAddressBook(printer) {
             currentAddressBookPrinter = printer || null;
-            abCredentials = { admin: null, password: null };
+            abCredentials = { admin: null };
+            abSessionToken = null;
             document.getElementById('addressBookAdmin').value = '';
             document.getElementById('addressBookPassword').value = '';
             document.getElementById('addressBookAuthStatus').textContent = '';
@@ -5431,28 +5556,124 @@
             document.getElementById('addressBookAuthModal')?.classList.add('open');
         } function showAddressBookPendingMessage() { const status = document.getElementById('addressBookStatus'); if (status) status.textContent = currentAddressBookPrinter ? t('ab_pending_real') + ' ' + currentAddressBookPrinter.ip + '. ' + t('ab_pending_local') : t('ab_open_from_yellow'); } function renderAddressBookEntries(entries, storageMode) { const list = document.getElementById('addressBookList'); const status = document.getElementById('addressBookStatus'); if (status) status.textContent = `${t('ml_mode')}: ${storageMode || 'ricoh-real'} | ${t('ml_records')}: ${entries.length}`; if (!entries.length) { if (list) list.innerHTML = '<tr><td colspan="12">' + t('no_registered_users') + '</td></tr>'; return; } if (list) { list.innerHTML = ''; entries.forEach(entry => { const entryJson = JSON.stringify(entry).replace(/'/g, '&apos;'); list.innerHTML += `<tr><td>${entry.registration_no ?? '-'}</td><td>${entry.name ?? '-'}</td><td>${entry.key_display ?? '-'}</td><td>${entry.freq ? 'Sí' : 'No'}</td><td>${entry.title1 ?? '-'}</td><td>${entry.title2 ?? '-'}</td><td>${entry.title3 ?? '-'}</td><td>${entry.user_code ?? '-'}</td><td>${entry.email_address ?? '-'}</td><td>${entry.folder ?? '-'}</td><td>${entry.status ?? '-'}</td><td><div class="action-row" style="margin-bottom:0;"><button class="action-button" onclick='editAddressBookEntry(${entryJson})'>${t('btn_edit')}</button><button class="action-button action-button-danger" onclick="deleteAddressBookEntry('${entry.registration_no}')">${t('btn_delete')}</button></div></td></tr>`; }); } } async function loadAddressBookEntries() {
             const list = document.getElementById('addressBookList'); const status = document.getElementById('addressBookStatus'); if (!currentAddressBookPrinter) { if (list) list.innerHTML = '<tr><td colspan="12">' + t('select_a_printer') + '</td></tr>'; showAddressBookPendingMessage(); return; } try {
-                showLoadingIn('addressBookList', 12, t('loading_address_book')); const qs = new URLSearchParams();
-                if (abCredentials.admin) qs.set('admin', abCredentials.admin);
-                if (abCredentials.password !== null && abCredentials.password !== undefined) qs.set('password', abCredentials.password);
-                const response = await fetch(`/printers/${currentAddressBookPrinter.id}/address-book` + (qs.toString() ? '?' + qs.toString() : '')); const data = await response.json(); if (!response.ok) throw new Error(data.detail || t('could_not_load_address_book')); renderAddressBookEntries(Array.isArray(data.entries) ? data.entries : [], data.storage_mode);
+                showLoadingIn('addressBookList', 12, t('loading_address_book'));
+                const response = await addressBookFetch(`/printers/${currentAddressBookPrinter.id}/address-book`); const data = await response.json(); if (!response.ok) throw new Error(data.detail || t('could_not_load_address_book')); renderAddressBookEntries(Array.isArray(data.entries) ? data.entries : [], data.storage_mode);
             } catch (error) { if (list) list.innerHTML = '<tr><td colspan="12">' + t('could_not_load_address_book') + '</td></tr>'; if (status) status.textContent = error.message || t('could_not_load_address_book'); console.error(error); }
         } function normalizeAddressBookPromptValue(value) { const trimmed = (value ?? '').trim(); return trimmed ? trimmed : null; }
-        async function createAddressBookEntry() { if (!currentAddressBookPrinter) { showAddressBookPendingMessage(); return; } const payload = await openAddressBookFormModal(null); if (!payload) return; if (!payload.name) { showToast(t('name_required'), 'error'); return; } try { const qs = new URLSearchParams(); if (abCredentials.admin) qs.set('admin', abCredentials.admin); if (abCredentials.password !== null && abCredentials.password !== undefined) qs.set('password', abCredentials.password); const response = await fetch(`/printers/${currentAddressBookPrinter.id}/address-book` + (qs.toString() ? '?' + qs.toString() : ''), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); const data = await response.json(); if (!response.ok) throw new Error(data.detail || t('could_not_add_user')); showToast(t('user_added'), 'success'); if (data.entries) { renderAddressBookEntries(data.entries, 'ricoh-real'); } else { await loadAddressBookEntries(); } } catch (error) { showToast(error.message || t('could_not_add_user'), 'error'); console.error(error); } }
-        async function editAddressBookEntry(entry) { if (!currentAddressBookPrinter || !entry) return; const payload = await openAddressBookFormModal(entry); if (!payload) return; if (!payload.name) { showToast(t('name_required'), 'error'); return; } try { const qs = new URLSearchParams(); if (abCredentials.admin) qs.set('admin', abCredentials.admin); if (abCredentials.password !== null && abCredentials.password !== undefined) qs.set('password', abCredentials.password); const response = await fetch(`/printers/${currentAddressBookPrinter.id}/address-book/${encodeURIComponent(entry.registration_no)}` + (qs.toString() ? '?' + qs.toString() : ''), { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); const data = await response.json(); if (!response.ok) throw new Error(data.detail || t('could_not_update_user')); showToast(t('user_updated'), 'success'); if (data.entries) { renderAddressBookEntries(data.entries, 'ricoh-real'); } else { await loadAddressBookEntries(); } } catch (error) { showToast(error.message || t('could_not_update_user'), 'error'); console.error(error); } }
-        async function deleteAddressBookEntry(registrationNo) { if (!currentAddressBookPrinter) return; if (!await appConfirm(t('delete_record'), t('delete_record_msg') + ' ' + registrationNo + '?')) return; try { const qs = new URLSearchParams(); if (abCredentials.admin) qs.set('admin', abCredentials.admin); if (abCredentials.password !== null && abCredentials.password !== undefined) qs.set('password', abCredentials.password); const response = await fetch(`/printers/${currentAddressBookPrinter.id}/address-book/${encodeURIComponent(registrationNo)}` + (qs.toString() ? '?' + qs.toString() : ''), { method: 'DELETE' }); const data = await response.json(); if (!response.ok) throw new Error(data.detail || t('could_not_delete_user')); showToast(t('user_deleted'), 'success'); if (data.entries) { renderAddressBookEntries(data.entries, 'ricoh-real'); } else { await loadAddressBookEntries(); } } catch (error) { showToast(error.message || t('could_not_delete_user'), 'error'); console.error(error); } } function toggleCountersAuto(checked) { if (checked) startCountersAuto(); else stopCountersAuto(); }
+        async function createAddressBookEntry() { if (!currentAddressBookPrinter) { showAddressBookPendingMessage(); return; } const payload = await openAddressBookFormModal(null); if (!payload) return; if (!payload.name) { showToast(t('name_required'), 'error'); return; } try { const response = await addressBookFetch(`/printers/${currentAddressBookPrinter.id}/address-book`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); const data = await response.json(); if (!response.ok) throw new Error(data.detail || t('could_not_add_user')); showToast(t('user_added'), 'success'); if (data.entries) { renderAddressBookEntries(data.entries, 'ricoh-real'); } else { await loadAddressBookEntries(); } } catch (error) { showToast(error.message || t('could_not_add_user'), 'error'); console.error(error); } }
+        async function editAddressBookEntry(entry) { if (!currentAddressBookPrinter || !entry) return; const payload = await openAddressBookFormModal(entry); if (!payload) return; if (!payload.name) { showToast(t('name_required'), 'error'); return; } try { const response = await addressBookFetch(`/printers/${currentAddressBookPrinter.id}/address-book/${encodeURIComponent(entry.registration_no)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); const data = await response.json(); if (!response.ok) throw new Error(data.detail || t('could_not_update_user')); showToast(t('user_updated'), 'success'); if (data.entries) { renderAddressBookEntries(data.entries, 'ricoh-real'); } else { await loadAddressBookEntries(); } } catch (error) { showToast(error.message || t('could_not_update_user'), 'error'); console.error(error); } }
+        async function deleteAddressBookEntry(registrationNo) { if (!currentAddressBookPrinter) return; if (!await appConfirm(t('delete_record'), t('delete_record_msg') + ' ' + registrationNo + '?')) return; try { const response = await addressBookFetch(`/printers/${currentAddressBookPrinter.id}/address-book/${encodeURIComponent(registrationNo)}`, { method: 'DELETE' }); const data = await response.json(); if (!response.ok) throw new Error(data.detail || t('could_not_delete_user')); showToast(t('user_deleted'), 'success'); if (data.entries) { renderAddressBookEntries(data.entries, 'ricoh-real'); } else { await loadAddressBookEntries(); } } catch (error) { showToast(error.message || t('could_not_delete_user'), 'error'); console.error(error); } } function toggleCountersAuto(checked) { if (checked) startCountersAuto(); else stopCountersAuto(); }
+        function escapeAddressBookText(value) {
+            const div = document.createElement('div');
+            div.textContent = value ?? '-';
+            return div.innerHTML;
+        }
+        function addressBookFetch(url, options) {
+            const opts = options || {};
+            opts.headers = Object.assign({}, opts.headers || {});
+            if (abSessionToken) opts.headers['X-Address-Book-Session'] = abSessionToken;
+            return fetch(url, opts);
+        }
+        function renderAddressBookEntries(entries, storageMode) {
+            const list = document.getElementById('addressBookList');
+            const status = document.getElementById('addressBookStatus');
+            if (status) status.textContent = `${t('ml_mode')}: ${storageMode || 'ricoh-real'} | ${t('ml_records')}: ${entries.length}`;
+            if (!entries.length) {
+                if (list) list.innerHTML = '<tr><td colspan="12">' + t('no_registered_users') + '</td></tr>';
+                return;
+            }
+            if (!list) return;
+            list.innerHTML = '';
+            entries.forEach(entry => {
+                const entryJson = JSON.stringify(entry).replace(/'/g, '&apos;');
+                const reg = String(entry.registration_no ?? '');
+                list.innerHTML += `<tr><td>${escapeAddressBookText(reg)}</td><td>${escapeAddressBookText(entry.name)}</td><td>${escapeAddressBookText(entry.key_display)}</td><td>${entry.freq ? 'Si' : 'No'}</td><td>${escapeAddressBookText(entry.title1)}</td><td>${escapeAddressBookText(entry.title2)}</td><td>${escapeAddressBookText(entry.title3)}</td><td>${escapeAddressBookText(entry.user_code)}</td><td>${escapeAddressBookText(entry.email_address)}</td><td>${escapeAddressBookText(entry.folder)}</td><td>${escapeAddressBookText(entry.status)}</td><td><div class="action-row" style="margin-bottom:0;"><button class="action-button" onclick='editAddressBookEntry(${entryJson})'>${t('btn_edit')}</button><button class="action-button action-button-danger" onclick="deleteAddressBookEntry('${encodeURIComponent(reg)}')">${t('btn_delete')}</button></div></td></tr>`;
+            });
+        }
+        async function loadAddressBookEntries() {
+            const list = document.getElementById('addressBookList');
+            const status = document.getElementById('addressBookStatus');
+            if (!currentAddressBookPrinter) {
+                if (list) list.innerHTML = '<tr><td colspan="12">' + t('select_a_printer') + '</td></tr>';
+                showAddressBookPendingMessage();
+                return;
+            }
+            try {
+                showLoadingIn('addressBookList', 12, t('loading_address_book'));
+                const response = await addressBookFetch(`/printers/${currentAddressBookPrinter.id}/address-book`);
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.detail || t('could_not_load_address_book'));
+                renderAddressBookEntries(Array.isArray(data.entries) ? data.entries : [], data.storage_mode);
+            } catch (error) {
+                if (list) list.innerHTML = '<tr><td colspan="12">' + t('could_not_load_address_book') + '</td></tr>';
+                if (status) status.textContent = error.message || t('could_not_load_address_book');
+                console.error(error);
+            }
+        }
+        async function createAddressBookEntry() {
+            if (!currentAddressBookPrinter) { showAddressBookPendingMessage(); return; }
+            const payload = await openAddressBookFormModal(null);
+            if (!payload) return;
+            if (!payload.name) { showToast(t('name_required'), 'error'); return; }
+            try {
+                const response = await addressBookFetch(`/printers/${currentAddressBookPrinter.id}/address-book`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.detail || t('could_not_add_user'));
+                showToast(t('user_added'), 'success');
+                if (data.entries) renderAddressBookEntries(data.entries, 'ricoh-real');
+                else await loadAddressBookEntries();
+            } catch (error) {
+                showToast(error.message || t('could_not_add_user'), 'error');
+                console.error(error);
+            }
+        }
+        async function editAddressBookEntry(entry) {
+            if (!currentAddressBookPrinter || !entry) return;
+            const payload = await openAddressBookFormModal(entry);
+            if (!payload) return;
+            if (!payload.name) { showToast(t('name_required'), 'error'); return; }
+            try {
+                const response = await addressBookFetch(`/printers/${currentAddressBookPrinter.id}/address-book/${encodeURIComponent(entry.registration_no)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.detail || t('could_not_update_user'));
+                showToast(t('user_updated'), 'success');
+                if (data.entries) renderAddressBookEntries(data.entries, 'ricoh-real');
+                else await loadAddressBookEntries();
+            } catch (error) {
+                showToast(error.message || t('could_not_update_user'), 'error');
+                console.error(error);
+            }
+        }
+        async function deleteAddressBookEntry(registrationNo) {
+            if (!currentAddressBookPrinter) return;
+            const reg = decodeURIComponent(registrationNo || '');
+            if (!await appConfirm(t('delete_record'), t('delete_record_msg') + ' ' + reg + '?')) return;
+            try {
+                const response = await addressBookFetch(`/printers/${currentAddressBookPrinter.id}/address-book/${encodeURIComponent(reg)}`, { method: 'DELETE' });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.detail || t('could_not_delete_user'));
+                showToast(t('user_deleted'), 'success');
+                if (data.entries) renderAddressBookEntries(data.entries, 'ricoh-real');
+                else await loadAddressBookEntries();
+            } catch (error) {
+                showToast(error.message || t('could_not_delete_user'), 'error');
+                console.error(error);
+            }
+        }
         async function closeAddressBookSession() {
             if (!currentAddressBookPrinter) {
                 showToast('No hay sesión activa', 'warning');
                 return;
             }
             try {
-                const response = await fetch(`/printers/${currentAddressBookPrinter.id}/address-book/session/close`, {
+                const response = await addressBookFetch(`/printers/${currentAddressBookPrinter.id}/address-book/session/close`, {
                     method: 'POST'
                 });
                 const data = await response.json();
                 if (data.closed) {
                     showToast('Sesión cerrada correctamente', 'success');
-                    abCredentials = { admin: null, password: null };
+                    abCredentials = { admin: null };
+                    abSessionToken = null;
                 } else {
                     showToast('Error al cerrar sesión', 'error');
                 }
@@ -5546,13 +5767,15 @@
             tableWrap.style.height = available + 'px';
             tableWrap.style.maxHeight = available + 'px';
         }
-        function refreshConfigThemeButtons() { const current = localStorage.getItem('ricoh_theme') || 'dark'; const darkBtn = document.getElementById('themeDarkBtn'); const lightBtn = document.getElementById('themeLightBtn'); if (darkBtn) darkBtn.className = current === 'dark' ? 'action-button' : 'action-button action-button-secondary'; if (lightBtn) lightBtn.className = current === 'light' ? 'action-button' : 'action-button action-button-secondary'; }
+        function refreshConfigThemeButtons() { const current = localStorage.getItem('ricoh_theme') || 'dark'; const darkBtn = document.getElementById('themeDarkBtn'); const lightBtn = document.getElementById('themeLightBtn'); const purpleBtn = document.getElementById('themePurpleBtn'); const contrastBtn = document.getElementById('themeContrastBtn'); if (darkBtn) darkBtn.className = current === 'dark' ? 'action-button' : 'action-button action-button-secondary'; if (lightBtn) lightBtn.className = current === 'light' ? 'action-button' : 'action-button action-button-secondary'; if (purpleBtn) purpleBtn.className = current === 'purple' ? 'action-button' : 'action-button action-button-secondary'; if (contrastBtn) contrastBtn.className = current === 'contrast' ? 'action-button' : 'action-button action-button-secondary'; }
         function loadConfig() { refreshConfigThemeButtons(); refreshConfigLangButtons(); refreshCacheInfo(); loadActivityLogs(); if (_isAdmin) { loadAdConfig(); loadSystemUsers(); } const adCard = document.getElementById('adConfigCard'); const usersCard = document.getElementById('usersConfigCard'); if (adCard) adCard.style.display = _isAdmin ? '' : 'none'; if (usersCard) usersCard.style.display = _isAdmin ? '' : 'none'; }
         function setTheme(theme) {
-        document.body.classList.remove('theme-light', 'theme-purple');
-         if (theme === 'light') document.body.classList.add('theme-light');
+        document.body.classList.remove('theme-light', 'theme-purple', 'theme-contrast');
+          if (theme === 'light') document.body.classList.add('theme-light');
         if (theme === 'purple') document.body.classList.add('theme-purple');
+        if (theme === 'contrast') document.body.classList.add('theme-contrast');
             localStorage.setItem('ricoh_theme', theme);
+        refreshConfigThemeButtons();
         showToast('Tema aplicado', 'success');
         }
         function refreshCacheInfo() { const el = document.getElementById('configCacheInfo'); if (!el) return; try { let totalBytes = 0; let count = 0; for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key) { const val = localStorage.getItem(key) || ''; totalBytes += (key.length + val.length) * 2; count++; } } const kb = (totalBytes / 1024).toFixed(1); el.innerHTML = '<strong>' + count + '</strong> ' + t('keys_stored') + ' &middot; <strong>' + kb + ' KB</strong> ' + t('in_use'); } catch (e) { el.textContent = t('could_not_calc_cache'); } }
@@ -5568,8 +5791,25 @@
         function togglePrinterSection(id) {
             const el = document.getElementById(id);
             if (!el) return;
-            el.classList.toggle('open');
-            el.style.display = el.classList.contains('open') ? '' : 'none';
+            const isOpen = !el.classList.contains('open');
+            el.classList.toggle('is-open', isOpen);
+            el.classList.toggle('open', isOpen);
+            el.style.display = '';
+            const toggleBtn = document.getElementById('toggleDiscoverPrintersBtn');
+            if (toggleBtn) toggleBtn.setAttribute('aria-expanded', String(isOpen));
+            if (isOpen) {
+                toggleDiscoverModeFields();
+                setTimeout(() => document.getElementById('discoverStartIp')?.focus(), 80);
+            }
+        }
+        function closeDiscoverPrintersModal() {
+            const el = document.getElementById('discoverPrinterCard');
+            if (el) {
+                el.classList.remove('is-open', 'open');
+                el.style.display = '';
+            }
+            const toggleBtn = document.getElementById('toggleDiscoverPrintersBtn');
+            if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'false');
         }
 
         function toggleDiscoverModeFields() {
@@ -5668,14 +5908,8 @@
         async function applyAddressBookChanges() {
             if (!currentAddressBookPrinter) { showToast(t('no_printer_selected'), 'error'); return; }
             if (!await appConfirm(t('apply_changes_printer'), t('ab_apply_confirm_msg') || '¿Aplicar los cambios locales a la impresora Ricoh?')) return;
-            const admin = (document.getElementById('addressBookAdmin')?.value || '').trim() || undefined;
-            const password = (document.getElementById('addressBookPassword')?.value || '').trim() || undefined;
             try {
-                const qs = new URLSearchParams();
-                if (admin) qs.set('admin', admin);
-                if (password) qs.set('password', password);
-                const url = `/printers/${currentAddressBookPrinter.id}/address-book/apply` + (qs.toString() ? '?' + qs.toString() : '');
-                const response = await fetch(url, { method: 'POST' });
+                const response = await addressBookFetch(`/printers/${currentAddressBookPrinter.id}/address-book/apply`, { method: 'POST' });
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.detail || 'Error al aplicar cambios');
                 if (data.applied) {
@@ -5702,7 +5936,9 @@
                 });
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.detail || 'Credenciales inválidas');
-                abCredentials = { admin: admin || 'admin', password: password || '' };
+                abCredentials = { admin: admin || 'admin' };
+                abSessionToken = data.session_token || null;
+                document.getElementById('addressBookPassword').value = '';
                 document.getElementById('addressBookAuthModal')?.classList.remove('open');
                 const title = document.getElementById('addressBookPrinterTitle');
                 const meta = document.getElementById('addressBookPrinterMeta');
@@ -5939,7 +6175,7 @@
             window.open('/printer-assets/export/csv', '_blank');
         }
         document.addEventListener('click', function (e) { const btn = e.target.closest('.action-button,.filter-toggle-btn,.toolbar-button'); if (!btn) return; const rect = btn.getBoundingClientRect(); const ripple = document.createElement('span'); ripple.className = 'btn-ripple'; const size = Math.max(rect.width, rect.height); ripple.style.width = ripple.style.height = size + 'px'; ripple.style.left = (e.clientX - rect.left - size / 2) + 'px'; ripple.style.top = (e.clientY - rect.top - size / 2) + 'px'; btn.appendChild(ripple); ripple.addEventListener('animationend', () => ripple.remove()); });
-        (function attachFilterListeners() { restoreDashboardFilters(); const searchEl = document.getElementById('searchInput'); if (searchEl) searchEl.addEventListener('input', scheduleDashboardSearchReload);['viewMode', 'densityMode', 'statusFilter', 'typeFilter', 'errorFilter', 'sortFilter'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('change', () => { loadPrinters(); saveDashboardFilters(); }); }); const printerIpEl = document.getElementById('printerIp'); if (printerIpEl) { printerIpEl.addEventListener('input', () => validatePrinterIpField()); printerIpEl.addEventListener('blur', () => { validatePrinterIpField(); autofillPrinterNameFromIp(); }); printerIpEl.addEventListener('change', () => { validatePrinterIpField(); autofillPrinterNameFromIp(); }); } ['discoverStartIp', 'discoverEndIp', 'discoverSingleIp'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('input', () => validateDiscoverFields()); }); toggleDiscoverModeFields(); document.addEventListener('keydown', function (e) { if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); const panel = document.getElementById('dashboardFilters'); if (panel && panel.classList.contains('closed')) toggleDashboardFilters(); const s = document.getElementById('searchInput'); if (s) { s.focus(); s.select(); } return; } if (e.key === 'Escape') { const modals = document.querySelectorAll('.modal-overlay.open'); if (modals.length) { const top = modals[modals.length - 1]; if (top.id === 'appConfirmModal') resolveAppConfirm(false); else if (top.id === 'addressBookFormModal') resolveAddressBookForm(null); else top.classList.remove('open'); return; } const drawer = document.getElementById('drawerPanel'); if (drawer && drawer.classList.contains('open')) { closeDrawer(); return; } } }); })();
+        (function attachFilterListeners() { restoreDashboardFilters(); const searchEl = document.getElementById('searchInput'); if (searchEl) searchEl.addEventListener('input', scheduleDashboardSearchReload);['viewMode', 'densityMode', 'statusFilter', 'typeFilter', 'errorFilter', 'sortFilter'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('change', () => { loadPrinters(); saveDashboardFilters(); }); }); const printerIpEl = document.getElementById('printerIp'); if (printerIpEl) { printerIpEl.addEventListener('input', () => validatePrinterIpField()); printerIpEl.addEventListener('blur', () => { validatePrinterIpField(); autofillPrinterNameFromIp(); }); printerIpEl.addEventListener('change', () => { validatePrinterIpField(); autofillPrinterNameFromIp(); }); } ['discoverStartIp', 'discoverEndIp', 'discoverSingleIp'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('input', () => validateDiscoverFields()); }); toggleDiscoverModeFields(); document.addEventListener('keydown', function (e) { if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); const panel = document.getElementById('dashboardFilters'); if (panel && panel.classList.contains('closed')) toggleDashboardFilters(); const s = document.getElementById('searchInput'); if (s) { s.focus(); s.select(); } return; } if (e.key === 'Escape') { const modals = document.querySelectorAll('.modal-overlay.open'); if (modals.length) { const top = modals[modals.length - 1]; if (top.id === 'appConfirmModal') resolveAppConfirm(false); else if (top.id === 'addressBookFormModal') resolveAddressBookForm(null); else if (top.id === 'discoverPrinterCard') closeDiscoverPrintersModal(); else top.classList.remove('open'); return; } const drawer = document.getElementById('drawerPanel'); if (drawer && drawer.classList.contains('open')) { closeDrawer(); return; } } }); })();
         function openPrinterAssetForm(asset) { const titleEl = document.getElementById('paFormTitle'); const subEl = document.getElementById('paFormSubtitle'); document.getElementById('paEditId').value = ''; document.getElementById('paModel').value = ''; document.getElementById('paSerial').value = ''; document.getElementById('paSharedName').value = ''; document.getElementById('paLocation').value = ''; document.getElementById('paStatus').value = 'Active'; document.getElementById('paVolumeNumber').value = ''; document.getElementById('paStaticIp').value = ''; document.getElementById('paSwitch').value = ''; document.getElementById('paPhysicalPort').value = ''; document.getElementById('paBpcs').value = ''; document.getElementById('paHostName').value = ''; document.getElementById('paMac').value = ''; document.getElementById('paArrival').value = ''; document.getElementById('paAssetTag').value = ''; document.getElementById('paNotes').value = ''; if (asset) { document.getElementById('paEditId').value = asset.id || ''; document.getElementById('paModel').value = asset.model || ''; document.getElementById('paSerial').value = asset.serial || ''; document.getElementById('paSharedName').value = asset.shared_name || ''; document.getElementById('paLocation').value = asset.facility_location || ''; document.getElementById('paStatus').value = asset.asset_status || 'Active'; document.getElementById('paVolumeNumber').value = asset.volume_number || ''; document.getElementById('paStaticIp').value = asset.static_ip || ''; document.getElementById('paSwitch').value = asset.switch_name || ''; document.getElementById('paPhysicalPort').value = asset.physical_port || ''; document.getElementById('paBpcs').value = asset.bpcs_code || ''; document.getElementById('paHostName').value = asset.host_name || ''; document.getElementById('paMac').value = asset.mac_address || ''; document.getElementById('paArrival').value = asset.arrival_date || ''; document.getElementById('paAssetTag').value = asset.asset_tag || ''; document.getElementById('paNotes').value = asset.notes || ''; if (titleEl) titleEl.textContent = t('pa_edit_asset') || 'Editar activo'; if (subEl) subEl.textContent = t('pa_edit_subtitle') || 'Modifique los campos del activo.'; } else { if (titleEl) titleEl.textContent = t('pa_add_asset') || 'Agregar activo'; if (subEl) subEl.textContent = t('pa_form_subtitle') || 'Complete los campos del activo de impresora.'; } document.getElementById('printerAssetFormModal')?.classList.add('open'); setTimeout(() => document.getElementById('paModel')?.focus(), 120); } function closePrinterAssetForm() { document.getElementById('printerAssetFormModal')?.classList.remove('open'); }
         async function savePrinterAsset() { const editId = (document.getElementById('paEditId')?.value || '').trim(); const payload = { model: (document.getElementById('paModel')?.value || '').trim() || null, serial: (document.getElementById('paSerial')?.value || '').trim() || null, shared_name: (document.getElementById('paSharedName')?.value || '').trim() || null, facility_location: (document.getElementById('paLocation')?.value || '').trim() || null, asset_status: document.getElementById('paStatus')?.value || 'Active', volume_number: (document.getElementById('paVolumeNumber')?.value || '').trim() || null, static_ip: (document.getElementById('paStaticIp')?.value || '').trim() || null, switch_name: (document.getElementById('paSwitch')?.value || '').trim() || null, physical_port: (document.getElementById('paPhysicalPort')?.value || '').trim() || null, bpcs_code: (document.getElementById('paBpcs')?.value || '').trim() || null, host_name: (document.getElementById('paHostName')?.value || '').trim() || null, mac_address: (document.getElementById('paMac')?.value || '').trim() || null, arrival_date: (document.getElementById('paArrival')?.value || '').trim() || null, asset_tag: (document.getElementById('paAssetTag')?.value || '').trim() || null, notes: (document.getElementById('paNotes')?.value || '').trim() || null }; try { let r; if (editId) { r = await fetch('/printer-assets/' + editId, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); } else { r = await fetch('/printer-assets/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); } if (!r.ok) { const d = await r.json(); throw new Error(d.detail || 'Error'); } showToast(editId ? t('pa_updated') : t('pa_saved'), 'success'); closePrinterAssetForm(); loadPrinterAssets(); } catch (e) { showToast(e.message || t('pa_error_saving'), 'error'); console.error(e); } } async function deletePrinterAsset(id) { if (!await appConfirm(t('pa_delete_title'), t('pa_delete_msg'))) return; try { await fetch('/printer-assets/' + id, { method: 'DELETE' }); showToast(t('pa_deleted'), 'success'); loadPrinterAssets(); } catch (e) { showToast(t('pa_error_deleting'), 'error'); console.error(e); } }
         function scheduleDashboardSearchReload() {
@@ -6453,6 +6689,7 @@
                 document.body.classList.add('theme-light');
             }
             if (t === 'purple') document.body.classList.add('theme-purple');
+            if (t === 'contrast') document.body.classList.add('theme-contrast');
             applyLanguage();
         })();
 
@@ -6812,29 +7049,34 @@
     </script>
     <nav class="mobile-nav" id="mobileNav">
         <button class="mobile-nav-btn active" onclick="showTab('dashboard')" data-tab="dashboard">
-            <i class="bi bi-display"></i><span>Dashboard</span>
+            <i class="bi bi-display"></i><span data-i18n="menu_dashboard">Dashboard</span>
             <span class="mobile-nav-badge warn" id="mbadge_toner"></span>
         </button>
         <button class="mobile-nav-btn" onclick="showTab('printers')" data-tab="printers">
-            <i class="bi bi-printer"></i><span>Impresoras</span>
+            <i class="bi bi-printer"></i><span data-i18n="menu_printers">Impresoras</span>
             <span class="mobile-nav-badge" id="mbadge_offline"></span>
         </button>
         <button class="mobile-nav-btn" onclick="showTab('counters')" data-tab="counters">
-            <i class="bi bi-bar-chart-line"></i><span>Contadores</span>
+            <i class="bi bi-bar-chart-line"></i><span data-i18n="menu_counters">Contadores</span>
         </button>
         <button class="mobile-nav-btn" onclick="showTab('inventory')" data-tab="inventory">
-            <i class="bi bi-boxes"></i><span>Inventario</span>
+            <i class="bi bi-boxes"></i><span data-i18n="menu_inventory">Inventario</span>
         </button>
         <button class="mobile-nav-btn" onclick="showTab('tonerControl')" data-tab="tonerControl">
-            <i class="bi bi-layers"></i><span>Tóner</span>
+            <i class="bi bi-layers"></i><span data-i18n="menu_toner_control">Tóner</span>
         </button>
         <button class="mobile-nav-btn" onclick="showTab('printerAssets')" data-tab="printerAssets">
-            <i class="bi bi-clipboard-check"></i><span>Activos</span>
+            <i class="bi bi-clipboard-check"></i><span data-i18n="menu_printer_assets">Activos</span>
         </button>
         <button class="mobile-nav-btn" onclick="showTab('config')" data-tab="config">
-            <i class="bi bi-gear"></i><span>Config</span>
+            <i class="bi bi-gear"></i><span data-i18n="menu_config">Config</span>
         </button>
     </nav>
+    <script>
+        applyLanguage();
+    </script>
+    <script src="/frontend/js/config-tools.js"></script>
+    <script src="/frontend/js/visual-polish.js"></script>
 </body>
 </html>
 

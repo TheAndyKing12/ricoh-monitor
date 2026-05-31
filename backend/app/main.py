@@ -4,13 +4,17 @@ from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 import threading
 import time
+from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
+from sqlalchemy import text
 
 from fastapi.middleware.cors import CORSMiddleware
 
+from .config import settings as app_settings
 from .database import Base, engine
+from .migrations import run_startup_migrations
 
-from .routers import printers, inventory, toner_control, address_book, printer_assets, logs, notifications, settings , auth
+from .routers import printers, inventory, toner_control, address_book, printer_assets, logs, notifications, settings, auth
 from app.task import (
     start_scheduler, stop_scheduler, get_scheduler_status,
     sync_all_printer_status, sync_all_printer_counters, sync_all_toner_control,
@@ -25,52 +29,58 @@ logging.basicConfig(
 )
 
 
-def _migrate_inventory_columns():
-    """Add new nullable columns to inventory table if they don't exist yet."""
-    import sqlalchemy
-    insp = sqlalchemy.inspect(engine)
-    if "inventory" in insp.get_table_names():
-        existing = {col["name"] for col in insp.get_columns("inventory")}
-        new_cols = {"part_number": "TEXT", "location": "TEXT", "notes": "TEXT"}
-        with engine.begin() as conn:
-            for col_name, col_type in new_cols.items():
-                if col_name not in existing:
-                    conn.execute(sqlalchemy.text(f"ALTER TABLE inventory ADD COLUMN {col_name} {col_type}"))
-
-_migrate_inventory_columns()
-
-
-def _migrate_printer_assets_columns():
-    """Rename physical_floor -> physical_port and handle removed ci column."""
-    import sqlalchemy
-    insp = sqlalchemy.inspect(engine)
-    if "printer_assets" not in insp.get_table_names():
-        return
-    existing = {col["name"] for col in insp.get_columns("printer_assets")}
-    with engine.begin() as conn:
-        if "physical_port" not in existing:
-            conn.execute(sqlalchemy.text("ALTER TABLE printer_assets ADD COLUMN physical_port TEXT"))
-            if "physical_floor" in existing:
-                conn.execute(sqlalchemy.text("UPDATE printer_assets SET physical_port = physical_floor"))
-
-_migrate_printer_assets_columns()
-
-
+run_startup_migrations()
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Ricoh Monitor")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logging.info("Iniciando scheduler de sincronizacion automatica...")
+    start_scheduler()
+    _start_daily_snapshot_worker()
+    try:
+        yield
+    finally:
+        logging.info("Deteniendo scheduler...")
+        _stop_daily_snapshot_worker()
+        stop_scheduler()
+
+
+app = FastAPI(title=app_settings.app_name, version=app_settings.app_version, lifespan=lifespan)
+
+
+@app.get("/health")
+def health_check():
+    db_ok = True
+    db_error = None
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+    except Exception as exc:
+        db_ok = False
+        db_error = str(exc)
+
+    scheduler = get_scheduler_status()
+    cache_metadata = get_cache_metadata()
+    return {
+        "status": "ok" if db_ok else "degraded",
+        "app": app_settings.app_name,
+        "version": app_settings.app_version,
+        "database": {"ok": db_ok, "error": db_error},
+        "scheduler": {"running": scheduler.get("running", False), "jobs": len(scheduler.get("jobs", []))},
+        "cache": cache_metadata,
+        "time": datetime.now().isoformat(),
+    }
 
 
 # ========== EVENTOS DE INICIO/CIERRE ==========
 
-@app.on_event("startup")
 async def startup_event():
     """Iniciar scheduler al arrancar la aplicación"""
     logging.info("🚀 Iniciando scheduler de sincronización automática...")
     start_scheduler()
 
 
-@app.on_event("shutdown")
 async def shutdown_event():
     """Detener scheduler al cerrar la aplicación"""
     logging.info("🛑 Deteniendo scheduler...")
@@ -183,7 +193,6 @@ def _daily_snapshot_worker():
         time.sleep(1)
 
 
-@app.on_event("startup")
 def _start_daily_snapshot_worker():
     global _DAILY_SNAPSHOT_THREAD
     if _DAILY_SNAPSHOT_THREAD and _DAILY_SNAPSHOT_THREAD.is_alive():
@@ -193,7 +202,6 @@ def _start_daily_snapshot_worker():
     _DAILY_SNAPSHOT_THREAD.start()
 
 
-@app.on_event("shutdown")
 def _stop_daily_snapshot_worker():
     _DAILY_SNAPSHOT_STOP_EVENT.set()
     global _DAILY_SNAPSHOT_THREAD
@@ -205,7 +213,7 @@ def _stop_daily_snapshot_worker():
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=app_settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

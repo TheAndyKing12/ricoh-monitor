@@ -1,4 +1,0 @@
-﻿with open('frontend/dashboard.html', encoding='utf-8') as f:
-    lines = f.readlines()
-line = lines[303]
-print(repr(line[-60:]))

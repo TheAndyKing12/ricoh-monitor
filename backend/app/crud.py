@@ -163,10 +163,14 @@ def create_log(db: Session, category: str, action: str, description: str):
     return log
 
 
-def get_logs(db: Session, category: str = None, limit: int = 200):
+def get_logs(db: Session, category: str = None, action: str = None, search: str = None, limit: int = 200):
     query = db.query(models.ActivityLog).order_by(models.ActivityLog.id.desc())
     if category:
         query = query.filter(models.ActivityLog.category == category)
+    if action:
+        query = query.filter(models.ActivityLog.action == action)
+    if search:
+        query = query.filter(models.ActivityLog.description.ilike(f"%{search}%"))
     return query.limit(limit).all() 
 def save_notification(db: Session, event_type: str, printer: str, message: str):
     from datetime import datetime

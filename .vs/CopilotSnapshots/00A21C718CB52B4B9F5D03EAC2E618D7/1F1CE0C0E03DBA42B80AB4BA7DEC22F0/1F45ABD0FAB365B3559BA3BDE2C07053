@@ -1,9 +1,0 @@
-﻿import re
-content = open('frontend/dashboard.html', encoding='utf-8').read()
-scripts = re.findall(r'<script>(.*?)</script>', content, re.DOTALL)
-js = scripts[0] if scripts else ''
-balance = 0
-for ch in js:
-    if ch == '{': balance += 1
-    elif ch == '}': balance -= 1
-print(f'Balance final: {balance}')

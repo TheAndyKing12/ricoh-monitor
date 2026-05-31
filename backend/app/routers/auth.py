@@ -5,15 +5,16 @@ from typing import Optional, List
 from datetime import datetime, timedelta
 from jose import jwt, JWTError
 from ldap3 import Server, Connection, ALL, SIMPLE
+from ..config import settings
 from ..database import SessionLocal
 from ..models import AppSetting, SystemUser
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 security = HTTPBearer()
 
-SECRET_KEY = "ricoh-monitor-secret-2024"
+SECRET_KEY = settings.secret_key
 ALGORITHM = "HS256"
-TOKEN_EXPIRE_HOURS = 8
+TOKEN_EXPIRE_HOURS = settings.token_expire_hours
 VALID_TABS = {"dashboard","printers","counters","inventory","tonerControl","printerAssets","config"}
 
 # ── helpers ──────────────────────────────────────────────
@@ -46,7 +47,11 @@ class LoginRequest(BaseModel):
 @router.post("/login")
 def login(req: LoginRequest):
     # ── Usuario de emergencia (siempre primero, sin AD) ──
-    if req.username == "SuperAdmin" and req.password == "Villalobos1208":
+    if (
+        settings.emergency_admin_password
+        and req.username == settings.emergency_admin_user
+        and req.password == settings.emergency_admin_password
+    ):
         token = _create_token({
             "sub": "superadmin",
             "display_name": "Super Admin",

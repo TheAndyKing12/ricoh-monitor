@@ -2,6 +2,7 @@
 import json
 import os
 import re
+import secrets
 import threading
 import time
 import base64
@@ -10,7 +11,7 @@ from pathlib import Path
 from typing import List
 
 import requests
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app import crud
@@ -27,12 +28,17 @@ RICOH_HTTP_TIMEOUT = 8
 RAW_DUMP_PATH = Path(__file__).resolve().parents[2] / "data" / "address_book_last_raw_response.html"
 ADRSLIST_DUMP_PATH = Path(__file__).resolve().parents[2] / "data" / "address_book_last_page.html"
 ADDRESS_BOOK_BROWSER_LOGIN_ENABLED = (os.getenv("ADDRESS_BOOK_BROWSER_LOGIN_ENABLED", "0") or "0").strip().lower() in {"1", "true", "yes", "on"}
+ADDRESS_BOOK_DEBUG_ENDPOINTS_ENABLED = (os.getenv("ADDRESS_BOOK_DEBUG_ENDPOINTS_ENABLED", "0") or "0").strip().lower() in {"1", "true", "yes", "on"}
 RICOH_SESSION_LOCKS: dict[str, threading.Lock] = {}
 RICOH_SESSION_LOCKS_GUARD = threading.Lock()
 
 RICOH_SESSION_POOL: dict[str, tuple[requests.Session, float]] = {}
 RICOH_SESSION_POOL_LOCK = threading.Lock()
 RICOH_SESSION_TIMEOUT = 300  # 5 minutos
+
+ADDRESS_BOOK_CLIENT_SESSIONS: dict[str, tuple[str, requests.Session, float]] = {}
+ADDRESS_BOOK_CLIENT_SESSIONS_LOCK = threading.Lock()
+ADDRESS_BOOK_CLIENT_SESSION_TIMEOUT = 900  # 15 minutos
 
 
 def _cleanup_expired_sessions():
@@ -46,6 +52,63 @@ def _cleanup_expired_sessions():
             _ricoh_logout_address_book(session, ip)
         except:
             pass
+
+
+def _cleanup_expired_client_sessions_locked():
+    now = time.time()
+    expired = [
+        token
+        for token, (_, _, ts) in ADDRESS_BOOK_CLIENT_SESSIONS.items()
+        if now - ts > ADDRESS_BOOK_CLIENT_SESSION_TIMEOUT
+    ]
+    for token in expired:
+        printer_ip, session, _ = ADDRESS_BOOK_CLIENT_SESSIONS.pop(token)
+        try:
+            _ricoh_logout_address_book(session, printer_ip)
+        except Exception:
+            pass
+
+
+def _register_address_book_client_session(printer_ip: str, session: requests.Session) -> str:
+    token = secrets.token_urlsafe(32)
+    with ADDRESS_BOOK_CLIENT_SESSIONS_LOCK:
+        _cleanup_expired_client_sessions_locked()
+        ADDRESS_BOOK_CLIENT_SESSIONS[token] = (printer_ip, session, time.time())
+    return token
+
+
+def _get_address_book_client_session(token: str | None, printer_ip: str) -> requests.Session | None:
+    if not token:
+        return None
+    with ADDRESS_BOOK_CLIENT_SESSIONS_LOCK:
+        _cleanup_expired_client_sessions_locked()
+        item = ADDRESS_BOOK_CLIENT_SESSIONS.get(token)
+        if not item:
+            raise HTTPException(status_code=401, detail="La sesion de libreta expiro. Conecte nuevamente.")
+        session_ip, session, _ = item
+        if session_ip != printer_ip:
+            raise HTTPException(status_code=403, detail="La sesion de libreta no corresponde a esta impresora.")
+        ADDRESS_BOOK_CLIENT_SESSIONS[token] = (session_ip, session, time.time())
+        return session
+
+
+def _close_address_book_client_session(token: str | None = None, printer_ip: str | None = None) -> bool:
+    closed = False
+    with ADDRESS_BOOK_CLIENT_SESSIONS_LOCK:
+        _cleanup_expired_client_sessions_locked()
+        targets = []
+        if token and token in ADDRESS_BOOK_CLIENT_SESSIONS:
+            targets.append(token)
+        elif printer_ip:
+            targets = [key for key, (ip, _, _) in ADDRESS_BOOK_CLIENT_SESSIONS.items() if ip == printer_ip]
+        for key in targets:
+            ip, session, _ = ADDRESS_BOOK_CLIENT_SESSIONS.pop(key)
+            try:
+                _ricoh_logout_address_book(session, ip)
+            except Exception:
+                pass
+            closed = True
+    return closed
 
 
 def _get_or_create_ricoh_session(printer_ip: str, admin: str, password: str, force_new: bool = False) -> requests.Session:
@@ -81,6 +144,7 @@ def _get_or_create_ricoh_session(printer_ip: str, admin: str, password: str, for
 
 def _close_ricoh_session(printer_ip: str):
     """Close and remove session from pool"""
+    _close_address_book_client_session(printer_ip=printer_ip)
     with RICOH_SESSION_POOL_LOCK:
         if printer_ip in RICOH_SESSION_POOL:
             session, _ = RICOH_SESSION_POOL.pop(printer_ip)
@@ -198,7 +262,14 @@ def _sort_entries(entries: list[dict]) -> list[dict]:
         text = str(value or "").strip()
         return text.isdigit() and int(text) == 0
 
-    cleaned = [item for item in (entries or []) if not is_zero_registration(item.get("registration_no"))]
+    cleaned = []
+    for item in entries or []:
+        reg = str(item.get("registration_no") or "").strip()
+        if is_zero_registration(reg):
+            continue
+        if not reg.isdigit():
+            continue
+        cleaned.append(item)
     return sorted(cleaned, key=lambda item: int(str(item.get("registration_no") or "0")))
 
 
@@ -420,12 +491,15 @@ def validate_address_book_auth(printer_id: int, payload: AddressBookAuthRequest,
             # Asegurar que entries siempre sea una lista
             if entries is None:
                 entries = []
+
+            session_token = _register_address_book_client_session(printer.ip, session)
             
             return {
                 "valid": True,
                 "printer_id": printer.id,
                 "printer_ip": printer.ip,
                 "storage_mode": "ricoh-real",
+                "session_token": session_token,
                 "entries_count": len(entries),
                 "entries": entries,
             }
@@ -437,6 +511,8 @@ def validate_address_book_auth(printer_id: int, payload: AddressBookAuthRequest,
 
 @router.post("/{printer_id}/address-book/debug-login")
 def debug_address_book_login(printer_id: int, payload: AddressBookAuthRequest, db: Session = Depends(get_db)):
+    if not ADDRESS_BOOK_DEBUG_ENDPOINTS_ENABLED:
+        raise HTTPException(status_code=404, detail="Debug endpoint disabled")
     """Endpoint temporal de diagnóstico — captura HTML real de la Ricoh."""
     import traceback
     try:
@@ -540,10 +616,17 @@ def debug_address_book_login(printer_id: int, payload: AddressBookAuthRequest, d
 
 
 @router.post("/{printer_id}/address-book/session/close")
-def close_address_book_session(printer_id: int, db: Session = Depends(get_db)):
+def close_address_book_session(
+    printer_id: int,
+    address_book_session: str | None = Header(default=None, alias="X-Address-Book-Session"),
+    db: Session = Depends(get_db),
+):
     """Cierra la sesión activa de la libreta de direcciones."""
     printer = _get_printer_or_404(db, printer_id)
-    _close_ricoh_session(printer.ip)
+    if address_book_session:
+        _close_address_book_client_session(token=address_book_session)
+    else:
+        _close_ricoh_session(printer.ip)
     return {"closed": True, "printer_id": printer.id, "printer_ip": printer.ip}
 
 
@@ -559,6 +642,8 @@ def logout_address_book_session(printer_id: int, admin: str | None = Query(defau
 
 @router.get("/{printer_id}/address-book/test-login")
 def test_login_diagnostics(printer_id: int, admin: str = "admin", password: str = "", db: Session = Depends(get_db)):
+    if not ADDRESS_BOOK_DEBUG_ENDPOINTS_ENABLED:
+        raise HTTPException(status_code=404, detail="Debug endpoint disabled")
     """Test login and return detailed diagnostics"""
     printer = _get_printer_or_404(db, printer_id)
     session = _ricoh_build_session(printer.ip)
@@ -624,15 +709,23 @@ def test_login_diagnostics(printer_id: int, admin: str = "admin", password: str 
 
 
 @router.get("/{printer_id}/address-book", response_model=AddressBookListResponse)
-def list_address_book(printer_id: int, storage_mode: str | None = Query(default=None), admin: str | None = Query(default=None), password: str | None = Query(default=None), db: Session = Depends(get_db)):
+def list_address_book(
+    printer_id: int,
+    storage_mode: str | None = Query(default=None),
+    admin: str | None = Query(default=None),
+    password: str | None = Query(default=None),
+    address_book_session: str | None = Header(default=None, alias="X-Address-Book-Session"),
+    db: Session = Depends(get_db),
+):
     printer = _get_printer_or_404(db, printer_id)
     storage_mode = _get_storage_mode(storage_mode)
     if storage_mode == "ricoh-real":
         lock = _get_ricoh_session_lock(printer.ip)
         with lock:
-            session = _ricoh_build_session(printer.ip)
+            session = _get_address_book_client_session(address_book_session, printer.ip) or _ricoh_build_session(printer.ip)
             try:
-                _ricoh_login_address_book(session, printer.ip, admin, password)
+                if not address_book_session:
+                    _ricoh_login_address_book(session, printer.ip, admin, password)
                 entries = _ricoh_load_entries_with_session(session, printer.ip, dump=False, admin=admin, password=password)
                 return {
                     "printer_id": printer.id,
@@ -645,10 +738,11 @@ def list_address_book(printer_id: int, storage_mode: str | None = Query(default=
             except Exception as ex:
                 raise HTTPException(status_code=502, detail=f"Ricoh address book error: {type(ex).__name__}: {str(ex)[:180]}")
             finally:
-                try:
-                    _ricoh_logout_address_book(session, printer.ip)
-                except Exception:
-                    pass
+                if not address_book_session:
+                    try:
+                        _ricoh_logout_address_book(session, printer.ip)
+                    except Exception:
+                        pass
     else:
         entries = _get_local_entries(printer.id)
         return {
@@ -1018,35 +1112,10 @@ def _ricoh_load_entries_with_browser(printer_ip: str, admin: str | None, passwor
                     diagnostics.append(f"browser:c{idx}:markers={','.join((matched or ['authform.cgi'])[:2])}")
                     continue
 
-                cookie_count = 0
-                for cookie in context.cookies():
-                    name = cookie.get("name")
-                    if not name:
-                        continue
-                    session.cookies.set(
-                        name,
-                        cookie.get("value") or "",
-                        domain=(cookie.get("domain") or printer_ip),
-                        path=(cookie.get("path") or "/"),
-                    )
-                    cookie_count += 1
-                diagnostics.append(f"browser:c{idx}:cookies={cookie_count}")
-                if cookie_count <= 0:
-                    continue
-
-                try:
-                    verify = session.get(c["page_url"], timeout=RICOH_HTTP_TIMEOUT)
-                    verify_text = (verify.text or "").lower()
-                except Exception as ex:
-                    diagnostics.append(f"browser:c{idx}:verify_exc={type(ex).__name__}")
-                    continue
-                if verify.status_code != 200 or _is_auth_redirect_page(verify_text):
-                    diagnostics.append(f"browser:c{idx}:verify_auth")
-                    continue
-
-                entries = _ricoh_parse_entries(verify_text)
+                page_html = page.content() or ""
+                entries = _ricoh_parse_entries(page_html)
                 if not entries:
-                    entries = _ricoh_parse_entries_from_html(verify_text)
+                    entries = _ricoh_parse_entries_from_html(page_html)
                 diagnostics.append(f"browser:c{idx}:parsed={len(entries)}")
                 browser.close()
                 return entries
@@ -1062,40 +1131,71 @@ def _ricoh_load_entries_with_browser(printer_ip: str, admin: str | None, passwor
 
 
 @router.post("/{printer_id}/address-book")
-def create_address_book_entry(printer_id: int, payload: AddressBookEntryCreate, storage_mode: str | None = Query(default=None), admin: str | None = Query(default=None), password: str | None = Query(default=None), db: Session = Depends(get_db)):
+def create_address_book_entry(
+    printer_id: int,
+    payload: AddressBookEntryCreate,
+    storage_mode: str | None = Query(default=None),
+    admin: str | None = Query(default=None),
+    password: str | None = Query(default=None),
+    address_book_session: str | None = Header(default=None, alias="X-Address-Book-Session"),
+    db: Session = Depends(get_db),
+):
     printer = _get_printer_or_404(db, printer_id)
     storage_mode = _get_storage_mode(storage_mode)
     if storage_mode == "ricoh-real":
-        return _create_ricoh_entry(printer, payload, admin, password)
+        return _create_ricoh_entry(printer, payload, admin, password, address_book_session)
     else:
         entry = _create_local_entry(printer.id, payload)
         return {"entry": entry}
 
 
 @router.put("/{printer_id}/address-book/{registration_no}")
-def update_address_book_entry(printer_id: int, registration_no: str, payload: AddressBookEntryUpdate, storage_mode: str | None = Query(default=None), admin: str | None = Query(default=None), password: str | None = Query(default=None), db: Session = Depends(get_db)):
+def update_address_book_entry(
+    printer_id: int,
+    registration_no: str,
+    payload: AddressBookEntryUpdate,
+    storage_mode: str | None = Query(default=None),
+    admin: str | None = Query(default=None),
+    password: str | None = Query(default=None),
+    address_book_session: str | None = Header(default=None, alias="X-Address-Book-Session"),
+    db: Session = Depends(get_db),
+):
     printer = _get_printer_or_404(db, printer_id)
     storage_mode = _get_storage_mode(storage_mode)
     if storage_mode == "ricoh-real":
-        return _update_ricoh_entry(printer, registration_no, payload, admin, password)
+        return _update_ricoh_entry(printer, registration_no, payload, admin, password, address_book_session)
     else:
         entry = _update_local_entry(printer.id, registration_no, payload)
         return {"entry": entry}
 
 
 @router.delete("/{printer_id}/address-book/{registration_no}")
-def delete_address_book_entry(printer_id: int, registration_no: str, storage_mode: str | None = Query(default=None), admin: str | None = Query(default=None), password: str | None = Query(default=None), db: Session = Depends(get_db)):
+def delete_address_book_entry(
+    printer_id: int,
+    registration_no: str,
+    storage_mode: str | None = Query(default=None),
+    admin: str | None = Query(default=None),
+    password: str | None = Query(default=None),
+    address_book_session: str | None = Header(default=None, alias="X-Address-Book-Session"),
+    db: Session = Depends(get_db),
+):
     printer = _get_printer_or_404(db, printer_id)
     storage_mode = _get_storage_mode(storage_mode)
     if storage_mode == "ricoh-real":
-        return _delete_ricoh_entry(printer, registration_no, admin, password)
+        return _delete_ricoh_entry(printer, registration_no, admin, password, address_book_session)
     else:
         _delete_local_entry(printer.id, registration_no)
         return {"deleted": True}
 
 
 @router.post("/{printer_id}/address-book/apply")
-def apply_address_book_changes(printer_id: int, admin: str | None = Query(default=None), password: str | None = Query(default=None), db: Session = Depends(get_db)):
+def apply_address_book_changes(
+    printer_id: int,
+    admin: str | None = Query(default=None),
+    password: str | None = Query(default=None),
+    address_book_session: str | None = Header(default=None, alias="X-Address-Book-Session"),
+    db: Session = Depends(get_db),
+):
     printer = _get_printer_or_404(db, printer_id)
     local = _get_local_entries(printer.id)
     if not local:
@@ -1103,9 +1203,10 @@ def apply_address_book_changes(printer_id: int, admin: str | None = Query(defaul
 
     lock = _get_ricoh_session_lock(printer.ip)
     with lock:
-        session = _ricoh_build_session(printer.ip)
+        session = _get_address_book_client_session(address_book_session, printer.ip) or _ricoh_build_session(printer.ip)
         try:
-            _ricoh_login_address_book(session, printer.ip, admin, password)
+            if not address_book_session:
+                _ricoh_login_address_book(session, printer.ip, admin, password)
             remote = _ricoh_load_entries_with_session(session, printer.ip, dump=False, admin=admin, password=password)
             remote_map = {str(item.get("registration_no") or "").strip().zfill(5): item for item in (remote or [])}
 
@@ -1131,15 +1232,16 @@ def apply_address_book_changes(printer_id: int, admin: str | None = Query(defaul
         except Exception as ex:
             raise HTTPException(status_code=502, detail=f"Apply error: {type(ex).__name__}: {str(ex)[:200]}")
         finally:
-            try:
-                _ricoh_logout_address_book(session, printer.ip)
-            except Exception:
-                pass
+            if not address_book_session:
+                try:
+                    _ricoh_logout_address_book(session, printer.ip)
+                except Exception:
+                    pass
 
 
-def _create_ricoh_entry(printer, payload: AddressBookEntryCreate, admin: str | None = None, password: str | None = None) -> dict:
+def _create_ricoh_entry(printer, payload: AddressBookEntryCreate, admin: str | None = None, password: str | None = None, address_book_session: str | None = None) -> dict:
     entry = {
-        "registration_no": (payload.registration_no or "").strip() or "00001",
+        "registration_no": (payload.registration_no or "").strip(),
         "name": payload.name or "",
         "key_display": payload.key_display or payload.name or "",
         "freq": payload.freq if payload.freq is not None else True,
@@ -1154,17 +1256,23 @@ def _create_ricoh_entry(printer, payload: AddressBookEntryCreate, admin: str | N
     lock = _get_ricoh_session_lock(printer.ip)
     with lock:
         try:
-            session = _get_or_create_ricoh_session(printer.ip, admin, password)
+            session = _get_address_book_client_session(address_book_session, printer.ip) or _get_or_create_ricoh_session(printer.ip, admin, password)
+            if not entry["registration_no"]:
+                existing = _ricoh_load_entries_with_session(session, printer.ip, dump=False, admin=admin, password=password)
+                entry["registration_no"] = _next_registration_no(existing or [])
             _ricoh_set_user(session, printer.ip, entry, "ADDUSER")
             entries = _ricoh_load_entries_with_session(session, printer.ip, dump=False, admin=admin, password=password)
             return {"entry": entry, "entries": entries or []}
         except Exception as ex:
             # Si falla, limpiar sesión del pool
-            _close_ricoh_session(printer.ip)
+            if address_book_session:
+                _close_address_book_client_session(token=address_book_session)
+            else:
+                _close_ricoh_session(printer.ip)
             raise
 
 
-def _update_ricoh_entry(printer, registration_no: str, payload: AddressBookEntryUpdate, admin: str | None = None, password: str | None = None) -> dict:
+def _update_ricoh_entry(printer, registration_no: str, payload: AddressBookEntryUpdate, admin: str | None = None, password: str | None = None, address_book_session: str | None = None) -> dict:
     entry = {
         "registration_no": registration_no,
         "name": payload.name or "",
@@ -1181,21 +1289,24 @@ def _update_ricoh_entry(printer, registration_no: str, payload: AddressBookEntry
     lock = _get_ricoh_session_lock(printer.ip)
     with lock:
         try:
-            session = _get_or_create_ricoh_session(printer.ip, admin, password)
+            session = _get_address_book_client_session(address_book_session, printer.ip) or _get_or_create_ricoh_session(printer.ip, admin, password)
             _ricoh_set_user(session, printer.ip, entry, "MODUSER")
             entries = _ricoh_load_entries_with_session(session, printer.ip, dump=False, admin=admin, password=password)
             return {"entry": entry, "entries": entries or []}
         except Exception as ex:
-            _close_ricoh_session(printer.ip)
+            if address_book_session:
+                _close_address_book_client_session(token=address_book_session)
+            else:
+                _close_ricoh_session(printer.ip)
             raise
 
 
-def _delete_ricoh_entry(printer, registration_no: str, admin: str | None = None, password: str | None = None) -> dict:
+def _delete_ricoh_entry(printer, registration_no: str, admin: str | None = None, password: str | None = None, address_book_session: str | None = None) -> dict:
     reg = str(registration_no).strip().zfill(5)
     lock = _get_ricoh_session_lock(printer.ip)
     with lock:
         try:
-            session = _get_or_create_ricoh_session(printer.ip, admin, password)
+            session = _get_address_book_client_session(address_book_session, printer.ip) or _get_or_create_ricoh_session(printer.ip, admin, password)
             list_page = session.get(f"http://{printer.ip}/web/entry/es/address/adrsList.cgi", timeout=RICOH_HTTP_TIMEOUT)
             token = _ricoh_extract_wim_token(list_page.text)
             if not token:
@@ -1212,5 +1323,8 @@ def _delete_ricoh_entry(printer, registration_no: str, admin: str | None = None,
             entries = _ricoh_load_entries_with_session(session, printer.ip, dump=False, admin=admin, password=password)
             return {"entries": entries or []}
         except Exception as ex:
-            _close_ricoh_session(printer.ip)
+            if address_book_session:
+                _close_address_book_client_session(token=address_book_session)
+            else:
+                _close_ricoh_session(printer.ip)
             raise

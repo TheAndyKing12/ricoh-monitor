@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 
 class InventoryCreate(BaseModel):
@@ -23,8 +23,7 @@ class InventoryUpdate(BaseModel):
 
 class InventoryResponse(InventoryCreate):
     id: int
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class TonerControlUpdate(BaseModel):
     check_date: str | None = None
@@ -66,8 +65,7 @@ class PrinterResponse(BaseModel):
     location: Optional[str] = None
     is_color: bool
     snmp_community: str
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 
@@ -108,5 +106,4 @@ class PrinterAssetUpdate(BaseModel):
 
 class PrinterAssetResponse(PrinterAssetCreate):
     id: int
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

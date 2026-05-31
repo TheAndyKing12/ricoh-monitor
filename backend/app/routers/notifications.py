@@ -3,7 +3,9 @@ from fastapi.responses import StreamingResponse
 import asyncio
 import json
 from datetime import datetime
+import requests
 from sqlalchemy.orm import Session
+from app.config import settings
 from app.database import SessionLocal
 from app import crud
 
@@ -52,6 +54,20 @@ def push_event_sync(event_type: str, data: dict):
             )
         finally:
             db.close()
+
+        if settings.alert_webhook_url:
+            try:
+                requests.post(
+                    settings.alert_webhook_url,
+                    json={
+                        "type": event_type,
+                        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        **data,
+                    },
+                    timeout=settings.alert_webhook_timeout_seconds,
+                )
+            except Exception:
+                pass
 
         # Enviar a clientes SSE conectados
         payload = json.dumps({
@@ -130,3 +146,13 @@ def get_notification_history(event_type: str = None, limit: int = 500):
         ]
     finally:
         db.close()
+
+
+@router.post("/test")
+def create_test_notification():
+    data = {
+        "printer": "Sistema",
+        "message": "Notificacion de prueba enviada correctamente",
+    }
+    push_event_sync("test", data)
+    return {"ok": True, **data}

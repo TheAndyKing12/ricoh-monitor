@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app import crud
 from app.routers import printers as printers_router
+from app.config import settings
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -24,10 +25,35 @@ cache_metadata = {
     "last_counter_sync": None,
     "last_toner_sync": None
 }
+job_stats = {}
 
 # Directorio de caché en disco (backup)
-CACHE_DIR = Path(__file__).resolve().parents[1] / "cache"
+CACHE_DIR = settings.cache_dir
 CACHE_DIR.mkdir(exist_ok=True)
+
+
+def _record_job_start(job_id: str) -> float:
+    started = datetime.now()
+    job_stats[job_id] = {
+        **job_stats.get(job_id, {}),
+        "last_started": started.isoformat(),
+        "last_finished": None,
+        "last_duration_seconds": None,
+        "last_error": None,
+        "last_success": False,
+    }
+    return started.timestamp()
+
+
+def _record_job_finish(job_id: str, started_ts: float, error: Exception | None = None) -> None:
+    finished = datetime.now()
+    job_stats[job_id] = {
+        **job_stats.get(job_id, {}),
+        "last_finished": finished.isoformat(),
+        "last_duration_seconds": round(finished.timestamp() - started_ts, 2),
+        "last_error": str(error) if error else None,
+        "last_success": error is None,
+    }
 
 
 def save_cache_to_disk():
@@ -99,6 +125,7 @@ def get_cache_metadata():
 
 def sync_all_printer_status():
     """Sincronizar estado completo de todas las impresoras (SNMP)"""
+    started_ts = _record_job_start("sync_printer_status")
     logger.info("=== Starting full printer status sync ===")
     db = SessionLocal()
     updated_cache = {}
@@ -203,12 +230,16 @@ def sync_all_printer_status():
         logger.info(f"=== Status sync completed: {success_count} success, {error_count} errors ===")
     except Exception as e:
         logger.error(f"Fatal error in sync_all_printer_status: {e}")
+        _record_job_finish("sync_printer_status", started_ts, e)
     finally:
         db.close()
+        if job_stats.get("sync_printer_status", {}).get("last_finished") is None:
+            _record_job_finish("sync_printer_status", started_ts)
 
 
 def sync_all_printer_counters():
     """Sincronizar contadores de todas las impresoras"""
+    started_ts = _record_job_start("sync_counters")
     logger.info("=== Starting counter sync job ===")
     db = SessionLocal()
     updated_cache = {}
@@ -249,12 +280,16 @@ def sync_all_printer_counters():
         logger.info(f"=== Counter sync completed: {success_count} success, {error_count} errors ===")
     except Exception as e:
         logger.error(f"Fatal error in sync_all_printer_counters: {e}")
+        _record_job_finish("sync_counters", started_ts, e)
     finally:
         db.close()
+        if job_stats.get("sync_counters", {}).get("last_finished") is None:
+            _record_job_finish("sync_counters", started_ts)
 
 
 def sync_all_toner_control():
     """Actualizar caché de control de tóner desde la base de datos"""
+    started_ts = _record_job_start("sync_toner_control")
     logger.info("=== Starting toner control cache update ===")
     db = SessionLocal()
     
@@ -274,32 +309,33 @@ def sync_all_toner_control():
         logger.info(f"=== Toner control cache updated: {len(records)} records ===")
     except Exception as e:
         logger.error(f"Fatal error in sync_all_toner_control: {e}")
+        _record_job_finish("sync_toner_control", started_ts, e)
     finally:
         db.close()
+        if job_stats.get("sync_toner_control", {}).get("last_finished") is None:
+            _record_job_finish("sync_toner_control", started_ts)
 
 def cleanup_old_notifications():
     """Eliminar notificaciones con más de 30 días"""
+    started_ts = _record_job_start("cleanup_notifications")
     db = SessionLocal()
     try:
         from app import crud
-        crud.delete_old_notifications(db, days=30)
+        crud.delete_old_notifications(db, days=settings.notification_retention_days)
         logger.info("✓ Old notifications cleaned up (>30 days)")
     except Exception as e:
         logger.error(f"Error cleaning notifications: {e}")
+        _record_job_finish("cleanup_notifications", started_ts, e)
     finally:
         db.close()
+        if job_stats.get("cleanup_notifications", {}).get("last_finished") is None:
+            _record_job_finish("cleanup_notifications", started_ts)
 
 def start_scheduler():
     """Iniciar el scheduler de tareas en segundo plano"""
-    import os
-    from dotenv import load_dotenv
-    
-    load_dotenv()
-    
-    # Cargar configuración
-    STATUS_SYNC_INTERVAL = int(os.getenv("STATUS_SYNC_INTERVAL", "5"))  # 5 minutos
-    COUNTER_SYNC_INTERVAL = int(os.getenv("COUNTER_SYNC_INTERVAL", "30"))  # 30 minutos
-    TONER_SYNC_INTERVAL = int(os.getenv("TONER_SYNC_INTERVAL", "10"))  # 10 minutos
+    STATUS_SYNC_INTERVAL = settings.status_sync_interval
+    COUNTER_SYNC_INTERVAL = settings.counter_sync_interval
+    TONER_SYNC_INTERVAL = settings.toner_sync_interval
     
     # Cargar caché desde disco
     load_cache_from_disk()
@@ -363,14 +399,15 @@ def stop_scheduler():
 def get_scheduler_status():
     """Obtener estado de las tareas programadas"""
     if not scheduler.running:
-        return {"running": False, "jobs": [], "cache_metadata": cache_metadata}
+        return {"running": False, "jobs": [], "cache_metadata": cache_metadata, "job_stats": job_stats}
     
     jobs = []
     for job in scheduler.get_jobs():
         jobs.append({
             "id": job.id,
             "name": job.name,
-            "next_run": job.next_run_time.isoformat() if job.next_run_time else None
+            "next_run": job.next_run_time.isoformat() if job.next_run_time else None,
+            "stats": job_stats.get(job.id, {})
         })
     
     return {
@@ -381,5 +418,6 @@ def get_scheduler_status():
             "printer_status_count": len(printer_status_cache),
             "counters_count": len(counters_cache),
             "toner_control_count": len(toner_control_cache)
-        }
+        },
+        "job_stats": job_stats
     }

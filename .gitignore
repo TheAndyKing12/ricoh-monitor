@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+venv/
+.venv/
+backend/venv/
+backend/app/venv/
+
+# Local data and runtime cache
+*.db
+*.sqlite
+*.sqlite3
+backend/cache/
+backend/data/
+backend/wheels/
+
+# Secrets and local settings
+.env
+backend/.env
+*.local
+
+# Editor and OS files
+.vs/
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
+
+# Temporary generated checks
+*.log
+*backup*
+frontend/__tmp*
+tmp/
+temp/

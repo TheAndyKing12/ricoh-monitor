@@ -1,1 +1,1 @@
-# This file is necessary to make this directory a package.
+"""This module is necessary to make the directory a package."""
