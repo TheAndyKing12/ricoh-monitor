@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends
 import logging
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
@@ -15,6 +15,7 @@ from .database import Base, engine
 from .migrations import run_startup_migrations
 
 from .routers import printers, inventory, toner_control, address_book, printer_assets, logs, notifications, settings, auth
+from .routers.auth import require_admin, require_tab
 from app.task import (
     start_scheduler, stop_scheduler, get_scheduler_status,
     sync_all_printer_status, sync_all_printer_counters, sync_all_toner_control,
@@ -90,7 +91,7 @@ async def shutdown_event():
 # ========== ENDPOINTS DE CACHÉ ==========
 
 @app.get("/cache/printer-status")
-def get_cached_status(printer_id: int = None):
+def get_cached_status(printer_id: int = None, token=Depends(require_tab("dashboard", "printers"))):
     """Obtener estado de impresoras desde caché (ultra rápido)"""
     data = get_cached_printer_status(printer_id)
     metadata = get_cache_metadata()
@@ -108,7 +109,7 @@ def get_cached_status(printer_id: int = None):
 
 
 @app.get("/cache/counters")
-def get_cached_printer_counters(printer_id: int = None):
+def get_cached_printer_counters(printer_id: int = None, token=Depends(require_tab("counters"))):
     """Obtener contadores desde caché"""
     data = get_cached_counters(printer_id)
     metadata = get_cache_metadata()
@@ -126,7 +127,7 @@ def get_cached_printer_counters(printer_id: int = None):
 
 
 @app.get("/cache/toner-control")
-def get_cached_toner_data():
+def get_cached_toner_data(token=Depends(require_tab("tonerControl"))):
     """Obtener datos de control de tóner desde caché"""
     data = get_cached_toner_control()
     metadata = get_cache_metadata()
@@ -141,28 +142,28 @@ def get_cached_toner_data():
 # ========== ENDPOINTS DE SINCRONIZACIÓN MANUAL ==========
 
 @app.post("/scheduler/sync-status-now")
-async def trigger_status_sync(background_tasks: BackgroundTasks):
+async def trigger_status_sync(background_tasks: BackgroundTasks, token=Depends(require_admin)):
     """Forzar sincronización de estado inmediata"""
     background_tasks.add_task(sync_all_printer_status)
     return {"message": "Status sync triggered"}
 
 
 @app.post("/scheduler/sync-counters-now")
-async def trigger_counter_sync(background_tasks: BackgroundTasks):
+async def trigger_counter_sync(background_tasks: BackgroundTasks, token=Depends(require_admin)):
     """Forzar sincronización de contadores inmediata"""
     background_tasks.add_task(sync_all_printer_counters)
     return {"message": "Counter sync triggered"}
 
 
 @app.post("/scheduler/sync-toner-now")
-async def trigger_toner_sync(background_tasks: BackgroundTasks):
+async def trigger_toner_sync(background_tasks: BackgroundTasks, token=Depends(require_admin)):
     """Forzar sincronización de tóner inmediata"""
     background_tasks.add_task(sync_all_toner_control)
     return {"message": "Toner sync triggered"}
 
 
 @app.get("/scheduler/status")
-def scheduler_status():
+def scheduler_status(token=Depends(require_admin)):
     """Ver estado de las tareas programadas y caché"""
     return get_scheduler_status()
 

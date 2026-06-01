@@ -17,8 +17,9 @@ from sqlalchemy.orm import Session
 from app import crud
 from app.database import SessionLocal
 from app.models import Printer
+from .auth import require_tab
 
-router = APIRouter(prefix="/printers", tags=["AddressBook"])
+router = APIRouter(prefix="/printers", tags=["AddressBook"], dependencies=[Depends(require_tab("printers"))])
 
 STORE_LOCK = threading.Lock()
 STORE_PATH = Path(__file__).resolve().parents[2] / "data" / "address_book_store.json"

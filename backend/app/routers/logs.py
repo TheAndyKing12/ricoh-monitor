@@ -4,8 +4,9 @@ import io
 from sqlalchemy.orm import Session
 from ..database import SessionLocal
 from .. import crud
+from .auth import require_admin
 
-router = APIRouter(prefix="/logs", tags=["Logs"])
+router = APIRouter(prefix="/logs", tags=["Logs"], dependencies=[Depends(require_admin)])
 
 
 def get_db():

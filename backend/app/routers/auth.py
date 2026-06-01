@@ -39,6 +39,30 @@ def require_admin(token=Depends(verify_token)):
         raise HTTPException(403, "Se requiere rol de administrador")
     return token
 
+def verify_token_value(token: str):
+    try:
+        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except JWTError:
+        raise HTTPException(401, "Token invalido o expirado")
+
+def _allowed_tabs_from_token(token: dict) -> set[str]:
+    raw = token.get("allowed_tabs") or ""
+    if isinstance(raw, str):
+        return {tab.strip() for tab in raw.split(",") if tab.strip()}
+    if isinstance(raw, list):
+        return {str(tab).strip() for tab in raw if str(tab).strip()}
+    return set()
+
+def require_tab(*tabs: str):
+    def _dependency(token=Depends(verify_token)):
+        if token.get("is_admin"):
+            return token
+        allowed = _allowed_tabs_from_token(token)
+        if not allowed.intersection(tabs):
+            raise HTTPException(403, "No tienes permisos para esta seccion")
+        return token
+    return _dependency
+
 # ── login ─────────────────────────────────────────────────
 class LoginRequest(BaseModel):
     username: str

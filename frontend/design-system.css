@@ -1632,3 +1632,434 @@ body.theme-contrast #config [style*="color:#64748b"],
 body.theme-contrast #config [style*="color:#475569"] {
     color: #ffffff !important;
 }
+
+/* Polished local fixes for dense admin controls. */
+.tc-toolbar {
+    display: grid !important;
+    grid-template-columns: auto 1px minmax(0, 1fr);
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 12px !important;
+}
+
+.tc-toolbar-actions,
+.tc-toolbar-filters {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.tc-toolbar-actions {
+    flex-wrap: nowrap;
+    white-space: nowrap;
+}
+
+.tc-toolbar-filters {
+    display: grid;
+    grid-template-columns: minmax(280px, 340px) minmax(150px, 170px) minmax(135px, 150px) auto;
+    justify-content: start;
+    min-width: 0;
+}
+
+.tc-toolbar-sep {
+    flex: 0 0 1px;
+    align-self: stretch;
+    margin-left: 0 !important;
+}
+
+.tc-toolbar .tc-search-wrap {
+    min-width: 0;
+    max-width: none;
+}
+
+.tc-toolbar .tc-search-wrap .toolbar-input,
+.tc-toolbar .toolbar-select {
+    width: 100%;
+}
+
+.tc-toolbar .toolbar-button {
+    white-space: nowrap;
+}
+
+#userModal .user-check-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+#userModal .user-check-pill,
+#userModal .user-tabs-grid > label {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    min-height: 36px;
+    padding: 8px 12px !important;
+    border: 1px solid var(--ds-border);
+    border-radius: 10px !important;
+    background: var(--ds-surface-2) !important;
+    color: var(--ds-text) !important;
+    cursor: pointer;
+    font-size: 13px !important;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+#userModal .user-tabs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(126px, 1fr));
+    gap: 8px;
+}
+
+#userModal .user-tab-pill span,
+#userModal .user-check-pill span,
+#userModal .user-tabs-grid > label {
+    min-width: 0;
+}
+
+#userModal input[type="checkbox"],
+#userModal .user-tab-check {
+    width: 16px !important;
+    height: 16px !important;
+    min-width: 16px !important;
+    min-height: 16px !important;
+    flex: 0 0 16px;
+    margin: 0 !important;
+    padding: 0 !important;
+    accent-color: var(--ds-primary);
+    box-shadow: none !important;
+}
+
+#userModal .user-check-pill:hover,
+#userModal .user-tabs-grid > label:hover {
+    border-color: var(--ds-border-strong);
+    background: var(--ds-surface-3) !important;
+}
+
+body.theme-contrast #userModal .user-check-pill,
+body.theme-contrast #userModal .user-tabs-grid > label {
+    background: #000000 !important;
+    border: 2px solid #ffffff !important;
+    color: #ffffff !important;
+}
+
+@media (max-width: 900px) {
+    .tc-toolbar {
+        grid-template-columns: 1fr;
+    }
+
+    .tc-toolbar-filters {
+        grid-template-columns: 1fr 1fr;
+        min-width: 0;
+    }
+
+    .tc-toolbar .tc-search-wrap {
+        grid-column: 1 / -1;
+    }
+
+    .tc-toolbar-sep {
+        display: none;
+    }
+}
+
+@media (max-width: 560px) {
+    .tc-toolbar-actions,
+    .tc-toolbar-filters {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .tc-toolbar-actions > *,
+    .tc-toolbar-filters > *,
+    .tc-toolbar .tc-search-wrap {
+        width: 100%;
+    }
+}
+
+/* Compact toner-control table layout. */
+.toner-control-table {
+    table-layout: fixed;
+    width: 100%;
+    min-width: 1180px;
+}
+
+.toner-control-table .tc-col-printer {
+    width: 33%;
+}
+
+.toner-control-table .tc-col-check {
+    width: 132px;
+}
+
+.toner-control-table .tc-col-toner {
+    width: 27%;
+}
+
+.toner-control-table .tc-col-backup {
+    width: 96px;
+}
+
+.toner-control-table .tc-col-order {
+    width: 130px;
+}
+
+.toner-control-table .tc-col-info {
+    width: 210px;
+}
+
+.toner-control-table thead th {
+    padding: 9px 12px !important;
+}
+
+.toner-control-table tbody td {
+    padding: 8px 12px !important;
+    vertical-align: middle !important;
+}
+
+.toner-control-table tbody tr {
+    min-height: 0;
+}
+
+.tc-printer-cell {
+    gap: 3px;
+}
+
+.tc-printer-cell .tc-pname {
+    font-size: 13px !important;
+}
+
+.tc-printer-cell .tc-psub {
+    gap: 7px !important;
+    line-height: 1.25;
+}
+
+.tc-toner-stack {
+    min-width: 0 !important;
+    max-width: 360px;
+    gap: 3px !important;
+    padding: 0 !important;
+}
+
+.tc-toner-row {
+    gap: 5px !important;
+}
+
+.tc-toner-bar {
+    height: 6px !important;
+    min-width: 80px !important;
+}
+
+.tc-toner-pct {
+    width: 30px !important;
+    font-size: 10px !important;
+}
+
+.tc-backup-group {
+    align-items: flex-start;
+}
+
+.tc-bk-row {
+    gap: 4px !important;
+}
+
+.tc-bk-input {
+    width: 40px !important;
+    height: 28px;
+    min-height: 28px;
+    padding: 2px 3px !important;
+}
+
+.tc-inline-date {
+    width: 118px !important;
+    min-height: 34px;
+}
+
+.tc-inline-text,
+.tc-inline-notes {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+}
+
+.tc-info-cell {
+    display: grid;
+    grid-template-columns: 74px minmax(0, 1fr);
+    gap: 6px;
+    align-items: center;
+}
+
+@media (max-width: 1280px) {
+    .toner-control-table {
+        min-width: 1080px;
+    }
+
+    .toner-control-table .tc-col-printer {
+        width: 30%;
+    }
+
+    .toner-control-table .tc-col-toner {
+        width: 26%;
+    }
+
+    .toner-control-table .tc-col-info {
+        width: 190px;
+    }
+}
+
+/* Cleaner 4-column toner-control layout. */
+.toner-control-table {
+    min-width: 980px;
+}
+
+.toner-control-table .tc-col-printer {
+    width: 280px;
+}
+
+.toner-control-table .tc-col-toner {
+    width: auto;
+}
+
+.toner-control-table .tc-col-backup {
+    width: 310px;
+}
+
+.toner-control-table .tc-col-follow {
+    width: 390px;
+}
+
+.toner-control-table tbody td {
+    padding: 10px 14px !important;
+}
+
+.tc-toner-stack {
+    max-width: 460px;
+}
+
+.tc-backup-group {
+    display: flex !important;
+    align-items: center;
+    gap: 8px !important;
+    flex-wrap: nowrap;
+    justify-content: center;
+    width: 100%;
+}
+
+.tc-bk-row {
+    display: inline-grid !important;
+    grid-template-columns: 14px 48px;
+    align-items: center;
+    gap: 5px !important;
+    padding: 5px 6px;
+    border: 1px solid rgba(51,65,85,.75);
+    border-radius: 10px;
+    background: rgba(15,23,42,.35);
+}
+
+.tc-bk-row.tc-bk-k {
+    border-color: rgba(148,163,184,.28);
+}
+
+.tc-bk-row.tc-bk-c {
+    border-color: rgba(34,211,238,.28);
+    background: rgba(34,211,238,.045);
+}
+
+.tc-bk-row.tc-bk-m {
+    border-color: rgba(232,121,249,.28);
+    background: rgba(232,121,249,.045);
+}
+
+.tc-bk-row.tc-bk-y {
+    border-color: rgba(253,224,71,.28);
+    background: rgba(253,224,71,.04);
+}
+
+.tc-bk-row .tc-toner-lbl {
+    width: 14px !important;
+    font-size: 11px !important;
+}
+
+.tc-bk-input {
+    width: 48px !important;
+    height: 30px;
+    min-height: 30px;
+    border: 0 !important;
+    background: transparent !important;
+    font-size: 12px !important;
+    color: var(--ds-text) !important;
+}
+
+.tc-follow-cell {
+    display: grid;
+    grid-template-columns: 118px minmax(104px, 1fr);
+    gap: 8px;
+    align-items: end;
+}
+
+.tc-mini-field {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+}
+
+.tc-mini-field span {
+    color: var(--ds-text-muted);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.tc-mini-field-notes {
+    grid-column: 2;
+}
+
+.tc-follow-cell .tc-inline,
+.tc-follow-cell .tc-inline-date {
+    min-height: 30px;
+    height: 30px;
+    border-color: rgba(51,65,85,.85);
+    background: rgba(15,23,42,.28);
+}
+
+.tc-follow-cell .tc-inline:focus,
+.tc-follow-cell .tc-inline-date:focus {
+    background: rgba(15,23,42,.72);
+}
+
+@media (max-width: 1280px) {
+    .toner-control-table {
+        min-width: 920px;
+    }
+
+    .toner-control-table .tc-col-printer {
+        width: 250px;
+    }
+
+    .toner-control-table .tc-col-backup {
+        width: 280px;
+    }
+
+    .toner-control-table .tc-col-follow {
+        width: 360px;
+    }
+
+    .tc-backup-group {
+        gap: 6px !important;
+    }
+
+    .tc-bk-row {
+        grid-template-columns: 12px 42px;
+        padding-inline: 5px;
+    }
+
+    .tc-bk-input {
+        width: 42px !important;
+    }
+
+    .tc-follow-cell {
+        grid-template-columns: 112px minmax(96px, 1fr);
+    }
+}

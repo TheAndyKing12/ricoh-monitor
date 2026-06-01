@@ -6,8 +6,9 @@ import io
 
 from ..database import SessionLocal
 from .. import crud, schemas
+from .auth import require_tab
 
-router = APIRouter(prefix="/printer-assets", tags=["PrinterAssets"])
+router = APIRouter(prefix="/printer-assets", tags=["PrinterAssets"], dependencies=[Depends(require_tab("printerAssets"))])
 
 
 def get_db():

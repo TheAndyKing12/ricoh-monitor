@@ -18,6 +18,7 @@ from .. import crud, schemas, models
 from app.ricoh_http import get_ricoh_http_counters, get_ricoh_http_hostname
  
 from ..snmp import get_snmp_value, get_snmp_values, get_snmp_walk
+from .auth import require_tab
 import time 
 
 router = APIRouter(prefix="/printers", tags=["Printers"])
@@ -47,6 +48,101 @@ HOSTNAME_LAST_SYNC: dict[int, float] = {}
 HOSTNAME_SYNC_IN_PROGRESS: set[int] = set()
 HOSTNAME_SYNC_LOCK = threading.Lock()
 
+PRINTER_IDENTITY_OIDS = {
+    "sys_descr": "1.3.6.1.2.1.1.1.0",
+    "sys_name": "1.3.6.1.2.1.1.5.0",
+    "hr_descr_1": "1.3.6.1.2.1.25.3.2.1.3.1",
+    "hr_descr_2": "1.3.6.1.2.1.25.3.2.1.3.2",
+    "printer_name": "1.3.6.1.2.1.43.5.1.1.16.1",
+    "serial": "1.3.6.1.2.1.43.5.1.1.17.1",
+    "toner_cyan": "1.3.6.1.2.1.43.11.1.1.9.1.2",
+}
+
+
+def _clean_snmp_text(value):
+    if value is None:
+        return None
+    text = str(value).strip().strip("\x00")
+    if not text:
+        return None
+    lowered = text.lower()
+    if "no such" in lowered or "not available" in lowered or lowered in {"none", "null", "-"}:
+        return None
+    return text
+
+
+def _normalize_ricoh_model(value):
+    text = _clean_snmp_text(value)
+    if not text:
+        return None
+    text = text.replace("RICOH ", "").replace("Ricoh ", "").strip()
+    tokens = text.replace(",", " ").replace(";", " ").split()
+    for idx, token in enumerate(tokens):
+        upper = token.upper()
+        if upper in {"IM", "MP", "SP"} and idx + 1 < len(tokens):
+            return (tokens[idx] + " " + tokens[idx + 1]).strip()
+        if upper == "P" and idx + 1 < len(tokens):
+            return (tokens[idx] + " " + tokens[idx + 1]).strip()
+    return text[:80]
+
+
+def _looks_like_color_from_live_data(model, cyan_toner):
+    if model:
+        return detect_is_color_from_model(model)
+    try:
+        if cyan_toner is not None and int(cyan_toner) >= 0:
+            return True
+    except Exception:
+        pass
+    return None
+
+
+def get_printer_identity(ip: str, community: str = "public") -> dict:
+    """Best-effort identity lookup for reconciling a reused printer IP."""
+    oids = list(PRINTER_IDENTITY_OIDS.values())
+    values = get_snmp_values(ip, community, oids, timeout=2, retries=0)
+    by_key = {key: values.get(oid) for key, oid in PRINTER_IDENTITY_OIDS.items()}
+
+    name = resolve_hostname_value(ip, community)
+    model = (
+        _normalize_ricoh_model(by_key.get("hr_descr_1"))
+        or _normalize_ricoh_model(by_key.get("hr_descr_2"))
+        or _normalize_ricoh_model(by_key.get("printer_name"))
+        or _normalize_ricoh_model(by_key.get("sys_descr"))
+    )
+    serial = _clean_snmp_text(by_key.get("serial"))
+    is_color = _looks_like_color_from_live_data(model, by_key.get("toner_cyan"))
+
+    return {
+        "name": name,
+        "model": model,
+        "serial": serial,
+        "is_color": is_color,
+    }
+
+
+def _build_reconcile_data(existing, incoming: dict, identity: dict) -> dict:
+    data = {}
+    for field in ("name", "model", "serial"):
+        value = identity.get(field) or incoming.get(field)
+        if value is not None and str(value).strip() and value != getattr(existing, field):
+            data[field] = value
+
+    if identity.get("is_color") is not None and identity.get("is_color") != existing.is_color:
+        data["is_color"] = bool(identity.get("is_color"))
+    elif incoming.get("model") and incoming.get("model") != "Desconocido" and "is_color" in incoming and incoming.get("is_color") != existing.is_color:
+        data["is_color"] = bool(incoming.get("is_color"))
+
+    if incoming.get("snmp_community") and incoming.get("snmp_community") != existing.snmp_community:
+        data["snmp_community"] = incoming.get("snmp_community")
+
+    if not existing.shared_name and incoming.get("shared_name"):
+        data["shared_name"] = incoming.get("shared_name")
+    if not existing.location and incoming.get("location"):
+        data["location"] = incoming.get("location")
+
+    return data
+
 
 def _sync_hostname_for_printer(printer_id: int):
     db = SessionLocal()
@@ -54,9 +150,11 @@ def _sync_hostname_for_printer(printer_id: int):
         printer = crud.get_printer_by_id(db, printer_id)
         if not printer:
             return
-        resolved_name = resolve_hostname_value(printer.ip, printer.snmp_community)
-        if resolved_name and resolved_name != (printer.name or "").strip():
-            crud.update_printer(db, printer_id, {"name": resolved_name})
+        identity = get_printer_identity(printer.ip, printer.snmp_community)
+        data = _build_reconcile_data(printer, {}, identity)
+        if data:
+            crud.update_printer(db, printer_id, data)
+            clear_all_cache()
     except Exception:
         pass
     finally:
@@ -331,16 +429,28 @@ def resolve_hostname_value(ip: str, community: str = "public") -> str | None:
     return hostname
 
 
-@router.post("/", response_model=schemas.PrinterResponse)
+@router.post("/", response_model=schemas.PrinterResponse, dependencies=[Depends(require_tab("printers"))])
 def create_printer(printer: schemas.PrinterCreate, db: Session = Depends(get_db)):
     existing = crud.get_printer_by_ip(db, printer.ip)
     if existing:
-        raise HTTPException(status_code=400, detail="Ya existe una impresora con esa IP")
+        incoming = printer.dict()
+        identity = get_printer_identity(printer.ip, printer.snmp_community)
+        data = _build_reconcile_data(existing, incoming, identity)
+        if data:
+            updated = crud.update_printer(db, existing.id, data)
+            clear_all_cache()
+            changed = ", ".join(sorted(data.keys()))
+            crud.create_log(db, "printer", "updated", f'IP reutilizada: "{updated.shared_name or updated.name}" ({updated.ip}) reconciliada ({changed})')
+            return updated
+        return existing
 
     printer_data = printer.dict()
-    resolved_name = resolve_hostname_value(printer.ip, printer.snmp_community)
-    if resolved_name:
-        printer_data["name"] = resolved_name
+    identity = get_printer_identity(printer.ip, printer.snmp_community)
+    for field in ("name", "model", "serial"):
+        if identity.get(field):
+            printer_data[field] = identity[field]
+    if identity.get("is_color") is True:
+        printer_data["is_color"] = True
 
     created = crud.create_printer(db, schemas.PrinterCreate(**printer_data))
     clear_all_cache()
@@ -348,7 +458,7 @@ def create_printer(printer: schemas.PrinterCreate, db: Session = Depends(get_db)
     return created
 
 
-@router.get("/", response_model=list[schemas.PrinterResponse])
+@router.get("/", response_model=list[schemas.PrinterResponse], dependencies=[Depends(require_tab("dashboard", "printers", "tonerControl", "counters"))])
 def list_printers(db: Session = Depends(get_db)):
     printers = crud.get_printers(db)
     scheduled = 0
@@ -360,7 +470,7 @@ def list_printers(db: Session = Depends(get_db)):
     return printers
 
 
-@router.put("/{printer_id}", response_model=schemas.PrinterResponse)
+@router.put("/{printer_id}", response_model=schemas.PrinterResponse, dependencies=[Depends(require_tab("printers"))])
 def update_printer(printer_id: int, printer: schemas.PrinterUpdate, db: Session = Depends(get_db)):
     existing = crud.get_printer_by_id(db, printer_id)
     if not existing:
@@ -374,9 +484,12 @@ def update_printer(printer_id: int, printer: schemas.PrinterUpdate, db: Session 
 
     target_ip = data.get("ip", existing.ip)
     target_community = data.get("snmp_community", existing.snmp_community)
-    resolved_name = resolve_hostname_value(target_ip, target_community)
-    if resolved_name:
-        data["name"] = resolved_name
+    identity = get_printer_identity(target_ip, target_community)
+    for field in ("name", "model", "serial"):
+        if identity.get(field):
+            data[field] = identity[field]
+    if identity.get("is_color") is not None:
+        data["is_color"] = bool(identity.get("is_color"))
 
     updated = crud.update_printer(db, printer_id, data)
     clear_all_cache()
@@ -384,7 +497,7 @@ def update_printer(printer_id: int, printer: schemas.PrinterUpdate, db: Session 
     return updated
 
 
-@router.delete("/{printer_id}")
+@router.delete("/{printer_id}", dependencies=[Depends(require_tab("printers"))])
 def delete_printer(printer_id: int, db: Session = Depends(get_db)):
     printer = crud.get_printer_by_id(db, printer_id)
     if not printer:
@@ -397,7 +510,25 @@ def delete_printer(printer_id: int, db: Session = Depends(get_db)):
     return {"message": "Printer deleted"}
 
 
-@router.get("/status")
+@router.post("/{printer_id}/reconcile", response_model=schemas.PrinterResponse, dependencies=[Depends(require_tab("printers"))])
+def reconcile_printer_identity(printer_id: int, db: Session = Depends(get_db)):
+    printer = crud.get_printer_by_id(db, printer_id)
+    if not printer:
+        raise HTTPException(status_code=404, detail="Printer not found")
+
+    identity = get_printer_identity(printer.ip, printer.snmp_community)
+    data = _build_reconcile_data(printer, {}, identity)
+    if not data:
+        return printer
+
+    updated = crud.update_printer(db, printer_id, data)
+    clear_all_cache()
+    changed = ", ".join(sorted(data.keys()))
+    crud.create_log(db, "printer", "updated", f'Identidad reconciliada: "{updated.shared_name or updated.name}" ({updated.ip}) ({changed})')
+    return updated
+
+
+@router.get("/status", dependencies=[Depends(require_tab("dashboard"))])
 def get_printers_status(db: Session = Depends(get_db)):
     now = time.time()
 
@@ -602,7 +733,7 @@ def build_printer_counters(printer):
     return row
 
 
-@router.get("/counters")
+@router.get("/counters", dependencies=[Depends(require_tab("counters"))])
 def get_printers_counters(
     status: str = Query(default="all", pattern="^(all|online|offline)$"),
     printer_type: str = Query(default="all", pattern="^(all|mono|color)$"),
@@ -622,7 +753,7 @@ def get_printers_counters(
     )
 
 
-@router.get("/counters/export")
+@router.get("/counters/export", dependencies=[Depends(require_tab("counters"))])
 def export_printers_counters_csv(
     status: str = Query(default="all", pattern="^(all|online|offline)$"),
     printer_type: str = Query(default="all", pattern="^(all|mono|color)$"),
@@ -658,7 +789,7 @@ def export_printers_counters_csv(
     )
 
 
-@router.get("/counters/changes")
+@router.get("/counters/changes", dependencies=[Depends(require_tab("counters"))])
 def get_printers_counters_changes(since: float = Query(default=0), db: Session = Depends(get_db)):
     rows, refreshed_at = _refresh_counters_cache(db)
     with COUNTERS_LOCK:
@@ -671,7 +802,7 @@ def get_printers_counters_changes(since: float = Query(default=0), db: Session =
     }
 
 
-@router.get("/{printer_id}/counters/debug")
+@router.get("/{printer_id}/counters/debug", dependencies=[Depends(require_tab("counters"))])
 def get_printer_counters_debug(printer_id: int, db: Session = Depends(get_db)):
     printer = crud.get_printer_by_id(db, printer_id)
     if not printer:
@@ -713,7 +844,7 @@ def get_printer_counters_debug(printer_id: int, db: Session = Depends(get_db)):
     }
 
 
-@router.get("/{printer_id}/counters/history")
+@router.get("/{printer_id}/counters/history", dependencies=[Depends(require_tab("counters", "tonerControl"))])
 def get_printer_counters_history(
     printer_id: int,
     granularity: str = Query(default="daily", pattern="^(daily|weekly|monthly)$"),
@@ -776,9 +907,16 @@ def clear_all_cache():
     clear_counters_cache()
 
 
-@router.get("/resolve-hostname")
+@router.get("/resolve-hostname", dependencies=[Depends(require_tab("printers"))])
 def resolve_printer_hostname(ip: str, community: str = "public"):
-    return {"hostname": resolve_hostname_value(ip, community)}
+    identity = get_printer_identity(ip, community)
+    return {
+        "hostname": identity.get("name"),
+        "name": identity.get("name"),
+        "model": identity.get("model"),
+        "serial": identity.get("serial"),
+        "is_color": bool(identity.get("is_color")),
+    }
 
 
 def _counter_is_complete(row: dict) -> bool:
@@ -993,7 +1131,7 @@ def _build_counters_consumption_report(db: Session, start_date: str, end_date: s
     }
 
 
-@router.get("/counters/consumption-report")
+@router.get("/counters/consumption-report", dependencies=[Depends(require_tab("counters"))])
 def get_counters_consumption_report(
     start_date: str = Query(..., description="YYYY-MM-DD"),
     end_date: str = Query(..., description="YYYY-MM-DD"),
@@ -1002,7 +1140,7 @@ def get_counters_consumption_report(
     return _build_counters_consumption_report(db, start_date=start_date, end_date=end_date)
 
 
-@router.get("/counters/consumption-report/export")
+@router.get("/counters/consumption-report/export", dependencies=[Depends(require_tab("counters"))])
 def export_counters_consumption_report(
     start_date: str = Query(..., description="YYYY-MM-DD"),
     end_date: str = Query(..., description="YYYY-MM-DD"),
@@ -1035,7 +1173,7 @@ def export_counters_consumption_report(
     )
 
 
-@router.get("/counters/consumption-report/export-xlsx")
+@router.get("/counters/consumption-report/export-xlsx", dependencies=[Depends(require_tab("counters"))])
 def export_counters_consumption_report_xlsx(
     start_date: str = Query(..., description="YYYY-MM-DD"),
     end_date: str = Query(..., description="YYYY-MM-DD"),

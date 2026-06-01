@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional
 from ..database import SessionLocal
 from ..models import AppSetting
+from .auth import require_admin
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
@@ -28,7 +29,7 @@ def _set(db, key, value):
     db.commit()
 
 @router.get("/ad")
-def get_ad_config():
+def get_ad_config(token=Depends(require_admin)):
     db = SessionLocal()
     try:
         return {
@@ -42,7 +43,7 @@ def get_ad_config():
         db.close()
 
 @router.post("/ad")
-def save_ad_config(config: ADConfig):
+def save_ad_config(config: ADConfig, token=Depends(require_admin)):
     db = SessionLocal()
     try:
         _set(db, "ad_server", config.ad_server)
@@ -57,7 +58,7 @@ def save_ad_config(config: ADConfig):
         db.close()
 
 @router.post("/ad/test")
-def test_ad_connection():
+def test_ad_connection(token=Depends(require_admin)):
     db = SessionLocal()
     try:
         server = _get(db, "ad_server")

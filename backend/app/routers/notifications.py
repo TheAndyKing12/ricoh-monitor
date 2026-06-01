@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 import asyncio
 import json
@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import SessionLocal
 from app import crud
+from .auth import require_admin, require_tab, verify_token_value
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
 
@@ -93,8 +94,11 @@ def push_event_sync(event_type: str, data: dict):
 
 
 @router.get("/stream")
-async def notification_stream():
+async def notification_stream(token: str = Query(default="")):
     """SSE endpoint — el frontend se conecta aquí para recibir notificaciones"""
+    if not token:
+        raise HTTPException(status_code=401, detail="Token requerido")
+    verify_token_value(token)
     queue: asyncio.Queue = asyncio.Queue(maxsize=50)
 
     async with _subscribers_lock:
@@ -129,7 +133,7 @@ async def notification_stream():
     )
 
 @router.get("/history")
-def get_notification_history(event_type: str = None, limit: int = 500):
+def get_notification_history(event_type: str = None, limit: int = 500, token=Depends(require_tab("dashboard"))):
     """Historial completo de notificaciones (últimos 30 días)"""
     db = SessionLocal()
     try:
@@ -149,7 +153,7 @@ def get_notification_history(event_type: str = None, limit: int = 500):
 
 
 @router.post("/test")
-def create_test_notification():
+def create_test_notification(token=Depends(require_admin)):
     data = {
         "printer": "Sistema",
         "message": "Notificacion de prueba enviada correctamente",

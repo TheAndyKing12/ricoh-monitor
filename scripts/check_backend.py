@@ -27,6 +27,7 @@ def check_imports() -> None:
         "jose",
         "ldap3",
         "openpyxl",
+        "pyodbc",
         "requests",
         "sqlalchemy",
         "uvicorn",

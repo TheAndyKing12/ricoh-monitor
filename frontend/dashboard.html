@@ -4439,12 +4439,12 @@
                     <div class="summary-card summary-card-online" style="cursor:pointer" onclick="filterTonerControlByCard('nobackup')"><h3><i class="bi bi-box-seam" style="color:#34d399"></i><span data-i18n="no_backup">Sin backup</span></h3><div class="value" id="tcSummaryNoBackup">0</div></div>
                 </div>
                 <div class="tc-toolbar">
-                    <div style="display:flex;gap:10px;align-items:center">
+                    <div class="tc-toolbar-actions">
                         <button class="action-button" type="button" onclick="loadTonerControl()" style="min-height:38px;padding:8px 14px;font-size:13px;"><i class="bi bi-arrow-clockwise"></i> <span data-i18n="btn_refresh">Refrescar</span></button>
                         <button class="action-button action-button-secondary" type="button" onclick="exportTonerControlCSV()" style="min-height:38px;padding:8px 14px;font-size:13px;"><i class="bi bi-filetype-csv"></i> <span data-i18n="export_csv">Exportar CSV</span></button>
                     </div>
-                    <div class="inv-toolbar-sep" style="margin-left:auto;"></div>
-                    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                    <div class="inv-toolbar-sep tc-toolbar-sep"></div>
+                    <div class="tc-toolbar-filters">
                         <div class="tc-search-wrap">
                             <i class="bi bi-search tc-search-icon"></i>
                             <input id="tcSearch" class="toolbar-input" type="text" placeholder="Buscar shared name, modelo, serie..." data-i18n-ph="tc_search_placeholder" oninput="renderTonerControlTable()">
@@ -4454,7 +4454,7 @@
                         <button class="toolbar-button" type="button" onclick="resetTonerControlFilters()"><i class="bi bi-x-lg"></i> <span data-i18n="btn_clean">Limpiar</span></button>
                     </div>
                 </div>
-                <div class="table-wrapper toner-control-wrapper"><table class="toner-control-table"><thead><tr><th class="sortable-th" onclick="toggleTonerControlSort('shared_name')"><span data-i18n="cth_printer">Impresora</span> <span class="sort-ind" id="tcsort_shared_name"></span></th><th class="sortable-th" onclick="toggleTonerControlSort('check_date')"><span data-i18n="tcth_check">Check</span> <span class="sort-ind" id="tcsort_check_date"></span></th><th class="sortable-th" onclick="toggleTonerControlSort('toner_black')"><span data-i18n="th_toner">Tóner</span> <span class="sort-ind" id="tcsort_toner_black"></span></th><th data-i18n="tcth_backup">Backup</th><th data-i18n="tcth_info">Info</th></tr></thead><tbody id="tonerControlList"><tr><td colspan="5" data-i18n="loading">Cargando...</td></tr></tbody></table></div>
+                <div class="table-wrapper toner-control-wrapper"><table class="toner-control-table"><colgroup><col class="tc-col-printer"><col class="tc-col-toner"><col class="tc-col-backup"><col class="tc-col-follow"></colgroup><thead><tr><th class="sortable-th" onclick="toggleTonerControlSort('shared_name')"><span data-i18n="cth_printer">Impresora</span> <span class="sort-ind" id="tcsort_shared_name"></span></th><th class="sortable-th" onclick="toggleTonerControlSort('toner_black')"><span data-i18n="th_toner">Tóner</span> <span class="sort-ind" id="tcsort_toner_black"></span></th><th data-i18n="tcth_backup">Backup</th><th class="sortable-th" onclick="toggleTonerControlSort('check_date')"><span>Seguimiento</span> <span class="sort-ind" id="tcsort_check_date"></span></th></tr></thead><tbody id="tonerControlList"><tr><td colspan="4" data-i18n="loading">Cargando...</td></tr></tbody></table></div>
             </div>
             <div id="config" class="tab">
                 <h2 class="section-title"><i class="bi bi-gear" style="margin-right:8px;color:#60a5fa"></i><span data-i18n="config_title">Configuración</span></h2>
@@ -4467,9 +4467,9 @@
                         <button class="cfg-nav-btn" onclick="showConfigSection('cfgLanguage',this)"><i class="bi bi-translate"></i> <span data-i18n="config_nav_language">Idioma</span></button>
                         <button class="cfg-nav-btn" onclick="showConfigSection('cfgCache',this)"><i class="bi bi-database"></i> <span data-i18n="config_nav_cache">Caché</span></button>
                         <button class="cfg-nav-btn" onclick="showConfigSection('cfgShortcuts',this)"><i class="bi bi-keyboard"></i> <span data-i18n="config_nav_shortcuts">Atajos</span></button>
-                        <div style="padding:14px 18px 10px;margin-top:8px;font-size:11px;font-weight:700;color:#475569;letter-spacing:.08em;text-transform:uppercase;border-top:1px solid #1e293b;" data-i18n="config_nav_security">Seguridad</div>
-                        <button class="cfg-nav-btn" onclick="showConfigSection('cfgAD',this)"><i class="bi bi-diagram-3"></i> Active Directory</button>
-                        <button class="cfg-nav-btn" onclick="showConfigSection('cfgUsers',this)"><i class="bi bi-people"></i> <span data-i18n="config_nav_users">Usuarios</span></button>
+                        <div class="admin-only" style="padding:14px 18px 10px;margin-top:8px;font-size:11px;font-weight:700;color:#475569;letter-spacing:.08em;text-transform:uppercase;border-top:1px solid #1e293b;" data-i18n="config_nav_security">Seguridad</div>
+                        <button class="cfg-nav-btn admin-only" onclick="showConfigSection('cfgAD',this)"><i class="bi bi-diagram-3"></i> Active Directory</button>
+                        <button class="cfg-nav-btn admin-only" onclick="showConfigSection('cfgUsers',this)"><i class="bi bi-people"></i> <span data-i18n="config_nav_users">Usuarios</span></button>
                         <div style="padding:14px 18px 10px;margin-top:8px;font-size:11px;font-weight:700;color:#475569;letter-spacing:.08em;text-transform:uppercase;border-top:1px solid #1e293b;" data-i18n="config_nav_diagnostics">Diagnóstico</div>
                         <button class="cfg-nav-btn" onclick="showConfigSection('cfgLogs',this)"><i class="bi bi-journal-text"></i> Logs</button>
                         <button class="cfg-nav-btn" onclick="showConfigSection('cfgAbout',this)"><i class="bi bi-info-circle"></i> <span data-i18n="config_nav_about">Acerca de</span></button>
@@ -4514,7 +4514,7 @@
                         <!-- Atajos -->
                         <div id="cfgShortcuts" class="cfg-section">
                             <div class="cfg-section-header"><i class="bi bi-keyboard" style="color:#fbbf24"></i><div><div class="cfg-section-title" data-i18n="config_shortcuts">Atajos de teclado</div><div class="cfg-section-desc">Accesos rápidos disponibles en el dashboard.</div></div></div>
-                            <div style="margin-top:20px;display:flex;flex-direction:column;gap:10px;">
+                            <div style="margin-top:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;">
                                 <div style="display:flex;align-items:center;gap:16px;padding:12px 16px;background:#1e293b;border-radius:10px;border:1px solid #334155;">
                                     <div><span class="kbd">Ctrl</span> + <span class="kbd">K</span></div>
                                     <div style="font-size:13px;color:#cbd5e1" data-i18n="shortcut_search">Abrir búsqueda rápida</div>
@@ -4522,6 +4522,34 @@
                                 <div style="display:flex;align-items:center;gap:16px;padding:12px 16px;background:#1e293b;border-radius:10px;border:1px solid #334155;">
                                     <div><span class="kbd">Esc</span></div>
                                     <div style="font-size:13px;color:#cbd5e1" data-i18n="shortcut_close">Cerrar modal / drawer activo</div>
+                                </div>
+                                <div style="display:flex;align-items:center;gap:16px;padding:12px 16px;background:#1e293b;border-radius:10px;border:1px solid #334155;">
+                                    <div><span class="kbd">Alt</span> + <span class="kbd">1-7</span></div>
+                                    <div style="font-size:13px;color:#cbd5e1" data-i18n="shortcut_tabs">Cambiar entre secciones</div>
+                                </div>
+                                <div style="display:flex;align-items:center;gap:16px;padding:12px 16px;background:#1e293b;border-radius:10px;border:1px solid #334155;">
+                                    <div><span class="kbd">Alt</span> + <span class="kbd">R</span></div>
+                                    <div style="font-size:13px;color:#cbd5e1" data-i18n="shortcut_refresh">Refrescar la seccion actual</div>
+                                </div>
+                                <div style="display:flex;align-items:center;gap:16px;padding:12px 16px;background:#1e293b;border-radius:10px;border:1px solid #334155;">
+                                    <div><span class="kbd">Alt</span> + <span class="kbd">N</span></div>
+                                    <div style="font-size:13px;color:#cbd5e1" data-i18n="shortcut_new">Crear registro segun la seccion</div>
+                                </div>
+                                <div style="display:flex;align-items:center;gap:16px;padding:12px 16px;background:#1e293b;border-radius:10px;border:1px solid #334155;">
+                                    <div><span class="kbd">Alt</span> + <span class="kbd">F</span></div>
+                                    <div style="font-size:13px;color:#cbd5e1" data-i18n="shortcut_filters">Mostrar u ocultar filtros del dashboard</div>
+                                </div>
+                                <div style="display:flex;align-items:center;gap:16px;padding:12px 16px;background:#1e293b;border-radius:10px;border:1px solid #334155;">
+                                    <div><span class="kbd">Alt</span> + <span class="kbd">C</span></div>
+                                    <div style="font-size:13px;color:#cbd5e1" data-i18n="shortcut_compact">Activar modo compacto</div>
+                                </div>
+                                <div style="display:flex;align-items:center;gap:16px;padding:12px 16px;background:#1e293b;border-radius:10px;border:1px solid #334155;">
+                                    <div><span class="kbd">Alt</span> + <span class="kbd">Enter</span></div>
+                                    <div style="font-size:13px;color:#cbd5e1" data-i18n="shortcut_fullscreen">Alternar pantalla completa</div>
+                                </div>
+                                <div style="display:flex;align-items:center;gap:16px;padding:12px 16px;background:#1e293b;border-radius:10px;border:1px solid #334155;">
+                                    <div><span class="kbd">Alt</span> + <span class="kbd">B</span></div>
+                                    <div style="font-size:13px;color:#cbd5e1" data-i18n="shortcut_notifications">Abrir notificaciones</div>
                                 </div>
                             </div>
                         </div>
@@ -4927,24 +4955,24 @@
                     <label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px">Nombre a mostrar</label>
                     <input id="userModalDisplay" class="toolbar-input" type="text" placeholder="Se autocompleta desde AD" style="width:100%">
                 </div>
-                <div style="display:flex;gap:20px;margin-bottom:16px;">
-                    <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#cbd5e1;cursor:pointer">
-                        <input type="checkbox" id="userModalAdmin"> Administrador
+                <div class="user-check-row">
+                    <label class="user-check-pill">
+                        <input type="checkbox" id="userModalAdmin"> <span>Administrador</span>
                     </label>
-                    <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#cbd5e1;cursor:pointer">
-                        <input type="checkbox" id="userModalActive" checked> Activo
+                    <label class="user-check-pill">
+                        <input type="checkbox" id="userModalActive" checked> <span>Activo</span>
                     </label>
                 </div>
                 <div>
                     <label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:8px">Pestañas permitidas</label>
-                    <div style="display:flex;flex-wrap:wrap;gap:8px;">
-                        <label style="display:flex;align-items:center;gap:5px;font-size:13px;color:#cbd5e1;cursor:pointer;background:#1e293b;padding:6px 12px;border-radius:8px;"><input type="checkbox" class="user-tab-check" value="dashboard" checked> Dashboard</label>
-                        <label style="display:flex;align-items:center;gap:5px;font-size:13px;color:#cbd5e1;cursor:pointer;background:#1e293b;padding:6px 12px;border-radius:8px;"><input type="checkbox" class="user-tab-check" value="printers"> Impresoras</label>
-                        <label style="display:flex;align-items:center;gap:5px;font-size:13px;color:#cbd5e1;cursor:pointer;background:#1e293b;padding:6px 12px;border-radius:8px;"><input type="checkbox" class="user-tab-check" value="counters"> Contadores</label>
-                        <label style="display:flex;align-items:center;gap:5px;font-size:13px;color:#cbd5e1;cursor:pointer;background:#1e293b;padding:6px 12px;border-radius:8px;"><input type="checkbox" class="user-tab-check" value="inventory"> Inventario</label>
-                        <label style="display:flex;align-items:center;gap:5px;font-size:13px;color:#cbd5e1;cursor:pointer;background:#1e293b;padding:6px 12px;border-radius:8px;"><input type="checkbox" class="user-tab-check" value="tonerControl"> Tóner</label>
-                        <label style="display:flex;align-items:center;gap:5px;font-size:13px;color:#cbd5e1;cursor:pointer;background:#1e293b;padding:6px 12px;border-radius:8px;"><input type="checkbox" class="user-tab-check" value="printerAssets"> Inv. Impresoras</label>
-                        <label style="display:flex;align-items:center;gap:5px;font-size:13px;color:#cbd5e1;cursor:pointer;background:#1e293b;padding:6px 12px;border-radius:8px;"><input type="checkbox" class="user-tab-check" value="config"> Config</label>
+                    <div class="user-tabs-grid">
+                        <label class="user-tab-pill"><input type="checkbox" class="user-tab-check" value="dashboard" checked> <span>Dashboard</span></label>
+                        <label class="user-tab-pill"><input type="checkbox" class="user-tab-check" value="printers"> <span>Impresoras</span></label>
+                        <label class="user-tab-pill"><input type="checkbox" class="user-tab-check" value="counters"> <span>Contadores</span></label>
+                        <label class="user-tab-pill"><input type="checkbox" class="user-tab-check" value="inventory"> <span>Inventario</span></label>
+                        <label class="user-tab-pill"><input type="checkbox" class="user-tab-check" value="tonerControl"> <span>Tóner</span></label>
+                        <label class="user-tab-pill"><input type="checkbox" class="user-tab-check" value="printerAssets"> <span>Inv. Impresoras</span></label>
+                        <label class="user-tab-pill"><input type="checkbox" class="user-tab-check" value="config"> <span>Config</span></label>
                     </div>
                 </div>
             </div>
@@ -5051,6 +5079,27 @@
             return { 'Authorization': 'Bearer ' + localStorage.getItem('auth_token') };
         }
 
+        (function attachAuthFetchGuard() {
+            const nativeFetch = window.fetch.bind(window);
+            window.fetch = function (input, init) {
+                const opts = init ? { ...init } : {};
+                const token = localStorage.getItem('auth_token');
+                try {
+                    const rawUrl = typeof input === 'string' ? input : input.url;
+                    const url = new URL(rawUrl, window.location.origin);
+                    const isSameOrigin = url.origin === window.location.origin;
+                    const isPublic = url.pathname === '/auth/login' || url.pathname.startsWith('/frontend/');
+                    if (token && isSameOrigin && !isPublic) {
+                        opts.headers = new Headers(opts.headers || (typeof input !== 'string' ? input.headers : undefined) || {});
+                        if (!opts.headers.has('Authorization')) {
+                            opts.headers.set('Authorization', 'Bearer ' + token);
+                        }
+                    }
+                } catch (_) { }
+                return nativeFetch(input, opts);
+            };
+        })();
+
         function logout() {
             localStorage.removeItem('auth_token');
             localStorage.removeItem('auth_user');
@@ -5068,6 +5117,13 @@
                     buttons[idx].style.display = 'none';
                 }
             });
+            if (!_isAdmin) {
+                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+                if (document.querySelector('#cfgAD[style*="display: block"], #cfgUsers[style*="display: block"]')) {
+                    const firstConfigButton = document.querySelector('.cfg-nav-btn:not(.admin-only)');
+                    if (firstConfigButton) showConfigSection('cfgAppearance', firstConfigButton);
+                }
+            }
         }
         let dashboardRawData = [];
         let dashboardSortColumn = 'shared_name';
@@ -5124,6 +5180,10 @@
                 config_nav_users: 'Usuarios', config_nav_diagnostics: 'Diagnóstico', config_nav_about: 'Acerca de',
                 config_about: 'Acerca de', config_shortcuts: 'Atajos de teclado', config_cache: 'Cache y datos locales', config_cache_desc: 'Datos almacenados en localStorage del navegador.', config_clear_cache: 'Limpiar toda la cache', config_refresh: 'Refrescar info', config_api_status: 'Estado del API',
                 shortcut_col: 'Atajo', action_col: 'Acción', shortcut_search: 'Abrir búsqueda rápida', shortcut_close: 'Cerrar modal / drawer activo',
+                shortcut_tabs: 'Cambiar entre secciones', shortcut_refresh: 'Refrescar la sección actual',
+                shortcut_new: 'Crear registro según la sección', shortcut_filters: 'Mostrar u ocultar filtros del dashboard',
+                shortcut_compact: 'Activar modo compacto', shortcut_fullscreen: 'Alternar pantalla completa',
+                shortcut_notifications: 'Abrir notificaciones',
                 theme_changed_to: 'Tema cambiado a', lang_set: 'Idioma configurado:',
                 btn_cancel: 'Cancelar', btn_save: 'Guardar', btn_close: 'Cerrar', btn_edit: 'Editar', btn_delete: 'Eliminar', btn_refresh: 'Refrescar', btn_confirm: 'Confirmar',
                 add_printer_manual: 'Agregar impresora manualmente', search_printers_network: 'Buscar impresoras en red', registered_printers: 'Impresoras registradas',
@@ -5266,6 +5326,10 @@
                 config_nav_users: 'Users', config_nav_diagnostics: 'Diagnostics', config_nav_about: 'About',
                 config_about: 'About', config_shortcuts: 'Keyboard Shortcuts', config_cache: 'Cache & Local Data', config_cache_desc: 'Data stored in browser localStorage.', config_clear_cache: 'Clear all cache', config_refresh: 'Refresh info', config_api_status: 'API Status',
                 shortcut_col: 'Shortcut', action_col: 'Action', shortcut_search: 'Open quick search', shortcut_close: 'Close active modal / drawer',
+                shortcut_tabs: 'Switch between sections', shortcut_refresh: 'Refresh current section',
+                shortcut_new: 'Create a record for the current section', shortcut_filters: 'Show or hide dashboard filters',
+                shortcut_compact: 'Toggle compact mode', shortcut_fullscreen: 'Toggle fullscreen',
+                shortcut_notifications: 'Open notifications',
                 theme_changed_to: 'Theme changed to', lang_set: 'Language set:',
                 btn_cancel: 'Cancel', btn_save: 'Save', btn_close: 'Close', btn_edit: 'Edit', btn_delete: 'Delete', btn_refresh: 'Refresh', btn_confirm: 'Confirm',
                 add_printer_manual: 'Add printer manually', search_printers_network: 'Search printers on network', registered_printers: 'Registered printers',
@@ -5899,7 +5963,7 @@
         function toggleTonerControlSort(column) { if (tonerControlSortColumn === column) { tonerControlSortDirection = tonerControlSortDirection === 'asc' ? 'desc' : 'asc'; } else { tonerControlSortColumn = column; tonerControlSortDirection = 'asc'; } renderTonerControlTable(); }
         function filterTonerControlByCard(type) { const tonerSel = document.getElementById('tcTonerFilter'); if (type === 'nobackup') { tcBackupFilterActive = true; if (tonerSel) tonerSel.value = 'all'; } else { tcBackupFilterActive = false; if (tonerSel) tonerSel.value = type; } document.getElementById('tcTypeFilter').value = 'all'; document.getElementById('tcSearch').value = ''; renderTonerControlTable(); }
         function resetTonerControlFilters() { document.getElementById('tcSearch').value = ''; document.getElementById('tcTonerFilter').value = 'all'; document.getElementById('tcTypeFilter').value = 'all'; tcBackupFilterActive = false; renderTonerControlTable(); }
-        function renderTonerControlTable() { const list = document.getElementById('tonerControlList'); if (!list) return; const search = (document.getElementById('tcSearch')?.value || '').toLowerCase().trim(); const tonerFilter = document.getElementById('tcTonerFilter')?.value || 'all'; const typeFilter = document.getElementById('tcTypeFilter')?.value || 'all'; let data = [...tonerControlRawData]; if (search) { data = data.filter(p => ((p.shared_name || '') + ' ' + (p.name || '') + ' ' + (p.model || '') + ' ' + (p.serial || '') + ' ' + (p.ip || '')).toLowerCase().includes(search)); } if (tonerFilter !== 'all') { data = data.filter(p => { const st = getTonerStatus(p); if (tonerFilter === 'low') return st === 'low'; if (tonerFilter === 'critical') return st === 'critical'; if (tonerFilter === 'ok') return st === 'ok'; return true; }); } if (typeFilter !== 'all') { data = data.filter(p => typeFilter === 'color' ? p.is_color : !p.is_color); } if (tcBackupFilterActive) { data = data.filter(p => hasNoBackup(p)); } data.sort((a, b) => { const col = tonerControlSortColumn; if (col === 'toner_black') { const av = safeValue(a.toner_black) ?? 999; const bv = safeValue(b.toner_black) ?? 999; return tonerControlSortDirection === 'asc' ? av - bv : bv - av; } if (col === 'check_date') { const av = a.check_date || ''; const bv = b.check_date || ''; return tonerControlSortDirection === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av); } const av = ((a[col] ?? '') + '').toLowerCase(); const bv = ((b[col] ?? '') + '').toLowerCase(); const r = av.localeCompare(bv); return tonerControlSortDirection === 'desc' ? -r : r; }); updateTonerControlSortIndicators(); if (!data.length) { list.innerHTML = '<tr><td colspan="6">' + t('no_data_filters') + '</td></tr>'; return; } const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); list.innerHTML = ''; data.forEach((p, index) => { const pid = p.printer_id; const shared = esc(p.shared_name || p.name || '-'); const subModel = esc(p.model || ''); const subIp = esc(p.ip || ''); const subHtml = subModel ? '<span class="tc-model">' + subModel + '</span>' : ''; const ipHtml = subIp ? '<span class="tc-ip">' + subIp + '</span>' : ''; const subSerial = esc(p.serial || ''); const serialHtml = subSerial ? '<span class="tc-ip" style="color:#94a3b8">S/N: ' + subSerial + '</span>' : ''; const subLoc = esc(p.location || ''); const locHtml2 = subLoc ? '<span class="tc-ip" style="color:#94a3b8"><i class="bi bi-geo-alt" style="font-size:9px"></i> ' + subLoc + '</span>' : ''; const printerCell = '<div class="tc-printer-cell"><span class="tc-pname clickable-name" onclick="openTcCounterHistory(' + pid + ')">' + shared + '</span><div class="tc-psub">' + subHtml + ipHtml + '</div>' + (serialHtml || locHtml2 ? '<div class="tc-psub" style="margin-top:2px">' + serialHtml + locHtml2 + '</div>' : '') + '</div>'; const checkCell = '<input type="date" class="tc-inline-date" data-tc="check_date" value="' + (p.check_date || '') + '" onchange="saveTonerControlInline(' + pid + ')">'; const bk = safeValue(p.toner_black); const tonerRows = ['<div class="tc-toner-row"><span class="tc-toner-lbl tc-toner-lbl-k">K</span><div class="tc-toner-bar"><div class="fill bar-black" style="width:' + Math.max(0, Math.min(100, bk ?? 0)) + '%"></div></div><span class="tc-toner-pct ' + (bk === null ? 'tc-ok' : bk < 10 ? 'tc-crit' : bk < 30 ? 'tc-low' : 'tc-ok') + '">' + (bk === null ? '-' : bk + '%') + '</span></div>']; if (p.is_color) { const cv = safeValue(p.toner_cyan); const mv = safeValue(p.toner_magenta); const yv = safeValue(p.toner_yellow); tonerRows.push('<div class="tc-toner-row"><span class="tc-toner-lbl tc-toner-lbl-c">C</span><div class="tc-toner-bar"><div class="fill bar-cyan" style="width:' + Math.max(0, Math.min(100, cv ?? 0)) + '%"></div></div><span class="tc-toner-pct ' + (cv === null ? 'tc-ok' : cv < 10 ? 'tc-crit' : cv < 30 ? 'tc-low' : 'tc-ok') + '">' + (cv === null ? '-' : cv + '%') + '</span></div>'); tonerRows.push('<div class="tc-toner-row"><span class="tc-toner-lbl tc-toner-lbl-m">M</span><div class="tc-toner-bar"><div class="fill bar-magenta" style="width:' + Math.max(0, Math.min(100, mv ?? 0)) + '%"></div></div><span class="tc-toner-pct ' + (mv === null ? 'tc-ok' : mv < 10 ? 'tc-crit' : mv < 30 ? 'tc-low' : 'tc-ok') + '">' + (mv === null ? '-' : mv + '%') + '</span></div>'); tonerRows.push('<div class="tc-toner-row"><span class="tc-toner-lbl tc-toner-lbl-y">Y</span><div class="tc-toner-bar"><div class="fill bar-yellow" style="width:' + Math.max(0, Math.min(100, yv ?? 0)) + '%"></div></div><span class="tc-toner-pct ' + (yv === null ? 'tc-ok' : yv < 10 ? 'tc-crit' : yv < 30 ? 'tc-low' : 'tc-ok') + '">' + (yv === null ? '-' : yv + '%') + '</span></div>'); } const tonerCell = '<div class="tc-toner-stack">' + tonerRows.join('') + '</div>'; const bkK = Math.round(Number(p.backup_black) || 0); const bkC = Math.round(Number(p.backup_cyan) || 0); const bkM = Math.round(Number(p.backup_magenta) || 0); const bkY = Math.round(Number(p.backup_yellow) || 0); let backupParts = '<div class="tc-bk-row"><span class="tc-toner-lbl tc-toner-lbl-k" style="font-size:9px">K</span><input type="number" min="0" class="tc-bk-input ' + (bkK <= 0 ? 'bk-zero' : 'bk-ok') + '" data-tc="backup_black" value="' + bkK + '" onchange="saveTonerControlInline(' + pid + ')"></div>'; if (p.is_color) { backupParts += '<div class="tc-bk-row"><span class="tc-toner-lbl tc-toner-lbl-c" style="font-size:9px">C</span><input type="number" min="0" class="tc-bk-input ' + (bkC <= 0 ? 'bk-zero' : 'bk-ok') + '" data-tc="backup_cyan" value="' + bkC + '" onchange="saveTonerControlInline(' + pid + ')"></div>'; backupParts += '<div class="tc-bk-row"><span class="tc-toner-lbl tc-toner-lbl-m" style="font-size:9px">M</span><input type="number" min="0" class="tc-bk-input ' + (bkM <= 0 ? 'bk-zero' : 'bk-ok') + '" data-tc="backup_magenta" value="' + bkM + '" onchange="saveTonerControlInline(' + pid + ')"></div>'; backupParts += '<div class="tc-bk-row"><span class="tc-toner-lbl tc-toner-lbl-y" style="font-size:9px">Y</span><input type="number" min="0" class="tc-bk-input ' + (bkY <= 0 ? 'bk-zero' : 'bk-ok') + '" data-tc="backup_yellow" value="' + bkY + '" onchange="saveTonerControlInline(' + pid + ')"></div>'; } const backupCell = '<div class="tc-backup-group" style="flex-direction:column;gap:4px">' + backupParts + '</div>'; const locCell = '<input type="text" class="tc-inline tc-inline-text" data-tc="pedido" value="' + esc(p.pedido || '') + '" placeholder="Pedido" onchange="saveTonerControlInline(' + pid + ')">'; const infoCell = '<div class="tc-info-cell"><input type="text" class="tc-inline tc-inline-text" data-tc="work_order" value="' + esc(p.work_order || '') + '" placeholder="WO" onchange="saveTonerControlInline(' + pid + ')"><input type="text" class="tc-inline tc-inline-notes" data-tc="notas" value="' + esc(p.notas || '') + '" placeholder="Notas" onchange="saveTonerControlInline(' + pid + ')"></div>'; const ts = getTonerStatus(p); const rowCls = ts === 'critical' ? 'row-error' : ts === 'low' ? 'row-low' : ''; list.innerHTML += '<tr id="tcrow_' + pid + '" class="' + rowCls + ' stagger-row" style="animation-delay:' + String(index * 25) + 'ms"><td>' + printerCell + '</td><td>' + checkCell + '</td><td>' + tonerCell + '</td><td>' + backupCell + '</td><td>' + locCell + '</td><td>' + infoCell + '</td></tr>'; }); }
+        function renderTonerControlTable() { const list = document.getElementById('tonerControlList'); if (!list) return; const search = (document.getElementById('tcSearch')?.value || '').toLowerCase().trim(); const tonerFilter = document.getElementById('tcTonerFilter')?.value || 'all'; const typeFilter = document.getElementById('tcTypeFilter')?.value || 'all'; let data = [...tonerControlRawData]; if (search) { data = data.filter(p => ((p.shared_name || '') + ' ' + (p.name || '') + ' ' + (p.model || '') + ' ' + (p.serial || '') + ' ' + (p.ip || '')).toLowerCase().includes(search)); } if (tonerFilter !== 'all') { data = data.filter(p => { const st = getTonerStatus(p); if (tonerFilter === 'low') return st === 'low'; if (tonerFilter === 'critical') return st === 'critical'; if (tonerFilter === 'ok') return st === 'ok'; return true; }); } if (typeFilter !== 'all') { data = data.filter(p => typeFilter === 'color' ? p.is_color : !p.is_color); } if (tcBackupFilterActive) { data = data.filter(p => hasNoBackup(p)); } data.sort((a, b) => { const col = tonerControlSortColumn; if (col === 'toner_black') { const av = safeValue(a.toner_black) ?? 999; const bv = safeValue(b.toner_black) ?? 999; return tonerControlSortDirection === 'asc' ? av - bv : bv - av; } if (col === 'check_date') { const av = a.check_date || ''; const bv = b.check_date || ''; return tonerControlSortDirection === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av); } const av = ((a[col] ?? '') + '').toLowerCase(); const bv = ((b[col] ?? '') + '').toLowerCase(); const r = av.localeCompare(bv); return tonerControlSortDirection === 'desc' ? -r : r; }); updateTonerControlSortIndicators(); if (!data.length) { list.innerHTML = '<tr><td colspan="4">' + t('no_data_filters') + '</td></tr>'; return; } const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); list.innerHTML = ''; data.forEach((p, index) => { const pid = p.printer_id; const shared = esc(p.shared_name || p.name || '-'); const subModel = esc(p.model || ''); const subIp = esc(p.ip || ''); const subHtml = subModel ? '<span class="tc-model">' + subModel + '</span>' : ''; const ipHtml = subIp ? '<span class="tc-ip">' + subIp + '</span>' : ''; const subSerial = esc(p.serial || ''); const serialHtml = subSerial ? '<span class="tc-ip" style="color:#94a3b8">S/N: ' + subSerial + '</span>' : ''; const subLoc = esc(p.location || ''); const locHtml2 = subLoc ? '<span class="tc-ip" style="color:#94a3b8"><i class="bi bi-geo-alt" style="font-size:9px"></i> ' + subLoc + '</span>' : ''; const printerCell = '<div class="tc-printer-cell"><span class="tc-pname clickable-name" onclick="openTcCounterHistory(' + pid + ')">' + shared + '</span><div class="tc-psub">' + subHtml + ipHtml + '</div>' + (serialHtml || locHtml2 ? '<div class="tc-psub" style="margin-top:2px">' + serialHtml + locHtml2 + '</div>' : '') + '</div>'; const checkCell = '<input type="date" class="tc-inline-date" data-tc="check_date" value="' + (p.check_date || '') + '" onchange="saveTonerControlInline(' + pid + ')">'; const bk = safeValue(p.toner_black); const tonerRows = ['<div class="tc-toner-row"><span class="tc-toner-lbl tc-toner-lbl-k">K</span><div class="tc-toner-bar"><div class="fill bar-black" style="width:' + Math.max(0, Math.min(100, bk ?? 0)) + '%"></div></div><span class="tc-toner-pct ' + (bk === null ? 'tc-ok' : bk < 10 ? 'tc-crit' : bk < 30 ? 'tc-low' : 'tc-ok') + '">' + (bk === null ? '-' : bk + '%') + '</span></div>']; if (p.is_color) { const cv = safeValue(p.toner_cyan); const mv = safeValue(p.toner_magenta); const yv = safeValue(p.toner_yellow); tonerRows.push('<div class="tc-toner-row"><span class="tc-toner-lbl tc-toner-lbl-c">C</span><div class="tc-toner-bar"><div class="fill bar-cyan" style="width:' + Math.max(0, Math.min(100, cv ?? 0)) + '%"></div></div><span class="tc-toner-pct ' + (cv === null ? 'tc-ok' : cv < 10 ? 'tc-crit' : cv < 30 ? 'tc-low' : 'tc-ok') + '">' + (cv === null ? '-' : cv + '%') + '</span></div>'); tonerRows.push('<div class="tc-toner-row"><span class="tc-toner-lbl tc-toner-lbl-m">M</span><div class="tc-toner-bar"><div class="fill bar-magenta" style="width:' + Math.max(0, Math.min(100, mv ?? 0)) + '%"></div></div><span class="tc-toner-pct ' + (mv === null ? 'tc-ok' : mv < 10 ? 'tc-crit' : mv < 30 ? 'tc-low' : 'tc-ok') + '">' + (mv === null ? '-' : mv + '%') + '</span></div>'); tonerRows.push('<div class="tc-toner-row"><span class="tc-toner-lbl tc-toner-lbl-y">Y</span><div class="tc-toner-bar"><div class="fill bar-yellow" style="width:' + Math.max(0, Math.min(100, yv ?? 0)) + '%"></div></div><span class="tc-toner-pct ' + (yv === null ? 'tc-ok' : yv < 10 ? 'tc-crit' : yv < 30 ? 'tc-low' : 'tc-ok') + '">' + (yv === null ? '-' : yv + '%') + '</span></div>'); } const tonerCell = '<div class="tc-toner-stack">' + tonerRows.join('') + '</div>'; const bkK = Math.round(Number(p.backup_black) || 0); const bkC = Math.round(Number(p.backup_cyan) || 0); const bkM = Math.round(Number(p.backup_magenta) || 0); const bkY = Math.round(Number(p.backup_yellow) || 0); let backupParts = '<div class="tc-bk-row tc-bk-k"><span class="tc-toner-lbl tc-toner-lbl-k">K</span><input type="number" min="0" class="tc-bk-input ' + (bkK <= 0 ? 'bk-zero' : 'bk-ok') + '" data-tc="backup_black" value="' + bkK + '" onchange="saveTonerControlInline(' + pid + ')"></div>'; if (p.is_color) { backupParts += '<div class="tc-bk-row tc-bk-c"><span class="tc-toner-lbl tc-toner-lbl-c">C</span><input type="number" min="0" class="tc-bk-input ' + (bkC <= 0 ? 'bk-zero' : 'bk-ok') + '" data-tc="backup_cyan" value="' + bkC + '" onchange="saveTonerControlInline(' + pid + ')"></div>'; backupParts += '<div class="tc-bk-row tc-bk-m"><span class="tc-toner-lbl tc-toner-lbl-m">M</span><input type="number" min="0" class="tc-bk-input ' + (bkM <= 0 ? 'bk-zero' : 'bk-ok') + '" data-tc="backup_magenta" value="' + bkM + '" onchange="saveTonerControlInline(' + pid + ')"></div>'; backupParts += '<div class="tc-bk-row tc-bk-y"><span class="tc-toner-lbl tc-toner-lbl-y">Y</span><input type="number" min="0" class="tc-bk-input ' + (bkY <= 0 ? 'bk-zero' : 'bk-ok') + '" data-tc="backup_yellow" value="' + bkY + '" onchange="saveTonerControlInline(' + pid + ')"></div>'; } const backupCell = '<div class="tc-backup-group">' + backupParts + '</div>'; const followCell = '<div class="tc-follow-cell"><label class="tc-mini-field"><span>Check</span>' + checkCell + '</label><label class="tc-mini-field"><span>Pedido</span><input type="text" class="tc-inline tc-inline-text" data-tc="pedido" value="' + esc(p.pedido || '') + '" placeholder="-" onchange="saveTonerControlInline(' + pid + ')"></label><label class="tc-mini-field"><span>WO</span><input type="text" class="tc-inline tc-inline-text" data-tc="work_order" value="' + esc(p.work_order || '') + '" placeholder="-" onchange="saveTonerControlInline(' + pid + ')"></label><label class="tc-mini-field tc-mini-field-notes"><span>Notas</span><input type="text" class="tc-inline tc-inline-notes" data-tc="notas" value="' + esc(p.notas || '') + '" placeholder="-" onchange="saveTonerControlInline(' + pid + ')"></label></div>'; const ts = getTonerStatus(p); const rowCls = ts === 'critical' ? 'row-error' : ts === 'low' ? 'row-low' : ''; list.innerHTML += '<tr id="tcrow_' + pid + '" class="' + rowCls + ' stagger-row" style="animation-delay:' + String(index * 25) + 'ms"><td>' + printerCell + '</td><td>' + tonerCell + '</td><td>' + backupCell + '</td><td>' + followCell + '</td></tr>'; }); }
         function openTcEditModal(printerId) { currentTonerControlPrinterId = printerId; const row = tonerControlRawData.find(r => r.printer_id === printerId); if (!row) return; const sub = document.getElementById('tonerControlModalSubtitle'); if (sub) sub.textContent = (row.shared_name || row.name || '-') + ' | ' + (row.model || '-') + ' | IP: ' + (row.ip || '-'); document.getElementById('tcDate').value = row.check_date || ''; document.getElementById('tcBackupK').value = row.backup_black || 0; document.getElementById('tcBackupC').value = row.backup_cyan || 0; document.getElementById('tcBackupM').value = row.backup_magenta || 0; document.getElementById('tcBackupY').value = row.backup_yellow || 0; document.getElementById('tcPedido').value = row.pedido || ''; document.getElementById('tcWO').value = row.work_order || ''; document.getElementById('tcNotas').value = row.notas || ''; document.getElementById('tonerControlModal')?.classList.add('open'); }
         async function saveTonerControlInline(printerId) { const row = tonerControlRawData.find(r => r.printer_id === printerId); if (!row) return; const tr = document.getElementById('tcrow_' + printerId); const g = k => tr ? tr.querySelector('[data-tc="' + k + '"]') : null; const payload = { check_date: (g('check_date')?.value) || null, backup_black: parseFloat(g('backup_black')?.value) || 0, backup_cyan: parseFloat(g('backup_cyan')?.value) || 0, backup_magenta: parseFloat(g('backup_magenta')?.value) || 0, backup_yellow: parseFloat(g('backup_yellow')?.value) || 0, pedido: (g('pedido')?.value || '').trim(), work_order: (g('work_order')?.value || '').trim(), notas: (g('notas')?.value || '').trim() }; if (tr) tr.classList.add('tc-saving'); try { const response = await fetch('/toner-control/' + printerId, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); if (!response.ok) { const d = await response.json(); throw new Error(d.detail || 'Error'); } row.check_date = payload.check_date || ''; row.backup_black = payload.backup_black; row.backup_cyan = payload.backup_cyan; row.backup_magenta = payload.backup_magenta; row.backup_yellow = payload.backup_yellow; row.pedido = payload.pedido; row.work_order = payload.work_order; row.notas = payload.notas; updateTonerControlSummary(tonerControlRawData); showToast(t('saved'), 'success'); } catch (error) { showToast(error.message || t('error_saving'), 'error'); console.error(error); } finally { if (tr) tr.classList.remove('tc-saving'); } } async function loadTonerControl() { const list = document.getElementById('tonerControlList'); if (!list) return; try { showLoadingIn('tonerControlList', 6, t('loading_toner_control')); const response = await fetch('/toner-control/'); const data = await response.json(); if (!Array.isArray(data) || !data.length) { list.innerHTML = '<tr><td colspan="6">' + t('no_toner_data') + '</td></tr>'; tonerControlRawData = []; updateTonerControlSummary([]); return; } tonerControlRawData = data; updateTonerControlSummary(data); renderTonerControlTable(); } catch (error) { list.innerHTML = '<tr><td colspan="6">' + t('error_loading_toner') + '</td></tr>'; console.error('loadTonerControl error:', error); } }
         function exportTonerControlCSV() { if (!tonerControlRawData.length) { showToast(t('no_data_export'), 'error'); return; } const headers = ['Shared Name', 'Modelo', 'Serie', 'IP', 'Check', 'K%', 'C%', 'M%', 'Y%', 'Backup K', 'Backup C', 'Backup M', 'Backup Y', 'Ubicación', 'Pedido', 'WO', 'Notas']; const csvEsc = v => { const s = String(v ?? ''); return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g, '""') + '"' : s; }; const rows = tonerControlRawData.map(p => [p.shared_name || '', p.model || '', p.serial || '', p.ip || '', p.check_date || '', safeValue(p.toner_black) ?? '', p.is_color ? (safeValue(p.toner_cyan) ?? '') : '', p.is_color ? (safeValue(p.toner_magenta) ?? '') : '', p.is_color ? (safeValue(p.toner_yellow) ?? '') : '', Math.round(Number(p.backup_black) || 0), p.is_color ? Math.round(Number(p.backup_cyan) || 0) : '', p.is_color ? Math.round(Number(p.backup_magenta) || 0) : '', p.is_color ? Math.round(Number(p.backup_yellow) || 0) : '', p.location || '', p.pedido || '', p.work_order || '', p.notas || ''].map(csvEsc).join(',')); const csv = '\uFEFF' + headers.map(csvEsc).join(',') + '\n' + rows.join('\n'); const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'control_toner_' + new Date().toISOString().slice(0, 10) + '.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); showToast(t('csv_exported'), 'success'); } function editTonerControl(printerId) { currentTonerControlPrinterId = printerId; const row = tonerControlRawData.find(r => r.printer_id === printerId); const sub = document.getElementById('tonerControlModalSubtitle'); if (sub) sub.textContent = row ? ((row.shared_name || row.name || '-') + ' | ' + (row.model || '-') + ' | IP: ' + (row.ip || '-')) : ''; document.getElementById('tcDate').value = row?.check_date || ''; document.getElementById('tcBackupK').value = row?.backup_black || 0; document.getElementById('tcBackupC').value = row?.backup_cyan || 0; document.getElementById('tcBackupM').value = row?.backup_magenta || 0; document.getElementById('tcBackupY').value = row?.backup_yellow || 0; document.getElementById('tcPedido').value = row?.pedido || ''; document.getElementById('tcWO').value = row?.work_order || ''; document.getElementById('tcNotas').value = row?.notas || ''; document.getElementById('tonerControlModal')?.classList.add('open'); }
@@ -6176,6 +6240,100 @@
         }
         document.addEventListener('click', function (e) { const btn = e.target.closest('.action-button,.filter-toggle-btn,.toolbar-button'); if (!btn) return; const rect = btn.getBoundingClientRect(); const ripple = document.createElement('span'); ripple.className = 'btn-ripple'; const size = Math.max(rect.width, rect.height); ripple.style.width = ripple.style.height = size + 'px'; ripple.style.left = (e.clientX - rect.left - size / 2) + 'px'; ripple.style.top = (e.clientY - rect.top - size / 2) + 'px'; btn.appendChild(ripple); ripple.addEventListener('animationend', () => ripple.remove()); });
         (function attachFilterListeners() { restoreDashboardFilters(); const searchEl = document.getElementById('searchInput'); if (searchEl) searchEl.addEventListener('input', scheduleDashboardSearchReload);['viewMode', 'densityMode', 'statusFilter', 'typeFilter', 'errorFilter', 'sortFilter'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('change', () => { loadPrinters(); saveDashboardFilters(); }); }); const printerIpEl = document.getElementById('printerIp'); if (printerIpEl) { printerIpEl.addEventListener('input', () => validatePrinterIpField()); printerIpEl.addEventListener('blur', () => { validatePrinterIpField(); autofillPrinterNameFromIp(); }); printerIpEl.addEventListener('change', () => { validatePrinterIpField(); autofillPrinterNameFromIp(); }); } ['discoverStartIp', 'discoverEndIp', 'discoverSingleIp'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('input', () => validateDiscoverFields()); }); toggleDiscoverModeFields(); document.addEventListener('keydown', function (e) { if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); const panel = document.getElementById('dashboardFilters'); if (panel && panel.classList.contains('closed')) toggleDashboardFilters(); const s = document.getElementById('searchInput'); if (s) { s.focus(); s.select(); } return; } if (e.key === 'Escape') { const modals = document.querySelectorAll('.modal-overlay.open'); if (modals.length) { const top = modals[modals.length - 1]; if (top.id === 'appConfirmModal') resolveAppConfirm(false); else if (top.id === 'addressBookFormModal') resolveAddressBookForm(null); else if (top.id === 'discoverPrinterCard') closeDiscoverPrintersModal(); else top.classList.remove('open'); return; } const drawer = document.getElementById('drawerPanel'); if (drawer && drawer.classList.contains('open')) { closeDrawer(); return; } } }); })();
+        function isShortcutTypingTarget(event) {
+            const el = event.target;
+            return !!(el && el.closest && el.closest('input, textarea, select, [contenteditable="true"]'));
+        }
+        function getActiveTabName() {
+            return document.querySelector('.tab.active')?.id || 'dashboard';
+        }
+        function hasBlockingShortcutOverlay() {
+            const drawer = document.getElementById('drawerPanel');
+            return !!document.querySelector('.modal-overlay.open') || !!(drawer && drawer.classList.contains('open'));
+        }
+        function focusDashboardSearch() {
+            showTab('dashboard');
+            const panel = document.getElementById('dashboardFilters');
+            if (panel && panel.classList.contains('closed')) toggleDashboardFilters();
+            const search = document.getElementById('searchInput');
+            if (search) {
+                search.focus();
+                search.select();
+            }
+        }
+        function refreshActiveSection() {
+            const tab = getActiveTabName();
+            if (tab === 'dashboard') loadPrinters();
+            else if (tab === 'printers') loadSavedPrinters();
+            else if (tab === 'counters') loadCounters();
+            else if (tab === 'inventory') loadInventory();
+            else if (tab === 'tonerControl') loadTonerControl();
+            else if (tab === 'printerAssets') loadPrinterAssets();
+            else if (tab === 'config') loadConfig();
+            showToast(t('btn_refresh'), 'success', 1200);
+        }
+        function createContextRecord() {
+            const tab = getActiveTabName();
+            if (tab === 'dashboard' || tab === 'printers') {
+                showTab('printers');
+                openDrawer(null);
+            } else if (tab === 'inventory') {
+                toggleInventoryForm();
+            } else if (tab === 'printerAssets') {
+                openPrinterAssetForm();
+            } else if (tab === 'counters') {
+                openCountersReportModal();
+            } else {
+                showToast(t('feature_in_dev'), 'success', 1400);
+            }
+        }
+        function handleAppKeyboardShortcut(event) {
+            const key = (event.key || '').toLowerCase();
+            const typing = isShortcutTypingTarget(event);
+            const tabs = ['dashboard', 'printers', 'counters', 'inventory', 'tonerControl', 'printerAssets', 'config'];
+            if ((event.ctrlKey || event.metaKey) && key === 'k') {
+                event.preventDefault();
+                focusDashboardSearch();
+                return;
+            }
+            if (typing || hasBlockingShortcutOverlay() || !event.altKey || event.ctrlKey || event.metaKey) return;
+            if (/^[1-7]$/.test(key)) {
+                event.preventDefault();
+                showTab(tabs[Number(key) - 1]);
+                return;
+            }
+            if (key === 'r') {
+                event.preventDefault();
+                refreshActiveSection();
+                return;
+            }
+            if (key === 'n') {
+                event.preventDefault();
+                createContextRecord();
+                return;
+            }
+            if (key === 'f') {
+                event.preventDefault();
+                showTab('dashboard');
+                toggleDashboardFilters();
+                return;
+            }
+            if (key === 'c') {
+                event.preventDefault();
+                toggleCompactMode();
+                return;
+            }
+            if (key === 'b') {
+                event.preventDefault();
+                toggleNotifPanel();
+                return;
+            }
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                toggleDashboardFullscreen();
+            }
+        }
+        document.addEventListener('keydown', handleAppKeyboardShortcut);
         function openPrinterAssetForm(asset) { const titleEl = document.getElementById('paFormTitle'); const subEl = document.getElementById('paFormSubtitle'); document.getElementById('paEditId').value = ''; document.getElementById('paModel').value = ''; document.getElementById('paSerial').value = ''; document.getElementById('paSharedName').value = ''; document.getElementById('paLocation').value = ''; document.getElementById('paStatus').value = 'Active'; document.getElementById('paVolumeNumber').value = ''; document.getElementById('paStaticIp').value = ''; document.getElementById('paSwitch').value = ''; document.getElementById('paPhysicalPort').value = ''; document.getElementById('paBpcs').value = ''; document.getElementById('paHostName').value = ''; document.getElementById('paMac').value = ''; document.getElementById('paArrival').value = ''; document.getElementById('paAssetTag').value = ''; document.getElementById('paNotes').value = ''; if (asset) { document.getElementById('paEditId').value = asset.id || ''; document.getElementById('paModel').value = asset.model || ''; document.getElementById('paSerial').value = asset.serial || ''; document.getElementById('paSharedName').value = asset.shared_name || ''; document.getElementById('paLocation').value = asset.facility_location || ''; document.getElementById('paStatus').value = asset.asset_status || 'Active'; document.getElementById('paVolumeNumber').value = asset.volume_number || ''; document.getElementById('paStaticIp').value = asset.static_ip || ''; document.getElementById('paSwitch').value = asset.switch_name || ''; document.getElementById('paPhysicalPort').value = asset.physical_port || ''; document.getElementById('paBpcs').value = asset.bpcs_code || ''; document.getElementById('paHostName').value = asset.host_name || ''; document.getElementById('paMac').value = asset.mac_address || ''; document.getElementById('paArrival').value = asset.arrival_date || ''; document.getElementById('paAssetTag').value = asset.asset_tag || ''; document.getElementById('paNotes').value = asset.notes || ''; if (titleEl) titleEl.textContent = t('pa_edit_asset') || 'Editar activo'; if (subEl) subEl.textContent = t('pa_edit_subtitle') || 'Modifique los campos del activo.'; } else { if (titleEl) titleEl.textContent = t('pa_add_asset') || 'Agregar activo'; if (subEl) subEl.textContent = t('pa_form_subtitle') || 'Complete los campos del activo de impresora.'; } document.getElementById('printerAssetFormModal')?.classList.add('open'); setTimeout(() => document.getElementById('paModel')?.focus(), 120); } function closePrinterAssetForm() { document.getElementById('printerAssetFormModal')?.classList.remove('open'); }
         async function savePrinterAsset() { const editId = (document.getElementById('paEditId')?.value || '').trim(); const payload = { model: (document.getElementById('paModel')?.value || '').trim() || null, serial: (document.getElementById('paSerial')?.value || '').trim() || null, shared_name: (document.getElementById('paSharedName')?.value || '').trim() || null, facility_location: (document.getElementById('paLocation')?.value || '').trim() || null, asset_status: document.getElementById('paStatus')?.value || 'Active', volume_number: (document.getElementById('paVolumeNumber')?.value || '').trim() || null, static_ip: (document.getElementById('paStaticIp')?.value || '').trim() || null, switch_name: (document.getElementById('paSwitch')?.value || '').trim() || null, physical_port: (document.getElementById('paPhysicalPort')?.value || '').trim() || null, bpcs_code: (document.getElementById('paBpcs')?.value || '').trim() || null, host_name: (document.getElementById('paHostName')?.value || '').trim() || null, mac_address: (document.getElementById('paMac')?.value || '').trim() || null, arrival_date: (document.getElementById('paArrival')?.value || '').trim() || null, asset_tag: (document.getElementById('paAssetTag')?.value || '').trim() || null, notes: (document.getElementById('paNotes')?.value || '').trim() || null }; try { let r; if (editId) { r = await fetch('/printer-assets/' + editId, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); } else { r = await fetch('/printer-assets/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); } if (!r.ok) { const d = await r.json(); throw new Error(d.detail || 'Error'); } showToast(editId ? t('pa_updated') : t('pa_saved'), 'success'); closePrinterAssetForm(); loadPrinterAssets(); } catch (e) { showToast(e.message || t('pa_error_saving'), 'error'); console.error(e); } } async function deletePrinterAsset(id) { if (!await appConfirm(t('pa_delete_title'), t('pa_delete_msg'))) return; try { await fetch('/printer-assets/' + id, { method: 'DELETE' }); showToast(t('pa_deleted'), 'success'); loadPrinterAssets(); } catch (e) { showToast(t('pa_error_deleting'), 'error'); console.error(e); } }
         function scheduleDashboardSearchReload() {
@@ -6825,7 +6983,9 @@
         }
 
         function initNotificationStream() {
-            const es = new EventSource('/notifications/stream');
+            const token = encodeURIComponent(localStorage.getItem('auth_token') || '');
+            if (!token) return;
+            const es = new EventSource('/notifications/stream?token=' + token);
             es.onmessage = function (e) {
                 try {
                     const d = JSON.parse(e.data);

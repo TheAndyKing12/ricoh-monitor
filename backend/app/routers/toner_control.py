@@ -4,8 +4,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from ..database import SessionLocal
 from .. import crud, schemas
 from ..snmp import get_snmp_values
+from .auth import require_tab
 
-router = APIRouter(prefix="/toner-control", tags=["Toner Control"])
+router = APIRouter(prefix="/toner-control", tags=["Toner Control"], dependencies=[Depends(require_tab("tonerControl"))])
 
 
 def get_db():

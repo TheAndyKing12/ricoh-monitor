@@ -29,7 +29,7 @@ if errorlevel 1 exit /b 1
 set PORT=8000
 powershell -NoProfile -Command "if (Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue) { exit 1 }"
 if errorlevel 1 (
-  set PORT=8001
+  set PORT=8000
 )
 
 echo Iniciando Ricoh Monitor en http://127.0.0.1:%PORT%/frontend/dashboard.html

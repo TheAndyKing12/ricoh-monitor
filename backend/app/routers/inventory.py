@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from ..database import SessionLocal
 from .. import crud, schemas
+from .auth import require_tab
 
-router = APIRouter(prefix="/inventory", tags=["Inventory"])
+router = APIRouter(prefix="/inventory", tags=["Inventory"], dependencies=[Depends(require_tab("inventory"))])
 
 
 def get_db():

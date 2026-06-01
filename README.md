@@ -57,6 +57,14 @@ node check_js.js
 backend\venv\Scripts\python.exe scripts\check_backend.py
 ```
 
+## Despliegue en Windows Server con SQL Server
+
+La guia completa esta en:
+
+[docs/DEPLOY_WINDOWS_SQLSERVER.md](docs/DEPLOY_WINDOWS_SQLSERVER.md)
+
+Incluye creacion de base SQL Server, configuracion de `DATABASE_URL`, arranque productivo, firewall y servicio Windows con NSSM.
+
 ## Endpoints utiles
 
 - `GET /health`: estado de API, base de datos, cache y scheduler.
