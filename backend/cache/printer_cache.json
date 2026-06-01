@@ -16,7 +16,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-01T01:01:26.026367"
+      "cached_at": "2026-06-01T00:33:19.025726"
     },
     "2": {
       "id": 2,
@@ -34,7 +34,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-01T01:01:28.040389"
+      "cached_at": "2026-06-01T00:33:21.027103"
     },
     "29": {
       "id": 29,
@@ -52,7 +52,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-01T01:01:30.047627"
+      "cached_at": "2026-06-01T00:33:23.034498"
     },
     "30": {
       "id": 30,
@@ -67,7 +67,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T01:01:32.061158"
+      "cached_at": "2026-06-01T00:33:25.045007"
     },
     "31": {
       "id": 31,
@@ -82,7 +82,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T01:01:34.064507"
+      "cached_at": "2026-06-01T00:33:27.046187"
     },
     "35": {
       "id": 35,
@@ -100,7 +100,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-01T01:01:36.076758"
+      "cached_at": "2026-06-01T00:33:29.054429"
     },
     "36": {
       "id": 36,
@@ -115,7 +115,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T01:01:38.087181"
+      "cached_at": "2026-06-01T00:33:31.057236"
     },
     "37": {
       "id": 37,
@@ -130,7 +130,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T01:01:40.100286"
+      "cached_at": "2026-06-01T00:33:33.061358"
     },
     "38": {
       "id": 38,
@@ -148,7 +148,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-01T01:01:42.109256"
+      "cached_at": "2026-06-01T00:33:35.066590"
     },
     "39": {
       "id": 39,
@@ -163,7 +163,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T01:01:44.115456"
+      "cached_at": "2026-06-01T00:33:37.076720"
     },
     "40": {
       "id": 40,
@@ -178,7 +178,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T01:01:46.119327"
+      "cached_at": "2026-06-01T00:33:39.091264"
     },
     "42": {
       "id": 42,
@@ -196,7 +196,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-01T01:01:48.120858"
+      "cached_at": "2026-06-01T00:33:41.101918"
     },
     "43": {
       "id": 43,
@@ -211,7 +211,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T01:01:50.123516"
+      "cached_at": "2026-06-01T00:33:43.115585"
     },
     "44": {
       "id": 44,
@@ -226,7 +226,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T01:01:52.135410"
+      "cached_at": "2026-06-01T00:33:45.124108"
     },
     "45": {
       "id": 45,
@@ -241,7 +241,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T01:01:54.146180"
+      "cached_at": "2026-06-01T00:33:47.124475"
     },
     "46": {
       "id": 46,
@@ -256,7 +256,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T01:01:56.154165"
+      "cached_at": "2026-06-01T00:33:49.130012"
     },
     "47": {
       "id": 47,
@@ -274,7 +274,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-01T01:01:58.165220"
+      "cached_at": "2026-06-01T00:33:51.131861"
     },
     "48": {
       "id": 48,
@@ -289,7 +289,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T01:02:00.172820"
+      "cached_at": "2026-06-01T00:33:53.145190"
     },
     "49": {
       "id": 49,
@@ -307,7 +307,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-01T01:02:02.177868"
+      "cached_at": "2026-06-01T00:33:55.146287"
     },
     "50": {
       "id": 50,
@@ -325,7 +325,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-01T01:02:04.181637"
+      "cached_at": "2026-06-01T00:33:57.157439"
     },
     "51": {
       "id": 51,
@@ -343,7 +343,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-01T01:02:06.188806"
+      "cached_at": "2026-06-01T00:33:59.160383"
     },
     "52": {
       "id": 52,
@@ -358,7 +358,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T01:02:08.190926"
+      "cached_at": "2026-06-01T00:34:01.161555"
     },
     "53": {
       "id": 53,
@@ -373,7 +373,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T01:02:10.193874"
+      "cached_at": "2026-06-01T00:34:03.171056"
     },
     "54": {
       "id": 54,
@@ -391,7 +391,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-01T01:02:12.195306"
+      "cached_at": "2026-06-01T00:34:05.180542"
     },
     "55": {
       "id": 55,
@@ -406,7 +406,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T01:02:14.207426"
+      "cached_at": "2026-06-01T00:34:07.190667"
     },
     "56": {
       "id": 56,
@@ -424,7 +424,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-01T01:02:16.211288"
+      "cached_at": "2026-06-01T00:34:09.205430"
     },
     "57": {
       "id": 57,
@@ -439,14 +439,501 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T01:02:18.222844"
+      "cached_at": "2026-06-01T00:34:11.205390"
     }
   },
-  "counters": {},
+  "counters": {
+    "1": {
+      "id": 1,
+      "name": "CRI01-01",
+      "serial": "9134RA00167",
+      "ip": "10.131.105.63",
+      "is_color": true,
+      "counter_status": "offline",
+      "counter_source": "fallback",
+      "total_pages": null,
+      "copy_bw": null,
+      "copy_color": null,
+      "print_bw": null,
+      "print_color": null,
+      "bw_pages": null,
+      "color_pages": null,
+      "is_complete": false,
+      "cached_at": "2026-06-01T00:29:43.152363"
+    },
+    "2": {
+      "id": 2,
+      "name": "CRI01-02",
+      "serial": "9154R711688",
+      "ip": "10.131.105.64",
+      "is_color": true,
+      "counter_status": "offline",
+      "counter_source": "fallback",
+      "total_pages": null,
+      "copy_bw": null,
+      "copy_color": null,
+      "print_bw": null,
+      "print_color": null,
+      "bw_pages": null,
+      "color_pages": null,
+      "is_complete": false,
+      "cached_at": "2026-06-01T00:31:09.284051"
+    },
+    "29": {
+      "id": 29,
+      "name": "CRI01-04",
+      "serial": "3101RB70833",
+      "ip": "10.131.105.66",
+      "is_color": true,
+      "counter_status": "offline",
+      "counter_source": "fallback",
+      "total_pages": null,
+      "copy_bw": null,
+      "copy_color": null,
+      "print_bw": null,
+      "print_color": null,
+      "bw_pages": null,
+      "color_pages": null,
+      "is_complete": false,
+      "cached_at": "2026-06-01T00:32:35.415012"
+    },
+    "30": {
+      "id": 30,
+      "name": "CRI01-06",
+      "serial": "4441R200193",
+      "ip": "10.131.105.68",
+      "is_color": false,
+      "counter_status": "offline",
+      "counter_source": "fallback",
+      "total_pages": null,
+      "copy_bw": null,
+      "copy_color": null,
+      "print_bw": null,
+      "print_color": null,
+      "bw_pages": null,
+      "color_pages": null,
+      "is_complete": false,
+      "cached_at": "2026-06-01T00:34:01.521110"
+    },
+    "31": {
+      "id": 31,
+      "name": "CRI01-12",
+      "serial": "3201XB51419",
+      "ip": "10.131.105.74",
+      "is_color": false,
+      "counter_status": "offline",
+      "counter_source": "fallback",
+      "total_pages": null,
+      "copy_bw": null,
+      "copy_color": null,
+      "print_bw": null,
+      "print_color": null,
+      "bw_pages": null,
+      "color_pages": null,
+      "is_complete": false,
+      "cached_at": "2026-06-01T00:35:27.628578"
+    },
+    "35": {
+      "id": 35,
+      "name": "CRI01-09",
+      "serial": "3924P950600",
+      "ip": "10.131.105.71",
+      "is_color": true,
+      "counter_status": "offline",
+      "counter_source": "fallback",
+      "total_pages": null,
+      "copy_bw": null,
+      "copy_color": null,
+      "print_bw": null,
+      "print_color": null,
+      "bw_pages": null,
+      "color_pages": null,
+      "is_complete": false,
+      "cached_at": "2026-06-01T00:36:53.731629"
+    },
+    "36": {
+      "id": 36,
+      "name": "CRI01-10",
+      "serial": "3209X608583",
+      "ip": "10.131.105.72",
+      "is_color": false,
+      "counter_status": "offline",
+      "counter_source": "fallback",
+      "total_pages": null,
+      "copy_bw": null,
+      "copy_color": null,
+      "print_bw": null,
+      "print_color": null,
+      "bw_pages": null,
+      "color_pages": null,
+      "is_complete": false,
+      "cached_at": "2026-06-01T00:38:19.840854"
+    },
+    "37": {
+      "id": 37,
+      "name": "CRI01-15",
+      "serial": "4441R200014",
+      "ip": "10.131.105.77",
+      "is_color": false,
+      "counter_status": "offline",
+      "counter_source": "fallback",
+      "total_pages": null,
+      "copy_bw": null,
+      "copy_color": null,
+      "print_bw": null,
+      "print_color": null,
+      "bw_pages": null,
+      "color_pages": null,
+      "is_complete": false,
+      "cached_at": "2026-06-01T00:39:45.982814"
+    },
+    "38": {
+      "id": 38,
+      "name": "CRI01-16",
+      "serial": "9174R700068",
+      "ip": "10.131.105.78",
+      "is_color": true,
+      "counter_status": "offline",
+      "counter_source": "fallback",
+      "total_pages": null,
+      "copy_bw": null,
+      "copy_color": null,
+      "print_bw": null,
+      "print_color": null,
+      "bw_pages": null,
+      "color_pages": null,
+      "is_complete": false,
+      "cached_at": "2026-06-01T00:41:12.146685"
+    },
+    "39": {
+      "id": 39,
+      "name": "CRI01-17",
+      "serial": "3201XB51527",
+      "ip": "10.131.105.79",
+      "is_color": false,
+      "counter_status": "offline",
+      "counter_source": "fallback",
+      "total_pages": null,
+      "copy_bw": null,
+      "copy_color": null,
+      "print_bw": null,
+      "print_color": null,
+      "bw_pages": null,
+      "color_pages": null,
+      "is_complete": false,
+      "cached_at": "2026-06-01T00:42:38.259981"
+    },
+    "40": {
+      "id": 40,
+      "name": "CRI01-24",
+      "serial": "5381P800938",
+      "ip": "10.131.105.81",
+      "is_color": false,
+      "counter_status": "offline",
+      "counter_source": "fallback",
+      "total_pages": null,
+      "copy_bw": null,
+      "copy_color": null,
+      "print_bw": null,
+      "print_color": null,
+      "bw_pages": null,
+      "color_pages": null,
+      "is_complete": false,
+      "cached_at": "2026-06-01T00:44:04.405025"
+    },
+    "42": {
+      "id": 42,
+      "name": "CRI01-18",
+      "serial": "3101RB70664",
+      "ip": "10.131.105.83",
+      "is_color": true,
+      "counter_status": "offline",
+      "counter_source": "fallback",
+      "total_pages": null,
+      "copy_bw": null,
+      "copy_color": null,
+      "print_bw": null,
+      "print_color": null,
+      "bw_pages": null,
+      "color_pages": null,
+      "is_complete": false,
+      "cached_at": "2026-06-01T00:45:30.528036"
+    },
+    "43": {
+      "id": 43,
+      "name": "CRI01-22",
+      "serial": "G588P900302",
+      "ip": "10.131.105.84",
+      "is_color": false,
+      "counter_status": "offline",
+      "counter_source": "fallback",
+      "total_pages": null,
+      "copy_bw": null,
+      "copy_color": null,
+      "print_bw": null,
+      "print_color": null,
+      "bw_pages": null,
+      "color_pages": null,
+      "is_complete": false,
+      "cached_at": "2026-06-01T00:46:56.628664"
+    },
+    "44": {
+      "id": 44,
+      "name": "CRI01-33",
+      "serial": "3354P951182",
+      "ip": "10.131.105.120",
+      "is_color": false,
+      "counter_status": "offline",
+      "counter_source": "fallback",
+      "total_pages": null,
+      "copy_bw": null,
+      "copy_color": null,
+      "print_bw": null,
+      "print_color": null,
+      "bw_pages": null,
+      "color_pages": null,
+      "is_complete": false,
+      "cached_at": "2026-06-01T00:48:22.776286"
+    },
+    "45": {
+      "id": 45,
+      "name": "CRI01-23",
+      "serial": "3201XB51651",
+      "ip": "10.131.105.85",
+      "is_color": false,
+      "counter_status": "offline",
+      "counter_source": "fallback",
+      "total_pages": null,
+      "copy_bw": null,
+      "copy_color": null,
+      "print_bw": null,
+      "print_color": null,
+      "bw_pages": null,
+      "color_pages": null,
+      "is_complete": false,
+      "cached_at": "2026-06-01T00:49:48.912821"
+    },
+    "46": {
+      "id": 46,
+      "name": "CRI01-34",
+      "serial": "G588PA00968",
+      "ip": "10.131.105.121",
+      "is_color": false,
+      "counter_status": "offline",
+      "counter_source": "fallback",
+      "total_pages": null,
+      "copy_bw": null,
+      "copy_color": null,
+      "print_bw": null,
+      "print_color": null,
+      "bw_pages": null,
+      "color_pages": null,
+      "is_complete": false,
+      "cached_at": "2026-06-01T00:51:15.049956"
+    },
+    "47": {
+      "id": 47,
+      "name": "CRI01-37",
+      "serial": "9143R200173",
+      "ip": "10.131.105.86",
+      "is_color": true,
+      "counter_status": "offline",
+      "counter_source": "fallback",
+      "total_pages": null,
+      "copy_bw": null,
+      "copy_color": null,
+      "print_bw": null,
+      "print_color": null,
+      "bw_pages": null,
+      "color_pages": null,
+      "is_complete": false,
+      "cached_at": "2026-06-01T00:52:41.178570"
+    },
+    "48": {
+      "id": 48,
+      "name": "CRI01-35",
+      "serial": "3354P951185",
+      "ip": "10.131.105.128",
+      "is_color": false,
+      "counter_status": "offline",
+      "counter_source": "fallback",
+      "total_pages": null,
+      "copy_bw": null,
+      "copy_color": null,
+      "print_bw": null,
+      "print_color": null,
+      "bw_pages": null,
+      "color_pages": null,
+      "is_complete": false,
+      "cached_at": "2026-06-01T00:54:07.320000"
+    },
+    "49": {
+      "id": 49,
+      "name": "CRI01-30",
+      "serial": "C778R710436",
+      "ip": "10.131.105.92",
+      "is_color": true,
+      "counter_status": "offline",
+      "counter_source": "fallback",
+      "total_pages": null,
+      "copy_bw": null,
+      "copy_color": null,
+      "print_bw": null,
+      "print_color": null,
+      "bw_pages": null,
+      "color_pages": null,
+      "is_complete": false,
+      "cached_at": "2026-06-01T00:55:33.438998"
+    },
+    "50": {
+      "id": 50,
+      "name": "CRI01-19",
+      "serial": "3924P852711",
+      "ip": "10.131.105.93",
+      "is_color": true,
+      "counter_status": "offline",
+      "counter_source": "fallback",
+      "total_pages": null,
+      "copy_bw": null,
+      "copy_color": null,
+      "print_bw": null,
+      "print_color": null,
+      "bw_pages": null,
+      "color_pages": null,
+      "is_complete": false,
+      "cached_at": "2026-06-01T00:56:59.605723"
+    },
+    "51": {
+      "id": 51,
+      "name": "CRI01-03",
+      "serial": "3090RB00343",
+      "ip": "10.131.105.65",
+      "is_color": true,
+      "counter_status": "offline",
+      "counter_source": "fallback",
+      "total_pages": null,
+      "copy_bw": null,
+      "copy_color": null,
+      "print_bw": null,
+      "print_color": null,
+      "bw_pages": null,
+      "color_pages": null,
+      "is_complete": false,
+      "cached_at": "2026-06-01T00:58:25.727508"
+    },
+    "52": {
+      "id": 52,
+      "name": "CRI01-25",
+      "serial": "5381P800939",
+      "ip": "10.131.105.144",
+      "is_color": false,
+      "counter_status": "offline",
+      "counter_source": "fallback",
+      "total_pages": null,
+      "copy_bw": null,
+      "copy_color": null,
+      "print_bw": null,
+      "print_color": null,
+      "bw_pages": null,
+      "color_pages": null,
+      "is_complete": false,
+      "cached_at": "2026-06-01T00:59:51.864439"
+    },
+    "53": {
+      "id": 53,
+      "name": "CRI01-31",
+      "serial": "3353P752593",
+      "ip": "10.131.105.146",
+      "is_color": false,
+      "counter_status": "offline",
+      "counter_source": "fallback",
+      "total_pages": null,
+      "copy_bw": null,
+      "copy_color": null,
+      "print_bw": null,
+      "print_color": null,
+      "bw_pages": null,
+      "color_pages": null,
+      "is_complete": false,
+      "cached_at": "2026-06-01T01:01:18.088189"
+    },
+    "54": {
+      "id": 54,
+      "name": "CRI01-07",
+      "serial": "3091R801111",
+      "ip": "10.131.105.69",
+      "is_color": true,
+      "counter_status": "offline",
+      "counter_source": "fallback",
+      "total_pages": null,
+      "copy_bw": null,
+      "copy_color": null,
+      "print_bw": null,
+      "print_color": null,
+      "bw_pages": null,
+      "color_pages": null,
+      "is_complete": false,
+      "cached_at": "2026-06-01T01:02:44.279493"
+    },
+    "55": {
+      "id": 55,
+      "name": "CRI01-20",
+      "serial": "4424R500027",
+      "ip": "10.131.105.82",
+      "is_color": false,
+      "counter_status": "offline",
+      "counter_source": "fallback",
+      "total_pages": null,
+      "copy_bw": null,
+      "copy_color": null,
+      "print_bw": null,
+      "print_color": null,
+      "bw_pages": null,
+      "color_pages": null,
+      "is_complete": false,
+      "cached_at": "2026-06-01T01:04:10.456191"
+    },
+    "56": {
+      "id": 56,
+      "name": "CRI01-08",
+      "serial": "3091R801097",
+      "ip": "10.131.105.70",
+      "is_color": true,
+      "counter_status": "offline",
+      "counter_source": "fallback",
+      "total_pages": null,
+      "copy_bw": null,
+      "copy_color": null,
+      "print_bw": null,
+      "print_color": null,
+      "bw_pages": null,
+      "color_pages": null,
+      "is_complete": false,
+      "cached_at": "2026-06-01T01:05:36.598220"
+    },
+    "57": {
+      "id": 57,
+      "name": "CRI01-14",
+      "serial": "9265PC00458",
+      "ip": "10.131.105.76",
+      "is_color": false,
+      "counter_status": "offline",
+      "counter_source": "fallback",
+      "total_pages": null,
+      "copy_bw": null,
+      "copy_color": null,
+      "print_bw": null,
+      "print_color": null,
+      "bw_pages": null,
+      "color_pages": null,
+      "is_complete": false,
+      "cached_at": "2026-06-01T01:07:02.722885"
+    }
+  },
   "toner_control": [],
   "metadata": {
-    "last_full_sync": "2026-06-01T01:02:18.222904",
-    "last_counter_sync": null,
+    "last_full_sync": "2026-06-01T00:34:11.205453",
+    "last_counter_sync": "2026-06-01T01:07:02.724549",
     "last_toner_sync": null
   }
 }
