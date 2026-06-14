@@ -1,4 +1,12 @@
 (function () {
+  function isAdminUser() {
+    try {
+      return !!JSON.parse(localStorage.getItem("auth_user") || "{}").is_admin;
+    } catch (_) {
+      return false;
+    }
+  }
+
   function setHtml(id, html) {
     const el = document.getElementById(id);
     if (el) el.innerHTML = html;
@@ -23,6 +31,10 @@
   window.loadSchedulerStatus = async function loadSchedulerStatus() {
     const box = document.getElementById("schedulerStatusBox");
     if (!box) return;
+    if (!isAdminUser()) {
+      box.innerHTML = '<span style="color:#94a3b8">Estado del scheduler disponible solo para administradores.</span>';
+      return;
+    }
     box.innerHTML = '<span style="color:#fbbf24">Cargando scheduler...</span>';
     try {
       const response = await fetch("/scheduler/status");
@@ -41,11 +53,32 @@
     }
   };
 
-  window.exportActivityLogs = function exportActivityLogs() {
+  window.exportActivityLogs = async function exportActivityLogs() {
     const category = document.getElementById("logCategoryFilter")?.value || "";
     const params = new URLSearchParams();
     if (category) params.set("category", category);
-    window.open("/logs/export" + (params.toString() ? "?" + params.toString() : ""), "_blank");
+    const url = "/logs/export" + (params.toString() ? "?" + params.toString() : "");
+    try {
+      if (window.downloadAuthenticatedFile) {
+        await window.downloadAuthenticatedFile(url, "activity_logs.csv");
+      } else {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        const blob = await response.blob();
+        const downloadUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = downloadUrl;
+        a.download = "activity_logs.csv";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(downloadUrl);
+      }
+      if (window.showToast) window.showToast("CSV exportado", "success");
+    } catch (error) {
+      if (window.showToast) window.showToast("No se pudo exportar CSV", "error");
+      console.error("exportActivityLogs error:", error);
+    }
   };
 
   window.sendTestNotification = async function sendTestNotification() {
@@ -62,6 +95,6 @@
   const originalLoadConfig = window.loadConfig;
   window.loadConfig = function wrappedLoadConfig() {
     if (typeof originalLoadConfig === "function") originalLoadConfig();
-    window.loadSchedulerStatus();
+    if (isAdminUser()) window.loadSchedulerStatus();
   };
 })();

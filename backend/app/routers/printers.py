@@ -662,7 +662,11 @@ def get_printers_counters(
     sort_dir: str = Query(default="asc", pattern="^(asc|desc)$"),
     db: Session = Depends(get_db),
 ):
-    rows, _ = _refresh_counters_cache(db)
+    rows = _get_cached_counter_rows()
+    if not rows:
+        rows = _get_latest_counter_snapshot_rows(db)
+    if not rows:
+        rows, _ = _refresh_counters_cache(db)
     return _apply_counter_filters_and_sort(
         rows,
         status=status,

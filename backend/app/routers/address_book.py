@@ -6,6 +6,7 @@ import secrets
 import threading
 import time
 import base64
+import html as html_lib
 import traceback
 from pathlib import Path
 from typing import List
@@ -759,6 +760,90 @@ def _ricoh_extract_wim_token(html: str) -> str:
     return token_match.group(1) if token_match else ""
 
 
+def _clean_ricoh_text(value) -> str:
+    text = html_lib.unescape(str(value or ""))
+    text = re.sub(r"<[^>]+>", "", text)
+    text = text.replace("\xa0", " ").replace("&nbsp;", " ")
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _is_plausible_address_name(value) -> bool:
+    text = _clean_ricoh_text(value)
+    if not text:
+        return False
+    lowered = text.lower()
+    if lowered in {"true", "false", "on", "off", "null", "none", "-", "0", "1"}:
+        return False
+    if text.isdigit():
+        return False
+    return True
+
+
+def _is_email(value: str) -> bool:
+    return bool(re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", _clean_ricoh_text(value)))
+
+
+def _is_folder_value(value: str) -> bool:
+    text = _clean_ricoh_text(value)
+    return ("\\" in text or "/" in text) and not text.lower().startswith(("http://", "https://"))
+
+
+def _optional_title(value: str | None) -> str | None:
+    text = _clean_ricoh_text(value)
+    if not text or text.isdigit() or _is_email(text) or _is_folder_value(text):
+        return None
+    return text
+
+
+def _address_entry_from_values(values: list) -> dict | None:
+    cleaned = [_clean_ricoh_text(v) for v in values]
+    cleaned = [v for v in cleaned if v != ""]
+    if len(cleaned) < 2:
+        return None
+
+    reg_idx = None
+    for idx, value in enumerate(cleaned[:6]):
+        digits = re.sub(r"\D", "", value)
+        if not _is_plausible_reg(digits):
+            continue
+        # Ricoh often prefixes rows with a 0-based index before registration.
+        if idx == 0 and len(cleaned) > 1 and re.sub(r"\D", "", cleaned[1]).isdigit():
+            continue
+        if any(_is_plausible_address_name(v) for v in cleaned[idx + 1:idx + 5]):
+            reg_idx = idx
+            break
+
+    if reg_idx is None:
+        return None
+
+    reg = re.sub(r"\D", "", cleaned[reg_idx]).zfill(5)
+    tail = cleaned[reg_idx + 1:]
+    name = next((v for v in tail if _is_plausible_address_name(v)), "")
+    if not name:
+        return None
+
+    name_pos = tail.index(name)
+    remaining = tail[name_pos + 1:]
+    key_display = next((v for v in remaining if _is_plausible_address_name(v)), name)
+    email = next((v for v in cleaned if _is_email(v)), None)
+    folder = next((v for v in cleaned if _is_folder_value(v)), None)
+    user_code = next((v for v in cleaned if v.isdigit() and len(v) >= 4 and v.zfill(5) != reg), None)
+
+    return {
+        "registration_no": reg,
+        "name": name,
+        "key_display": key_display,
+        "freq": True,
+        "title1": _optional_title(remaining[1] if len(remaining) > 1 else None),
+        "title2": _optional_title(remaining[2] if len(remaining) > 2 else None),
+        "title3": _optional_title(remaining[3] if len(remaining) > 3 else None),
+        "user_code": user_code,
+        "email_address": email,
+        "folder": folder,
+        "status": "Activo",
+    }
+
+
 def _ricoh_load_entries_with_session(session: requests.Session, printer_ip: str, dump: bool = False, admin: str | None = None, password: str | None = None) -> list[dict]:
     def _has_max_users_error(text: str) -> bool:
         t = (text or "").lower()
@@ -949,31 +1034,44 @@ def _is_plausible_reg(value) -> bool:
 def _ricoh_parse_entries(text: str) -> list[dict]:
     if not text:
         return []
-    entries: list[dict] = []
-    pattern = r'\[\s*\d+\s*,\s*"([^"]*)"(?:\s*,\s*"([^"]*)")*\s*\]'
-    for match in re.finditer(pattern, text):
-        raw_row = match.group(0)
-        parts = re.findall(r'"([^"]*)"', raw_row)
-        if not parts or len(parts) < 3:
+    source = html_lib.unescape(text or "")
+    entries_by_reg: dict[str, dict] = {}
+
+    def add_entry(values: list):
+        entry = _address_entry_from_values(values)
+        if not entry:
+            return
+        reg = str(entry.get("registration_no") or "").strip().zfill(5)
+        if _is_plausible_reg(reg):
+            entries_by_reg[reg] = entry
+
+    # Ricoh variants usually expose rows as JS arrays. Accept quoted,
+    # numeric and mixed rows instead of one exact firmware layout.
+    for match in re.finditer(r"\[(?P<body>[^\[\]]{8,500})\]", source, flags=re.DOTALL):
+        body = match.group("body") or ""
+        if not re.search(r"\d", body) or not re.search(r"['\"]", body):
             continue
-        reg = parts[0].strip()
-        if not reg or not reg.isdigit():
+        quoted = [
+            html_lib.unescape(m.group(1) or m.group(2) or "")
+            for m in re.finditer(r'"((?:\\.|[^"\\])*)"|\'((?:\\.|[^\'\\])*)\'', body)
+        ]
+        numbers = re.findall(r"(?<![\w.])\d{1,5}(?![\w.])", body)
+        add_entry(numbers[:2] + quoted)
+        add_entry(quoted)
+
+    # Some endpoints return tab/pipe/comma-delimited text, one user per line.
+    for line in source.splitlines():
+        line = line.strip()
+        if not line or not re.search(r"\d", line):
             continue
-        entry = {
-            "registration_no": reg.zfill(5),
-            "name": parts[1].strip() if len(parts) > 1 else "",
-            "key_display": parts[2].strip() if len(parts) > 2 else "",
-            "freq": True,
-            "title1": parts[3].strip() if len(parts) > 3 else None,
-            "title2": parts[4].strip() if len(parts) > 4 else None,
-            "title3": parts[5].strip() if len(parts) > 5 else None,
-            "user_code": parts[6].strip() if len(parts) > 6 else None,
-            "email_address": parts[7].strip() if len(parts) > 7 else None,
-            "folder": parts[8].strip() if len(parts) > 8 else None,
-            "status": "Activo",
-        }
-        entries.append(entry)
-    return entries
+        if "\t" in line:
+            add_entry(line.split("\t"))
+        elif "|" in line:
+            add_entry(line.split("|"))
+        elif "," in line and re.search(r"(^|,)\s*\d{1,5}\s*,", line):
+            add_entry([part.strip().strip('"').strip("'") for part in line.split(",")])
+
+    return _sort_entries(list(entries_by_reg.values()))
 
 
 def _ricoh_parse_entries_from_html(html: str) -> list[dict]:
@@ -983,26 +1081,13 @@ def _ricoh_parse_entries_from_html(html: str) -> list[dict]:
     for row_match in re.finditer(r"<tr[^>]*>(.*?)</tr>", html, re.IGNORECASE | re.DOTALL):
         row_html = row_match.group(1) or ""
         cells = re.findall(r"<td[^>]*>(.*?)</td>", row_html, re.IGNORECASE | re.DOTALL)
-        if len(cells) < 3:
+        if len(cells) < 2:
             continue
-        reg_raw = re.sub(r"<[^>]+>", "", cells[0] or "").strip()
-        if not reg_raw.isdigit():
+        entry = _address_entry_from_values(cells)
+        if not entry:
             continue
-        entry = {
-            "registration_no": reg_raw.zfill(5),
-            "name": re.sub(r"<[^>]+>", "", cells[1] or "").strip(),
-            "key_display": re.sub(r"<[^>]+>", "", cells[2] or "").strip(),
-            "freq": True,
-            "title1": None,
-            "title2": None,
-            "title3": None,
-            "user_code": None,
-            "email_address": None,
-            "folder": None,
-            "status": "Activo",
-        }
         entries.append(entry)
-    return entries
+    return _sort_entries(entries)
 
 
 def _ricoh_load_entries_with_browser(printer_ip: str, admin: str | None, password: str | None, diagnostics: list[str]) -> list[dict] | None:
