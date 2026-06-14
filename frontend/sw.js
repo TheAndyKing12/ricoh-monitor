@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ricoh-monitor-v7';
+const CACHE_NAME = 'ricoh-monitor-v8';
 const STATIC_ASSETS = [
     '/frontend/dashboard.html',
     '/frontend/style.css',
@@ -32,11 +32,16 @@ self.addEventListener('fetch', event => {
 
     // No interceptar llamadas a la API del backend
     if (url.pathname.startsWith('/auth') ||
+        url.pathname.startsWith('/cache') ||
         url.pathname.startsWith('/printers') ||
         url.pathname.startsWith('/inventory') ||
         url.pathname.startsWith('/toner-control') ||
         url.pathname.startsWith('/printer-assets') ||
         url.pathname.startsWith('/logs') ||
+        url.pathname.startsWith('/settings') ||
+        url.pathname.startsWith('/scheduler') ||
+        url.pathname.startsWith('/system') ||
+        url.pathname.startsWith('/notifications') ||
         url.pathname.startsWith('/counters')) {
         return;
     }

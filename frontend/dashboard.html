@@ -5817,15 +5817,32 @@
 
             try {
                 showLoadingIn('countersList', 10, t('loading_counters'));
-
                 // 1) Intentar caché
-                const response = await fetch('/cache/counters');
-                let result = await response.json();
-                let data = Array.isArray(result?.data) ? result.data : [];
+                let result = { cached_at: null, data: [] };
+                let data = [];
+                try {
+                    const response = await fetch('/cache/counters', { cache: 'no-store' });
+                    if (response.ok) {
+                        result = await response.json();
+                        data = Array.isArray(result?.data) ? result.data : [];
+                    } else {
+                        console.warn('cache/counters unavailable:', response.status);
+                    }
+                } catch (cacheError) {
+                    console.warn('cache/counters error:', cacheError);
+                }
 
                 // 2) Fallback a endpoint original si caché está vacío
                 if (!data.length) {
-                    const fallbackResponse = await fetch('/printers/counters');
+                    const fallbackResponse = await fetch('/printers/counters', { cache: 'no-store' });
+                    if (!fallbackResponse.ok) {
+                        let msg = 'HTTP ' + fallbackResponse.status;
+                        try {
+                            const errorData = await fallbackResponse.json();
+                            if (errorData?.detail) msg = errorData.detail;
+                        } catch (_) { }
+                        throw new Error(msg);
+                    }
                     const fallbackData = await fallbackResponse.json();
                     data = Array.isArray(fallbackData) ? fallbackData : [];
                     result = { cached_at: null, data };
