@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from app import crud
 from app.database import SessionLocal
 from app.models import Printer
+from app.utils import get_db
 from .auth import require_tab
 
 router = APIRouter(prefix="/printers", tags=["AddressBook"], dependencies=[Depends(require_tab("printers"))])
@@ -222,14 +223,6 @@ class AddressBookListResponse(BaseModel):
 class AddressBookAuthRequest(BaseModel):
     admin: str
     password: str
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 def _ensure_store_dir():

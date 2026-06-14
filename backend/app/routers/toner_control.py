@@ -3,66 +3,15 @@ from sqlalchemy.orm import Session
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from ..database import SessionLocal
 from .. import crud, schemas
+from .. import utils
+from ..utils import safe_int, detect_is_color, get_db
 from ..snmp import get_snmp_values
 from .auth import require_tab
 
 router = APIRouter(prefix="/toner-control", tags=["Toner Control"], dependencies=[Depends(require_tab("tonerControl"))])
 
 
-def get_db():
 
-    db = SessionLocal()
-
-    try:
-
-        yield db
-
-    finally:
-
-        db.close()
-
-
-def safe_int(value):
-
-    try:
-
-        return int(value)
-
-    except:
-
-        return None
-
-
-def detect_is_color(printer):
-
-    if hasattr(printer, "is_color") and printer.is_color is not None:
-
-        return bool(printer.is_color)
-
-    model_upper = (printer.model or "").upper().strip()
-
-    return (
-
-        model_upper.startswith("IM C") or
-
-        model_upper.startswith("MP C") or
-
-        model_upper.startswith("P C") or
-
-        model_upper.startswith("RICOH IM C") or
-
-        model_upper.startswith("RICOH MP C") or
-
-        model_upper.startswith("RICOH P C") or
-
-        "IM C" in model_upper or
-
-        "MP C" in model_upper or
-
-        "P C" in model_upper
-
-    )
- 
 
 
 OID_K = "1.3.6.1.2.1.43.11.1.1.9.1.1"
@@ -166,23 +115,21 @@ def update_control(
 def get_all_toner_control_records(db: Session):
     """Obtener todos los registros de toner control para caché"""
     from app.models import TonerControl
-    from sqlalchemy import desc
     
-    # Obtener último registro por cada impresora
-    records = db.query(TonerControl).order_by(desc(TonerControl.date_checked)).all()
-    
+    records = db.query(TonerControl).all()
+
     result = []
     for record in records:
         result.append({
             "id": record.id,
             "printer_id": record.printer_id,
-            "date_checked": record.date_checked.isoformat() if record.date_checked else None,
-            "backup_k": record.backup_k,
-            "backup_c": record.backup_c,
-            "backup_m": record.backup_m,
-            "backup_y": record.backup_y,
+            "check_date": record.check_date,
+            "backup_black": record.backup_black,
+            "backup_cyan": record.backup_cyan,
+            "backup_magenta": record.backup_magenta,
+            "backup_yellow": record.backup_yellow,
             "pedido": record.pedido,
-            "wo": record.wo,
+            "work_order": record.work_order,
             "notas": record.notas
         })
     

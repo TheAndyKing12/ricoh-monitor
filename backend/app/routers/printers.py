@@ -14,6 +14,8 @@ import socket
 from ..database import SessionLocal
 
 from .. import crud, schemas, models
+from .. import utils
+from ..utils import _clean_snmp_text, _normalize_ricoh_model, safe_int, detect_is_color, detect_is_color_from_model, get_db
 
 from app.ricoh_http import get_ricoh_http_counters, get_ricoh_http_hostname
  
@@ -59,31 +61,7 @@ PRINTER_IDENTITY_OIDS = {
 }
 
 
-def _clean_snmp_text(value):
-    if value is None:
-        return None
-    text = str(value).strip().strip("\x00")
-    if not text:
-        return None
-    lowered = text.lower()
-    if "no such" in lowered or "not available" in lowered or lowered in {"none", "null", "-"}:
-        return None
-    return text
 
-
-def _normalize_ricoh_model(value):
-    text = _clean_snmp_text(value)
-    if not text:
-        return None
-    text = text.replace("RICOH ", "").replace("Ricoh ", "").strip()
-    tokens = text.replace(",", " ").replace(";", " ").split()
-    for idx, token in enumerate(tokens):
-        upper = token.upper()
-        if upper in {"IM", "MP", "SP"} and idx + 1 < len(tokens):
-            return (tokens[idx] + " " + tokens[idx + 1]).strip()
-        if upper == "P" and idx + 1 < len(tokens):
-            return (tokens[idx] + " " + tokens[idx + 1]).strip()
-    return text[:80]
 
 
 def _looks_like_color_from_live_data(model, cyan_toner):
@@ -178,28 +156,7 @@ def _schedule_hostname_sync(printer_id: int) -> bool:
     return True
 
 
-def get_db():
 
-    db = SessionLocal()
-
-    try:
-
-        yield db
-
-    finally:
-
-        db.close()
-
-
-def safe_int(value):
-
-    try:
-
-        return int(value)
-
-    except:
-
-        return None
 
 
 def decode_printer_error_state(raw_value):
@@ -277,44 +234,7 @@ def decode_printer_error_state(raw_value):
     return errors
 
 
-def detect_is_color(printer):
 
-    if hasattr(printer, "is_color") and printer.is_color is not None:
-
-        return bool(printer.is_color)
-
-    model_upper = (printer.model or "").upper().strip()
-
-    return (
-
-        model_upper.startswith("IM C") or
-
-        model_upper.startswith("MP C") or
-
-        model_upper.startswith("P C") or
-
-        "IM C" in model_upper or
-
-        "MP C" in model_upper or
-
-        "P C" in model_upper
-
-    )
- 
-
-def detect_is_color_from_model(model_str: str):
-
-    model_upper = (model_str or "").upper()
-
-    return (
-
-        "IM C" in model_upper or
-
-        "MP C" in model_upper or
-
-        "P C" in model_upper
-
-    )
 
 
 def build_fast_printer_status(printer):
@@ -762,7 +682,11 @@ def export_printers_counters_csv(
     sort_dir: str = Query(default="asc", pattern="^(asc|desc)$"),
     db: Session = Depends(get_db),
 ):
-    rows, _ = _refresh_counters_cache(db)
+    rows = _get_cached_counter_rows()
+    if not rows:
+        rows = _get_latest_counter_snapshot_rows(db)
+    if not rows:
+        rows, _ = _refresh_counters_cache(db)
     rows = _apply_counter_filters_and_sort(
         rows,
         status=status,
@@ -1028,6 +952,64 @@ def _apply_counter_filters_and_sort(
     return filtered
 
 
+def _get_cached_counter_rows() -> list[dict]:
+    rows = COUNTERS_CACHE.get("data")
+    if rows:
+        return rows
+    with COUNTERS_LOCK:
+        if COUNTERS_LAST_ROWS:
+            return list(COUNTERS_LAST_ROWS.values())
+    return []
+
+
+def _get_latest_counter_snapshot_rows(db: Session) -> list[dict]:
+    printers = crud.get_printers(db)
+    snapshots = (
+        db.query(models.PrinterCounterSnapshot)
+        .filter(models.PrinterCounterSnapshot.granularity == "daily")
+        .order_by(models.PrinterCounterSnapshot.captured_at.desc())
+        .all()
+    )
+    latest_by_printer: dict[int, models.PrinterCounterSnapshot] = {}
+    for snapshot in snapshots:
+        if snapshot.printer_id not in latest_by_printer:
+            latest_by_printer[snapshot.printer_id] = snapshot
+
+    if not latest_by_printer:
+        return []
+
+    rows = []
+    for printer in printers:
+        snapshot = latest_by_printer.get(printer.id)
+        is_color = detect_is_color(printer)
+        has_counters = bool(
+            snapshot
+            and (
+                snapshot.total_pages is not None
+                or snapshot.bw_pages is not None
+                or (is_color and snapshot.color_pages is not None)
+            )
+        )
+        rows.append({
+            "id": printer.id,
+            "name": getattr(printer, "shared_name", None) or printer.name or printer.model,
+            "serial": printer.serial,
+            "ip": printer.ip,
+            "is_color": is_color,
+            "counter_status": "online" if has_counters else "offline",
+            "counter_source": snapshot.source if snapshot else "cache",
+            "total_pages": snapshot.total_pages if snapshot else None,
+            "copy_bw": snapshot.copy_bw if snapshot else None,
+            "copy_color": snapshot.copy_color if snapshot and is_color else None,
+            "print_bw": snapshot.print_bw if snapshot else None,
+            "print_color": snapshot.print_color if snapshot and is_color else None,
+            "bw_pages": snapshot.bw_pages if snapshot else None,
+            "color_pages": snapshot.color_pages if snapshot and is_color else None,
+            "is_complete": bool(snapshot.is_complete) if snapshot else False,
+        })
+    return rows
+
+
 def _refresh_counters_cache(db: Session, force: bool = False) -> tuple[list[dict], float]:
     global COUNTERS_LAST_REFRESH_TS
     now = time.time()
@@ -1146,30 +1128,28 @@ def export_counters_consumption_report(
     end_date: str = Query(..., description="YYYY-MM-DD"),
     db: Session = Depends(get_db),
 ):
-    rows, _ = _refresh_counters_cache(db)
-    rows = _apply_counter_filters_and_sort(
-        rows,
-        status=status,
-        printer_type=printer_type,
-        incomplete=incomplete,
-        sort_by=sort_by,
-        sort_dir=sort_dir,
-    )
+    report = _build_counters_consumption_report(db, start_date=start_date, end_date=end_date)
+    rows = report.get("rows") or []
 
     output = io.StringIO()
     writer = csv.writer(output)
     headers = [
-        "id", "name", "serial", "ip", "is_color", "counter_status", "counter_source",
-        "total_pages", "copy_bw", "copy_color", "print_bw", "print_color", "bw_pages", "color_pages", "is_complete"
+        "printer_id", "name", "ip", "is_color",
+        "start_captured_at", "end_captured_at",
+        "start_total", "end_total", "consumed_total",
+        "start_bw", "end_bw", "consumed_bw",
+        "start_color", "end_color", "consumed_color",
+        "counter_reset_detected", "incomplete",
     ]
     writer.writerow(headers)
     for row in rows:
         writer.writerow([row.get(h) for h in headers])
 
+    filename = f"counters_consumption_{start_date}_to_{end_date}.csv"
     return Response(
         content=output.getvalue(),
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=printers_counters.csv"},
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
 
 

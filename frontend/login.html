@@ -295,6 +295,18 @@
                 transform: none;
             }
 
+        .login-btn-secondary {
+            background: rgba(15,23,42,.64);
+            border: 1px solid rgba(148,163,184,.22);
+            box-shadow: none;
+            color: #dbeafe;
+        }
+
+            .login-btn-secondary:hover {
+                background: rgba(30,41,59,.78);
+                box-shadow: 0 8px 24px rgba(15,23,42,.28);
+            }
+
         .login-error {
             background: rgba(239,68,68,.12);
             border: 1px solid rgba(239,68,68,.3);
@@ -434,6 +446,10 @@
                 <i class="bi bi-box-arrow-in-right"></i>
                 <span id="loginBtnText">Iniciar Sesión</span>
             </button>
+            <button class="login-btn login-btn-secondary" id="dashboardBtn" onclick="enterDashboardOnly()" type="button">
+                <i class="bi bi-display"></i>
+                <span id="dashboardBtnText">Ver Dashboard</span>
+            </button>
         </div>
     </div>
 
@@ -460,7 +476,9 @@
                 pass_label: 'Contraseña',
                 pass_ph: 'Ingresa tu contraseña',
                 btn_login: 'Iniciar Sesión',
+                btn_dashboard: 'Ver Dashboard',
                 btn_loading: 'Verificando...',
+                btn_dashboard_loading: 'Abriendo dashboard...',
                 err_empty: 'Ingresa usuario y contraseña.',
                 err_server: 'No se pudo conectar con el servidor.',
                 brand_subtitle: 'Monitor de Impresora',
@@ -482,7 +500,9 @@
                 pass_label: 'Password',
                 pass_ph: 'Enter your password',
                 btn_login: 'Sign In',
+                btn_dashboard: 'View Dashboard',
                 btn_loading: 'Verifying...',
+                btn_dashboard_loading: 'Opening dashboard...',
                 err_empty: 'Please enter username and password.',
                 err_server: 'Could not connect to the server.',
                 brand_subtitle: 'Printer Monitor',
@@ -510,6 +530,7 @@
             document.getElementById('passLabel').textContent = tr('pass_label');
             document.getElementById('loginPass').placeholder = tr('pass_ph');
             document.getElementById('loginBtnText').textContent = tr('btn_login');
+            document.getElementById('dashboardBtnText').textContent = tr('btn_dashboard');
             document.getElementById('brandSubtitle').textContent = tr('brand_subtitle');
             document.getElementById('brandDesc').textContent = tr('brand_desc');
             document.getElementById('feat1Title').textContent = tr('feat1_title');
@@ -580,7 +601,8 @@
                 localStorage.setItem('auth_user', JSON.stringify({
                     display_name: data.display_name,
                     is_admin: data.is_admin,
-                    allowed_tabs: data.allowed_tabs
+                    allowed_tabs: data.allowed_tabs,
+                    read_only: !!data.read_only
                 }));
                 window.location.href = '/frontend/dashboard.html';
             } catch (e) {
@@ -589,6 +611,33 @@
             } finally {
                 btn.disabled = false;
                 document.getElementById('loginBtnText').textContent = tr('btn_login');
+            }
+        }
+
+        async function enterDashboardOnly() {
+            const btn = document.getElementById('dashboardBtn');
+            const err = document.getElementById('loginError');
+            err.style.display = 'none';
+            btn.disabled = true;
+            document.getElementById('dashboardBtnText').textContent = tr('btn_dashboard_loading');
+            try {
+                const res = await fetch('/auth/dashboard', { method: 'POST' });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || tr('err_server'));
+                localStorage.setItem('auth_token', data.access_token);
+                localStorage.setItem('auth_user', JSON.stringify({
+                    display_name: data.display_name,
+                    is_admin: data.is_admin,
+                    allowed_tabs: data.allowed_tabs,
+                    read_only: true
+                }));
+                window.location.href = '/frontend/dashboard.html';
+            } catch (e) {
+                err.textContent = e.message || tr('err_server');
+                err.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                document.getElementById('dashboardBtnText').textContent = tr('btn_dashboard');
             }
         }
     </script>

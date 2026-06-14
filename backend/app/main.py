@@ -10,7 +10,7 @@ from sqlalchemy import text
 
 from fastapi.middleware.cors import CORSMiddleware
 
-from .config import settings as app_settings
+from .config import settings as app_settings, BASE_DIR
 from .database import Base, engine
 from .migrations import run_startup_migrations
 
@@ -34,8 +34,20 @@ run_startup_migrations()
 Base.metadata.create_all(bind=engine)
 
 
+def _validate_startup_config():
+    warnings = []
+    if app_settings.secret_key == "ricoh-monitor-change-me":
+        warnings.append("APP_SECRET_KEY sigue siendo el valor por defecto. Cambialo en backend/.env para produccion.")
+    if not app_settings.emergency_admin_password:
+        warnings.append("EMERGENCY_ADMIN_PASSWORD no esta configurada. No se podra iniciar sesion como admin de emergencia.")
+    for w in warnings:
+        logging.warning("⚠  %s", w)
+    return warnings
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    _validate_startup_config()
     logging.info("Iniciando scheduler de sincronizacion automatica...")
     start_scheduler()
     _start_daily_snapshot_worker()

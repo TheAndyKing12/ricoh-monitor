@@ -1,8 +1,10 @@
 import requests
 import re
 import html as html_lib
+import logging
 
-# Temporary debug flag to print HTTP fetch and parsing information
+logger = logging.getLogger(__name__)
+
 RICOH_HTTP_DEBUG = False
 
 
@@ -93,27 +95,22 @@ def get_ricoh_http_counters(ip):
     session.headers.update({"User-Agent": "Mozilla/5.0 (compatible)"})
 
     def try_get(u):
-        if RICOH_HTTP_DEBUG:
-            print(f"[RICOH_HTTP] try_get: {_short_url(u)}")
+        logger.debug("try_get: %s", _short_url(u))
         try:
             r = session.get(u, timeout=6, allow_redirects=True)
             if r is not None and r.status_code == 200 and r.text:
-                if RICOH_HTTP_DEBUG:
-                    print(f"[RICOH_HTTP] got {len(r.text)} bytes (200) from {_short_url(u)}")
+                logger.debug("got %d bytes (200) from %s", len(r.text), _short_url(u))
                 return r.text
         except Exception as e:
-            if RICOH_HTTP_DEBUG:
-                print(f"[RICOH_HTTP] request error {_short_url(u)}: {e}")
+            logger.debug("request error %s: %s", _short_url(u), e)
         try:
             r = session.get(u, timeout=6, auth=("admin", ""), allow_redirects=True)
             if r is not None and r.status_code == 200 and r.text:
-                if RICOH_HTTP_DEBUG:
-                    print(f"[RICOH_HTTP] got {len(r.text)} bytes (200, auth) from {_short_url(u)}")
+                logger.debug("got %d bytes (200, auth) from %s", len(r.text), _short_url(u))
                 return r.text
         except Exception:
             pass
-        if RICOH_HTTP_DEBUG:
-            print(f"[RICOH_HTTP] no content from {_short_url(u)}")
+        logger.debug("no content from %s", _short_url(u))
         return None
 
     for url in candidate_urls:
@@ -221,10 +218,9 @@ def get_ricoh_http_counters(ip):
     if bw_pages is not None and color_pages is not None:
         total_pages = bw_pages + color_pages
 
-    if RICOH_HTTP_DEBUG:
-        print(f"[RICOH_HTTP] result for {ip}: copy_bw={copy_bw}, copy_color={copy_color}, print_bw={print_bw}, print_color={print_color}, bw_pages={bw_pages}, color_pages={color_pages}, total_pages={total_pages}")
-        if final_text:
-            print(f"[RICOH_HTTP] final_text snippet: {final_text[:800]}")
+    logger.debug("result for %s: copy_bw=%s, copy_color=%s, print_bw=%s, print_color=%s, bw_pages=%s, color_pages=%s, total_pages=%s", ip, copy_bw, copy_color, print_bw, print_color, bw_pages, color_pages, total_pages)
+    if final_text:
+        logger.debug("final_text snippet: %s", final_text[:800])
 
     return {
         "bw_pages": bw_pages,

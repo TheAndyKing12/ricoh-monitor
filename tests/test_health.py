@@ -62,3 +62,18 @@ def test_inventory_requires_matching_tab_permission():
     response = client.get("/inventory/", headers=_auth_headers(is_admin=False, allowed_tabs="inventory"))
     assert response.status_code == 200
     assert isinstance(response.json(), list)
+
+
+def test_dashboard_readonly_login_is_limited_to_dashboard():
+    response = client.post("/auth/dashboard")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["is_admin"] is False
+    assert payload["read_only"] is True
+    assert payload["allowed_tabs"] == ["dashboard"]
+
+    headers = {"Authorization": f"Bearer {payload['access_token']}"}
+    assert client.get("/cache/printer-status", headers=headers).status_code == 200
+    assert client.get("/inventory/", headers=headers).status_code == 403
+    assert client.get("/auth/users", headers=headers).status_code == 403

@@ -4,17 +4,10 @@ import io
 from sqlalchemy.orm import Session
 from ..database import SessionLocal
 from .. import crud
+from ..utils import get_db
 from .auth import require_admin
 
 router = APIRouter(prefix="/logs", tags=["Logs"], dependencies=[Depends(require_admin)])
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 def _serialize_log(log):

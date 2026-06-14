@@ -16,7 +16,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-01T00:33:19.025726"
+      "cached_at": "2026-06-14T01:05:12.211416"
     },
     "2": {
       "id": 2,
@@ -34,7 +34,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-01T00:33:21.027103"
+      "cached_at": "2026-06-14T01:05:14.214685"
     },
     "29": {
       "id": 29,
@@ -52,7 +52,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-01T00:33:23.034498"
+      "cached_at": "2026-06-14T01:05:16.217992"
     },
     "30": {
       "id": 30,
@@ -67,7 +67,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T00:33:25.045007"
+      "cached_at": "2026-06-14T01:05:18.225868"
     },
     "31": {
       "id": 31,
@@ -82,7 +82,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T00:33:27.046187"
+      "cached_at": "2026-06-14T01:05:20.235044"
     },
     "35": {
       "id": 35,
@@ -100,7 +100,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-01T00:33:29.054429"
+      "cached_at": "2026-06-14T01:05:22.246994"
     },
     "36": {
       "id": 36,
@@ -115,7 +115,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T00:33:31.057236"
+      "cached_at": "2026-06-14T01:05:24.260645"
     },
     "37": {
       "id": 37,
@@ -130,7 +130,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T00:33:33.061358"
+      "cached_at": "2026-06-14T01:05:26.268677"
     },
     "38": {
       "id": 38,
@@ -148,7 +148,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-01T00:33:35.066590"
+      "cached_at": "2026-06-14T01:05:28.278870"
     },
     "39": {
       "id": 39,
@@ -163,7 +163,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T00:33:37.076720"
+      "cached_at": "2026-06-14T01:05:30.289640"
     },
     "40": {
       "id": 40,
@@ -178,7 +178,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T00:33:39.091264"
+      "cached_at": "2026-06-14T01:05:32.302484"
     },
     "42": {
       "id": 42,
@@ -196,7 +196,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-01T00:33:41.101918"
+      "cached_at": "2026-06-14T01:05:34.309356"
     },
     "43": {
       "id": 43,
@@ -211,7 +211,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T00:33:43.115585"
+      "cached_at": "2026-06-14T01:05:36.314924"
     },
     "44": {
       "id": 44,
@@ -226,7 +226,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T00:33:45.124108"
+      "cached_at": "2026-06-14T01:05:38.319089"
     },
     "45": {
       "id": 45,
@@ -241,7 +241,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T00:33:47.124475"
+      "cached_at": "2026-06-14T01:05:40.325785"
     },
     "46": {
       "id": 46,
@@ -256,7 +256,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T00:33:49.130012"
+      "cached_at": "2026-06-14T01:05:42.334730"
     },
     "47": {
       "id": 47,
@@ -274,7 +274,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-01T00:33:51.131861"
+      "cached_at": "2026-06-14T01:05:44.346382"
     },
     "48": {
       "id": 48,
@@ -289,7 +289,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T00:33:53.145190"
+      "cached_at": "2026-06-14T01:05:46.358014"
     },
     "49": {
       "id": 49,
@@ -307,7 +307,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-01T00:33:55.146287"
+      "cached_at": "2026-06-14T01:05:48.366855"
     },
     "50": {
       "id": 50,
@@ -325,7 +325,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-01T00:33:57.157439"
+      "cached_at": "2026-06-14T01:05:50.376222"
     },
     "51": {
       "id": 51,
@@ -343,7 +343,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-01T00:33:59.160383"
+      "cached_at": "2026-06-14T01:05:52.377098"
     },
     "52": {
       "id": 52,
@@ -358,7 +358,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T00:34:01.161555"
+      "cached_at": "2026-06-14T01:05:54.385513"
     },
     "53": {
       "id": 53,
@@ -373,7 +373,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T00:34:03.171056"
+      "cached_at": "2026-06-14T01:05:56.398657"
     },
     "54": {
       "id": 54,
@@ -391,7 +391,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-01T00:34:05.180542"
+      "cached_at": "2026-06-14T01:05:58.414817"
     },
     "55": {
       "id": 55,
@@ -406,7 +406,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T00:34:07.190667"
+      "cached_at": "2026-06-14T01:06:00.426558"
     },
     "56": {
       "id": 56,
@@ -424,7 +424,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-01T00:34:09.205430"
+      "cached_at": "2026-06-14T01:06:02.438945"
     },
     "57": {
       "id": 57,
@@ -439,7 +439,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-01T00:34:11.205390"
+      "cached_at": "2026-06-14T01:06:04.448599"
     }
   },
   "counters": {
@@ -459,7 +459,7 @@
       "bw_pages": null,
       "color_pages": null,
       "is_complete": false,
-      "cached_at": "2026-06-01T00:29:43.152363"
+      "cached_at": "2026-06-13T00:45:14.632175"
     },
     "2": {
       "id": 2,
@@ -477,7 +477,7 @@
       "bw_pages": null,
       "color_pages": null,
       "is_complete": false,
-      "cached_at": "2026-06-01T00:31:09.284051"
+      "cached_at": "2026-06-13T00:46:40.743036"
     },
     "29": {
       "id": 29,
@@ -495,7 +495,7 @@
       "bw_pages": null,
       "color_pages": null,
       "is_complete": false,
-      "cached_at": "2026-06-01T00:32:35.415012"
+      "cached_at": "2026-06-13T00:48:06.868322"
     },
     "30": {
       "id": 30,
@@ -513,7 +513,7 @@
       "bw_pages": null,
       "color_pages": null,
       "is_complete": false,
-      "cached_at": "2026-06-01T00:34:01.521110"
+      "cached_at": "2026-06-13T00:49:32.973004"
     },
     "31": {
       "id": 31,
@@ -531,7 +531,7 @@
       "bw_pages": null,
       "color_pages": null,
       "is_complete": false,
-      "cached_at": "2026-06-01T00:35:27.628578"
+      "cached_at": "2026-06-13T00:50:59.091812"
     },
     "35": {
       "id": 35,
@@ -549,7 +549,7 @@
       "bw_pages": null,
       "color_pages": null,
       "is_complete": false,
-      "cached_at": "2026-06-01T00:36:53.731629"
+      "cached_at": "2026-06-13T00:52:25.197912"
     },
     "36": {
       "id": 36,
@@ -567,7 +567,7 @@
       "bw_pages": null,
       "color_pages": null,
       "is_complete": false,
-      "cached_at": "2026-06-01T00:38:19.840854"
+      "cached_at": "2026-06-13T00:53:51.318844"
     },
     "37": {
       "id": 37,
@@ -585,7 +585,7 @@
       "bw_pages": null,
       "color_pages": null,
       "is_complete": false,
-      "cached_at": "2026-06-01T00:39:45.982814"
+      "cached_at": "2026-06-13T00:55:17.462934"
     },
     "38": {
       "id": 38,
@@ -603,7 +603,7 @@
       "bw_pages": null,
       "color_pages": null,
       "is_complete": false,
-      "cached_at": "2026-06-01T00:41:12.146685"
+      "cached_at": "2026-06-13T00:56:43.603489"
     },
     "39": {
       "id": 39,
@@ -621,7 +621,7 @@
       "bw_pages": null,
       "color_pages": null,
       "is_complete": false,
-      "cached_at": "2026-06-01T00:42:38.259981"
+      "cached_at": "2026-06-13T00:58:09.730372"
     },
     "40": {
       "id": 40,
@@ -639,7 +639,7 @@
       "bw_pages": null,
       "color_pages": null,
       "is_complete": false,
-      "cached_at": "2026-06-01T00:44:04.405025"
+      "cached_at": "2026-06-13T00:59:35.855137"
     },
     "42": {
       "id": 42,
@@ -657,7 +657,7 @@
       "bw_pages": null,
       "color_pages": null,
       "is_complete": false,
-      "cached_at": "2026-06-01T00:45:30.528036"
+      "cached_at": "2026-06-13T01:01:01.992330"
     },
     "43": {
       "id": 43,
@@ -675,7 +675,7 @@
       "bw_pages": null,
       "color_pages": null,
       "is_complete": false,
-      "cached_at": "2026-06-01T00:46:56.628664"
+      "cached_at": "2026-06-13T01:02:28.102839"
     },
     "44": {
       "id": 44,
@@ -693,7 +693,7 @@
       "bw_pages": null,
       "color_pages": null,
       "is_complete": false,
-      "cached_at": "2026-06-01T00:48:22.776286"
+      "cached_at": "2026-06-13T01:03:54.221553"
     },
     "45": {
       "id": 45,
@@ -711,7 +711,7 @@
       "bw_pages": null,
       "color_pages": null,
       "is_complete": false,
-      "cached_at": "2026-06-01T00:49:48.912821"
+      "cached_at": "2026-06-13T01:05:20.358141"
     },
     "46": {
       "id": 46,
@@ -729,7 +729,7 @@
       "bw_pages": null,
       "color_pages": null,
       "is_complete": false,
-      "cached_at": "2026-06-01T00:51:15.049956"
+      "cached_at": "2026-06-13T01:06:46.488751"
     },
     "47": {
       "id": 47,
@@ -747,7 +747,7 @@
       "bw_pages": null,
       "color_pages": null,
       "is_complete": false,
-      "cached_at": "2026-06-01T00:52:41.178570"
+      "cached_at": "2026-06-13T01:08:12.637492"
     },
     "48": {
       "id": 48,
@@ -765,7 +765,7 @@
       "bw_pages": null,
       "color_pages": null,
       "is_complete": false,
-      "cached_at": "2026-06-01T00:54:07.320000"
+      "cached_at": "2026-06-13T01:09:38.778690"
     },
     "49": {
       "id": 49,
@@ -783,7 +783,7 @@
       "bw_pages": null,
       "color_pages": null,
       "is_complete": false,
-      "cached_at": "2026-06-01T00:55:33.438998"
+      "cached_at": "2026-06-13T01:11:04.912992"
     },
     "50": {
       "id": 50,
@@ -801,7 +801,7 @@
       "bw_pages": null,
       "color_pages": null,
       "is_complete": false,
-      "cached_at": "2026-06-01T00:56:59.605723"
+      "cached_at": "2026-06-13T01:12:31.067000"
     },
     "51": {
       "id": 51,
@@ -819,7 +819,7 @@
       "bw_pages": null,
       "color_pages": null,
       "is_complete": false,
-      "cached_at": "2026-06-01T00:58:25.727508"
+      "cached_at": "2026-06-13T01:13:57.230277"
     },
     "52": {
       "id": 52,
@@ -837,7 +837,7 @@
       "bw_pages": null,
       "color_pages": null,
       "is_complete": false,
-      "cached_at": "2026-06-01T00:59:51.864439"
+      "cached_at": "2026-06-13T01:15:23.379849"
     },
     "53": {
       "id": 53,
@@ -855,7 +855,7 @@
       "bw_pages": null,
       "color_pages": null,
       "is_complete": false,
-      "cached_at": "2026-06-01T01:01:18.088189"
+      "cached_at": "2026-06-13T01:16:49.506446"
     },
     "54": {
       "id": 54,
@@ -873,7 +873,7 @@
       "bw_pages": null,
       "color_pages": null,
       "is_complete": false,
-      "cached_at": "2026-06-01T01:02:44.279493"
+      "cached_at": "2026-06-13T01:18:15.633592"
     },
     "55": {
       "id": 55,
@@ -891,7 +891,7 @@
       "bw_pages": null,
       "color_pages": null,
       "is_complete": false,
-      "cached_at": "2026-06-01T01:04:10.456191"
+      "cached_at": "2026-06-13T01:19:41.765747"
     },
     "56": {
       "id": 56,
@@ -909,7 +909,7 @@
       "bw_pages": null,
       "color_pages": null,
       "is_complete": false,
-      "cached_at": "2026-06-01T01:05:36.598220"
+      "cached_at": "2026-06-13T01:21:07.888289"
     },
     "57": {
       "id": 57,
@@ -927,13 +927,218 @@
       "bw_pages": null,
       "color_pages": null,
       "is_complete": false,
-      "cached_at": "2026-06-01T01:07:02.722885"
+      "cached_at": "2026-06-13T01:22:34.027200"
     }
   },
-  "toner_control": [],
+  "toner_control": [
+    {
+      "id": 1,
+      "printer_id": 31,
+      "check_date": "3/11/26",
+      "backup_black": 1.0,
+      "backup_cyan": 0.0,
+      "backup_magenta": 0.0,
+      "backup_yellow": 0.0,
+      "pedido": "",
+      "work_order": "",
+      "notas": ""
+    },
+    {
+      "id": 2,
+      "printer_id": 1,
+      "check_date": "2026-06-01",
+      "backup_black": 1.0,
+      "backup_cyan": 1.0,
+      "backup_magenta": 1.0,
+      "backup_yellow": 1.0,
+      "pedido": "",
+      "work_order": "",
+      "notas": ""
+    },
+    {
+      "id": 3,
+      "printer_id": 2,
+      "check_date": "2026-04-17",
+      "backup_black": 0.0,
+      "backup_cyan": 0.0,
+      "backup_magenta": 0.0,
+      "backup_yellow": 0.0,
+      "pedido": "",
+      "work_order": "",
+      "notas": ""
+    },
+    {
+      "id": 4,
+      "printer_id": 47,
+      "check_date": "2026-04-20",
+      "backup_black": 0.0,
+      "backup_cyan": 1.0,
+      "backup_magenta": 1.0,
+      "backup_yellow": 0.0,
+      "pedido": "CS1223408",
+      "work_order": "test",
+      "notas": "test"
+    },
+    {
+      "id": 5,
+      "printer_id": 42,
+      "check_date": null,
+      "backup_black": 1.0,
+      "backup_cyan": 1.0,
+      "backup_magenta": 0.0,
+      "backup_yellow": 0.0,
+      "pedido": "",
+      "work_order": "",
+      "notas": ""
+    },
+    {
+      "id": 6,
+      "printer_id": 40,
+      "check_date": "2026-04-20",
+      "backup_black": 0.0,
+      "backup_cyan": 0.0,
+      "backup_magenta": 0.0,
+      "backup_yellow": 0.0,
+      "pedido": "",
+      "work_order": "",
+      "notas": ""
+    },
+    {
+      "id": 7,
+      "printer_id": 35,
+      "check_date": "2026-04-17",
+      "backup_black": 1.0,
+      "backup_cyan": 0.0,
+      "backup_magenta": 0.0,
+      "backup_yellow": 0.0,
+      "pedido": "",
+      "work_order": "",
+      "notas": ""
+    },
+    {
+      "id": 8,
+      "printer_id": 29,
+      "check_date": "2026-04-17",
+      "backup_black": 0.0,
+      "backup_cyan": 0.0,
+      "backup_magenta": 0.0,
+      "backup_yellow": 1.0,
+      "pedido": "",
+      "work_order": "",
+      "notas": ""
+    },
+    {
+      "id": 9,
+      "printer_id": 56,
+      "check_date": "2026-04-17",
+      "backup_black": 0.0,
+      "backup_cyan": 1.0,
+      "backup_magenta": 1.0,
+      "backup_yellow": 1.0,
+      "pedido": "",
+      "work_order": "",
+      "notas": ""
+    },
+    {
+      "id": 10,
+      "printer_id": 54,
+      "check_date": "2026-04-17",
+      "backup_black": 0.0,
+      "backup_cyan": 1.0,
+      "backup_magenta": 1.0,
+      "backup_yellow": 1.0,
+      "pedido": "",
+      "work_order": "",
+      "notas": ""
+    },
+    {
+      "id": 11,
+      "printer_id": 53,
+      "check_date": "2026-04-20",
+      "backup_black": 1.0,
+      "backup_cyan": 0.0,
+      "backup_magenta": 0.0,
+      "backup_yellow": 0.0,
+      "pedido": "",
+      "work_order": "",
+      "notas": ""
+    },
+    {
+      "id": 12,
+      "printer_id": 37,
+      "check_date": "2026-04-20",
+      "backup_black": 1.0,
+      "backup_cyan": 0.0,
+      "backup_magenta": 0.0,
+      "backup_yellow": 0.0,
+      "pedido": "",
+      "work_order": "",
+      "notas": ""
+    },
+    {
+      "id": 13,
+      "printer_id": 45,
+      "check_date": "2026-04-20",
+      "backup_black": 0.0,
+      "backup_cyan": 0.0,
+      "backup_magenta": 0.0,
+      "backup_yellow": 0.0,
+      "pedido": "CS1223413",
+      "work_order": "",
+      "notas": ""
+    },
+    {
+      "id": 14,
+      "printer_id": 52,
+      "check_date": "2026-04-20",
+      "backup_black": 0.0,
+      "backup_cyan": 0.0,
+      "backup_magenta": 0.0,
+      "backup_yellow": 0.0,
+      "pedido": "",
+      "work_order": "",
+      "notas": ""
+    },
+    {
+      "id": 15,
+      "printer_id": 49,
+      "check_date": "2026-04-20",
+      "backup_black": 1.0,
+      "backup_cyan": 1.0,
+      "backup_magenta": 1.0,
+      "backup_yellow": 1.0,
+      "pedido": "",
+      "work_order": "",
+      "notas": ""
+    },
+    {
+      "id": 16,
+      "printer_id": 55,
+      "check_date": "2026-04-20",
+      "backup_black": 1.0,
+      "backup_cyan": 0.0,
+      "backup_magenta": 0.0,
+      "backup_yellow": 0.0,
+      "pedido": "",
+      "work_order": "",
+      "notas": ""
+    },
+    {
+      "id": 17,
+      "printer_id": 38,
+      "check_date": null,
+      "backup_black": 1.0,
+      "backup_cyan": 1.0,
+      "backup_magenta": 2.0,
+      "backup_yellow": 2.0,
+      "pedido": "",
+      "work_order": "",
+      "notas": ""
+    }
+  ],
   "metadata": {
-    "last_full_sync": "2026-06-01T00:34:11.205453",
-    "last_counter_sync": "2026-06-01T01:07:02.724549",
-    "last_toner_sync": null
+    "last_full_sync": "2026-06-14T01:06:04.448670",
+    "last_counter_sync": "2026-06-13T01:22:34.027230",
+    "last_toner_sync": "2026-06-13T01:33:48.495333"
   }
 }

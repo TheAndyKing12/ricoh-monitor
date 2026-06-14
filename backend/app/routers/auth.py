@@ -27,6 +27,9 @@ def _create_token(data: dict):
     payload["exp"] = datetime.utcnow() + timedelta(hours=TOKEN_EXPIRE_HOURS)
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
+def _create_non_expiring_token(data: dict):
+    return jwt.encode(data.copy(), SECRET_KEY, algorithm=ALGORITHM)
+
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     try:
         payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
@@ -131,6 +134,24 @@ def login(req: LoginRequest):
         }
     finally:
         db.close()
+
+@router.post("/dashboard")
+def dashboard_readonly_login():
+    token = _create_non_expiring_token({
+        "sub": "dashboard-viewer",
+        "display_name": "Dashboard",
+        "is_admin": False,
+        "allowed_tabs": "dashboard",
+        "read_only": True,
+    })
+    return {
+        "access_token": token,
+        "display_name": "Dashboard",
+        "is_admin": False,
+        "allowed_tabs": ["dashboard"],
+        "read_only": True,
+    }
+
 class UserCreate(BaseModel):
     username: str
     display_name: Optional[str] = None
