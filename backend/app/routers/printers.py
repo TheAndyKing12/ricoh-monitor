@@ -613,6 +613,13 @@ def build_printer_counters(printer):
     if is_color and (copy_color is not None or print_color is not None):
         color_pages = (copy_color or 0) + (print_color or 0)
 
+    # Some Ricoh models expose total and B/W counters but not the private color
+    # counter. In that case color is still recoverable as total - B/W.
+    if is_color and color_pages is None and total_pages is not None and bw_pages is not None:
+        derived_color = total_pages - bw_pages
+        if derived_color >= 0:
+            color_pages = derived_color
+
     # recompute total if possible
     if is_color:
         if (bw_pages is not None) and (color_pages is not None):
