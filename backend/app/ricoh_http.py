@@ -6,6 +6,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 RICOH_HTTP_DEBUG = False
+RICOH_HTTP_TIMEOUT = 2
 
 
 def _parse_int(text):
@@ -79,13 +80,13 @@ def _extract_hostname(text):
 def get_ricoh_http_counters(ip):
     """Attempt to extract Ricoh counters via HTTP. Returns dict with counters or None."""
     candidate_urls = [
+        f"http://{ip}/web/guest/es/websys/status/getUnificationCounter.cgi",
         f"http://{ip}/web/entry/es/websys/webArch/mainFrame.cgi",
         f"http://{ip}/web/entry/es/websys/webArch/topPage.cgi",
         f"http://{ip}/web/entry/es/websys/webArch/header.cgi",
         f"http://{ip}/web/guest/es/websys/webArch/mainFrame.cgi",
         f"http://{ip}/web/guest/es/websys/webArch/topPage.cgi",
         f"http://{ip}/web/guest/es/websys/webArch/header.cgi",
-        f"http://{ip}/web/guest/es/websys/status/getUnificationCounter.cgi",
     ]
 
     copy_bw = copy_color = print_bw = print_color = None
@@ -97,14 +98,14 @@ def get_ricoh_http_counters(ip):
     def try_get(u):
         logger.debug("try_get: %s", _short_url(u))
         try:
-            r = session.get(u, timeout=6, allow_redirects=True)
+            r = session.get(u, timeout=RICOH_HTTP_TIMEOUT, allow_redirects=True)
             if r is not None and r.status_code == 200 and r.text:
                 logger.debug("got %d bytes (200) from %s", len(r.text), _short_url(u))
                 return r.text
         except Exception as e:
             logger.debug("request error %s: %s", _short_url(u), e)
         try:
-            r = session.get(u, timeout=6, auth=("admin", ""), allow_redirects=True)
+            r = session.get(u, timeout=RICOH_HTTP_TIMEOUT, auth=("admin", ""), allow_redirects=True)
             if r is not None and r.status_code == 200 and r.text:
                 logger.debug("got %d bytes (200, auth) from %s", len(r.text), _short_url(u))
                 return r.text

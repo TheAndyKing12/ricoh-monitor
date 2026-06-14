@@ -4367,7 +4367,7 @@
             <div id="counters" class="tab">
                 <h2 class="section-title" data-i18n="counters_title">Contadores de impresión</h2>
                 <div class="action-row" style="align-items:center; margin-bottom:8px; flex-wrap:wrap;">
-                    <button class="action-button" onclick="loadCounters()" data-i18n="refresh_counters">Refrescar contadores</button>
+                    <button class="action-button" onclick="loadCounters(true)" data-i18n="refresh_counters">Refrescar contadores</button>
                     <label style="display:inline-flex;align-items:center;gap:8px;margin-left:8px;color:#cbd5e6;font-size:13px">
                         <input type="checkbox" id="countersAuto" onchange="toggleCountersAuto(this.checked)"> Auto
                         <input id="countersAutoInterval" type="number" value="60" style="width:72px;margin-left:6px;padding:6px;border-radius:6px;background:#0f172a;border:1px solid #374151;color:#fff">s
@@ -5811,7 +5811,10 @@
                 showToast('Error de conexión al cerrar sesión', 'error');
             }
         }
-        async function loadCounters() {
+        function hasCounterValues(row) {
+            return row && ['total_pages', 'copy_bw', 'copy_color', 'print_bw', 'print_color', 'bw_pages', 'color_pages'].some(key => row[key] !== null && row[key] !== undefined && row[key] !== '');
+        }
+        async function loadCounters(forceLive) {
             const list = document.getElementById('countersList');
             if (!list) return;
 
@@ -5820,21 +5823,24 @@
                 // 1) Intentar caché
                 let result = { cached_at: null, data: [] };
                 let data = [];
-                try {
-                    const response = await fetch('/cache/counters', { cache: 'no-store' });
-                    if (response.ok) {
-                        result = await response.json();
-                        data = Array.isArray(result?.data) ? result.data : [];
-                    } else {
-                        console.warn('cache/counters unavailable:', response.status);
+                if (!forceLive) {
+                    try {
+                        const response = await fetch('/cache/counters', { cache: 'no-store' });
+                        if (response.ok) {
+                            result = await response.json();
+                            data = Array.isArray(result?.data) ? result.data : [];
+                        } else {
+                            console.warn('cache/counters unavailable:', response.status);
+                        }
+                    } catch (cacheError) {
+                        console.warn('cache/counters error:', cacheError);
                     }
-                } catch (cacheError) {
-                    console.warn('cache/counters error:', cacheError);
                 }
 
                 // 2) Fallback a endpoint original si caché está vacío
-                if (!data.length) {
-                    const fallbackResponse = await fetch('/printers/counters', { cache: 'no-store' });
+                if (forceLive || !data.length || (data.length && !data.some(hasCounterValues))) {
+                    const fallbackUrl = '/printers/counters' + (forceLive || data.length ? '?force=true' : '');
+                    const fallbackResponse = await fetch(fallbackUrl, { cache: 'no-store' });
                     if (!fallbackResponse.ok) {
                         let msg = 'HTTP ' + fallbackResponse.status;
                         try {

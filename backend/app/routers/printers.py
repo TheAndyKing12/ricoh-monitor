@@ -581,8 +581,9 @@ def build_printer_counters(printer):
     print_bw = None
     print_color = None
 
-    http_data = get_ricoh_http_counters(printer.ip)
     http_used = False
+    snmp_has_basic = total_pages is not None and bw_pages is not None and (not is_color or color_pages is not None)
+    http_data = None if snmp_has_basic else get_ricoh_http_counters(printer.ip)
     if http_data:
         if http_data.get("bw_pages") is not None:
             bw_pages = safe_int(http_data["bw_pages"])
@@ -660,13 +661,17 @@ def get_printers_counters(
     incomplete: str = Query(default="all", pattern="^(all|true|false)$"),
     sort_by: str = Query(default="name"),
     sort_dir: str = Query(default="asc", pattern="^(asc|desc)$"),
+    force: bool = Query(default=False),
     db: Session = Depends(get_db),
 ):
-    rows = _get_cached_counter_rows()
-    if not rows:
-        rows = _get_latest_counter_snapshot_rows(db)
-    if not rows:
+    if force:
         rows, _ = _refresh_counters_cache(db)
+    else:
+        rows = _get_cached_counter_rows()
+        if not rows:
+            rows = _get_latest_counter_snapshot_rows(db)
+        if not rows:
+            rows, _ = _refresh_counters_cache(db)
     return _apply_counter_filters_and_sort(
         rows,
         status=status,
