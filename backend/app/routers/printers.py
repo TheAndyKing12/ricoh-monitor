@@ -663,6 +663,7 @@ def build_printer_counters(printer):
     row = {
         "id": printer.id,
         "name": getattr(printer, "shared_name", None) or printer.name or printer.model,
+        "model": printer.model,
         "serial": printer.serial,
         "ip": printer.ip,
         "is_color": is_color,
@@ -734,7 +735,7 @@ def export_printers_counters_csv(
     output = io.StringIO()
     writer = csv.writer(output)
     headers = [
-        "id", "name", "serial", "ip", "is_color", "counter_status", "counter_source",
+        "id", "name", "model", "serial", "ip", "is_color", "counter_status", "counter_source",
         "total_pages", "copy_bw", "copy_color", "print_bw", "print_color", "bw_pages", "color_pages", "is_complete"
     ]
     writer.writerow(headers)
@@ -1056,6 +1057,7 @@ def _get_latest_counter_snapshot_rows(db: Session) -> list[dict]:
         rows.append({
             "id": printer.id,
             "name": getattr(printer, "shared_name", None) or printer.name or printer.model,
+            "model": printer.model,
             "serial": printer.serial,
             "ip": printer.ip,
             "is_color": is_color,
@@ -1110,6 +1112,10 @@ def _parse_date_yyyy_mm_dd(value: str, field: str) -> datetime:
         raise HTTPException(status_code=400, detail=f"{field} inválido. Formato esperado: YYYY-MM-DD")
 
 
+def _format_report_date(value: datetime | None) -> str | None:
+    return value.date().isoformat() if value else None
+
+
 def _build_counters_consumption_report(db: Session, start_date: str, end_date: str) -> dict:
     start_dt = _parse_date_yyyy_mm_dd(start_date, "start_date")
     end_dt = _parse_date_yyyy_mm_dd(end_date, "end_date")
@@ -1151,10 +1157,12 @@ def _build_counters_consumption_report(db: Session, start_date: str, end_date: s
         row = {
             "printer_id": printer.id,
             "name": getattr(printer, "shared_name", None) or printer.name or printer.model,
+            "model": printer.model,
+            "serial": printer.serial,
             "ip": printer.ip,
             "is_color": bool(getattr(printer, "is_color", False)),
-            "start_captured_at": start_snap.captured_at.isoformat() if start_snap and start_snap.captured_at else None,
-            "end_captured_at": end_snap.captured_at.isoformat() if end_snap and end_snap.captured_at else None,
+            "start_captured_at": _format_report_date(start_snap.captured_at) if start_snap else None,
+            "end_captured_at": _format_report_date(end_snap.captured_at) if end_snap else None,
             "start_total": start_total,
             "end_total": end_total,
             "consumed_total": total_consumed,
@@ -1174,6 +1182,29 @@ def _build_counters_consumption_report(db: Session, start_date: str, end_date: s
         "end_date": end_date,
         "rows": report_rows,
     }
+
+
+COUNTERS_REPORT_FIELDS = [
+    ("printer_id", "ID"),
+    ("name", "Impresora"),
+    ("model", "Modelo"),
+    ("serial", "Serie"),
+    ("ip", "IP"),
+    ("is_color", "Tipo color"),
+    ("start_captured_at", "Lectura inicial"),
+    ("end_captured_at", "Lectura final"),
+    ("start_total", "Total inicial"),
+    ("end_total", "Total final"),
+    ("consumed_total", "Consumo total"),
+    ("start_bw", "B/N inicial"),
+    ("end_bw", "B/N final"),
+    ("consumed_bw", "Consumo B/N"),
+    ("start_color", "Color inicial"),
+    ("end_color", "Color final"),
+    ("consumed_color", "Consumo color"),
+    ("counter_reset_detected", "Reinicio contador"),
+    ("incomplete", "Incompleto"),
+]
 
 
 @router.get("/counters/consumption-report", dependencies=[Depends(require_tab("counters"))])
@@ -1196,17 +1227,11 @@ def export_counters_consumption_report(
 
     output = io.StringIO()
     writer = csv.writer(output)
-    headers = [
-        "printer_id", "name", "ip", "is_color",
-        "start_captured_at", "end_captured_at",
-        "start_total", "end_total", "consumed_total",
-        "start_bw", "end_bw", "consumed_bw",
-        "start_color", "end_color", "consumed_color",
-        "counter_reset_detected", "incomplete",
-    ]
+    fields = [field for field, _ in COUNTERS_REPORT_FIELDS]
+    headers = [label for _, label in COUNTERS_REPORT_FIELDS]
     writer.writerow(headers)
     for row in rows:
-        writer.writerow([row.get(h) for h in headers])
+        writer.writerow([row.get(field) for field in fields])
 
     filename = f"counters_consumption_{start_date}_to_{end_date}.csv"
     return Response(
@@ -1234,18 +1259,17 @@ def export_counters_consumption_report_xlsx(
     ws = wb.active
     ws.title = "Reporte"
 
-    headers = [
-        "printer_id", "name", "ip", "is_color",
-        "start_captured_at", "end_captured_at",
-        "start_total", "end_total", "consumed_total",
-        "start_bw", "end_bw", "consumed_bw",
-        "start_color", "end_color", "consumed_color",
-        "counter_reset_detected", "incomplete",
-    ]
+    fields = [field for field, _ in COUNTERS_REPORT_FIELDS]
+    headers = [label for _, label in COUNTERS_REPORT_FIELDS]
     ws.append(headers)
 
     for row in rows:
-        ws.append([row.get(h) for h in headers])
+        ws.append([row.get(field) for field in fields])
+
+    for column_cells in ws.columns:
+        max_len = max(len(str(cell.value or "")) for cell in column_cells)
+        ws.column_dimensions[column_cells[0].column_letter].width = min(max(max_len + 2, 12), 28)
+    ws.freeze_panes = "A2"
 
     data = io.BytesIO()
     wb.save(data)

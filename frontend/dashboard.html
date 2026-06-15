@@ -4210,6 +4210,287 @@
             }
         }
 
+        .table-pref-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            min-height: 38px;
+            padding: 7px 10px 7px 8px;
+            border-radius: 12px;
+            border: 1px solid rgba(148,163,184,.28);
+            background: linear-gradient(180deg, rgba(30,41,59,.94), rgba(15,23,42,.88));
+            color: #f1f5f9;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 4px 14px rgba(0,0,0,.16);
+            transition: border-color .15s ease, background .15s ease, transform .15s ease, box-shadow .15s ease;
+        }
+
+        .table-pref-button:hover {
+            border-color: rgba(203,213,225,.42);
+            background: linear-gradient(180deg, rgba(51,65,85,.98), rgba(30,41,59,.9));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 8px 22px rgba(0,0,0,.2);
+            transform: translateY(-1px);
+        }
+
+        .table-pref-button-icon {
+            position: relative;
+            display: inline-grid;
+            grid-template-columns: repeat(3, 4px);
+            gap: 3px;
+            align-items: stretch;
+            justify-content: center;
+            width: 28px;
+            height: 24px;
+            padding: 5px;
+            border-radius: 9px;
+            background: rgba(15,23,42,.72);
+            border: 1px solid rgba(148,163,184,.22);
+        }
+
+        .table-pref-button-icon span {
+            display: block;
+            border-radius: 999px;
+            background: rgba(203,213,225,.72);
+        }
+
+        .table-pref-button-icon span:nth-child(2) {
+            background: rgba(96,165,250,.9);
+        }
+
+        .table-pref-button-text {
+            line-height: 1;
+        }
+
+        .table-pref-panel {
+            position: fixed;
+            z-index: 5000;
+            width: min(340px, calc(100vw - 24px));
+            max-height: min(620px, calc(100vh - 32px));
+            overflow: auto;
+            padding: 14px;
+            border: 1px solid rgba(96,165,250,.24);
+            border-radius: 14px;
+            background: #111827;
+            box-shadow: 0 24px 60px rgba(0,0,0,.38);
+        }
+
+        .table-pref-panel h4 {
+            margin: 0 0 4px;
+            font-size: 15px;
+            color: #f8fafc;
+        }
+
+        .table-pref-panel p {
+            margin: 0 0 12px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .table-pref-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(148,163,184,.12);
+            color: #dbeafe;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background .15s ease, border-color .15s ease, opacity .15s ease;
+        }
+
+        .table-pref-row.dragging {
+            opacity: .55;
+            background: rgba(59,130,246,.10);
+            border-color: rgba(96,165,250,.35);
+        }
+
+        .table-pref-row.drag-over {
+            background: rgba(96,165,250,.12);
+            box-shadow: inset 3px 0 0 #60a5fa;
+        }
+
+        .table-pref-left {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            min-width: 0;
+        }
+
+        .table-pref-grip {
+            width: 18px;
+            height: 26px;
+            flex: 0 0 18px;
+            cursor: grab;
+            border-radius: 7px;
+            opacity: .72;
+            background-image: radial-gradient(circle, rgba(203,213,225,.9) 1.2px, transparent 1.8px);
+            background-size: 6px 6px;
+            background-position: 1px 2px;
+        }
+
+        .table-pref-grip:active {
+            cursor: grabbing;
+        }
+
+        .table-pref-row:last-child {
+            border-bottom: 0;
+        }
+
+        .table-pref-row input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .table-pref-switch {
+            position: relative;
+            width: 46px;
+            height: 26px;
+            flex: 0 0 46px;
+            border-radius: 999px;
+            background: #334155;
+            border: 1px solid #475569;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,.28);
+            transition: background .2s ease, border-color .2s ease, box-shadow .2s ease;
+        }
+
+        .table-pref-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            background: #f8fafc;
+            box-shadow: 0 2px 8px rgba(0,0,0,.28);
+            transition: transform .22s cubic-bezier(.2,.8,.2,1), background .2s ease;
+        }
+
+        .table-pref-row input:checked + .table-pref-switch {
+            background: linear-gradient(135deg, #2563eb, #38bdf8);
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 3px rgba(59,130,246,.14), inset 0 1px 2px rgba(0,0,0,.16);
+        }
+
+        .table-pref-row input:checked + .table-pref-switch::after {
+            transform: translateX(20px);
+            background: #ffffff;
+        }
+
+        .table-pref-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: space-between;
+            margin-top: 12px;
+        }
+
+        th.table-resizable {
+            position: relative;
+        }
+
+        .table-resize-handle {
+            position: absolute;
+            top: 7px;
+            right: -1px;
+            width: 12px;
+            height: calc(100% - 14px);
+            cursor: col-resize;
+            z-index: 5;
+            border-radius: 999px;
+        }
+
+        .table-resize-handle::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 5px;
+            width: 2px;
+            height: 100%;
+            border-radius: 999px;
+            background: rgba(148,163,184,.34);
+            box-shadow: 0 0 0 1px rgba(15,23,42,.45);
+            transition: background .15s ease, box-shadow .15s ease, width .15s ease;
+        }
+
+        .table-resize-handle::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: 2px;
+            width: 6px;
+            height: 18px;
+            transform: translateY(-50%);
+            opacity: 0;
+            background-image: radial-gradient(circle, rgba(203,213,225,.78) 1px, transparent 1.6px);
+            background-size: 6px 6px;
+            transition: opacity .15s ease;
+        }
+
+        .table-resize-handle:hover::before,
+        th.table-resizable:hover .table-resize-handle::before {
+            width: 3px;
+            background: rgba(203,213,225,.74);
+            box-shadow: 0 0 0 3px rgba(148,163,184,.14);
+        }
+
+        .table-resize-handle:hover::after,
+        th.table-resizable:hover .table-resize-handle::after {
+            opacity: 1;
+        }
+
+        body.table-column-resizing,
+        body.table-column-resizing * {
+            cursor: col-resize !important;
+            user-select: none !important;
+        }
+
+        .theme-light .table-pref-panel {
+            background: #ffffff;
+            border-color: #cbd5e1;
+        }
+
+        .theme-light .table-pref-panel h4 {
+            color: #0f172a;
+        }
+
+        .theme-light .table-resize-handle::before {
+            background: rgba(100,116,139,.32);
+            box-shadow: 0 0 0 1px rgba(255,255,255,.8);
+        }
+
+        .theme-light .table-pref-row {
+            color: #1e293b;
+            border-bottom-color: #e2e8f0;
+        }
+
+        .theme-light .table-pref-grip {
+            background-image: radial-gradient(circle, rgba(71,85,105,.9) 1.2px, transparent 1.8px);
+        }
+
+        .theme-light .table-pref-switch {
+            background: #cbd5e1;
+            border-color: #94a3b8;
+        }
+
+        .theme-light .table-pref-button {
+            background: #ffffff;
+            color: #1e293b;
+            border-color: #cbd5e1;
+        }
+
+        .theme-light .table-pref-button-icon {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+
+        .theme-light .table-pref-button-icon span {
+            background: rgba(71,85,105,.52);
+        }
+
     </style>
     <link rel="stylesheet" href="design-system.css">
 </head>
@@ -5224,6 +5505,341 @@
         let paSortDirection = 'asc';
         let dashboardSearchDebounceTimer = null;
 
+        const TABLE_PREF_CONFIGS = {
+            dashboard: {
+                title: 'Dashboard',
+                table: '#dashboardTableView table',
+                buttonTarget: '#dashboard .dashboard-actions',
+                columns: [
+                    ['shared_name', 'Shared Name'], ['name', 'Name'], ['model', 'Modelo'], ['serial', 'Serie'],
+                    ['ip', 'IP'], ['location', 'Ubicacion'], ['status', 'Status'], ['error', 'Error'], ['toner', 'Toner']
+                ]
+            },
+            inventory: {
+                title: 'Control de Inventario',
+                table: '#inventory table',
+                buttonTarget: '#inventory .inv-toolbar',
+                columns: [
+                    ['id', 'ID'], ['name', 'Nombre'], ['model', 'Modelo'], ['type', 'Tipo'], ['part_number', 'N Parte'],
+                    ['quantity', 'Cantidad'], ['min_stock', 'Minimo'], ['location', 'Ubicacion'], ['notes', 'Notas'], ['actions', 'Acciones']
+                ]
+            },
+            tonerControl: {
+                title: 'Control de Toner',
+                table: '#tonerControl table',
+                buttonTarget: '#tonerControl .tc-toolbar-actions',
+                columns: [['printer', 'Impresora'], ['toner', 'Toner'], ['backup', 'Backup'], ['follow', 'Seguimiento']]
+            },
+            printerAssets: {
+                title: 'Inventario de Impresoras',
+                table: '#printerAssets table',
+                buttonTarget: '#printerAssets .inv-toolbar',
+                columns: [
+                    ['model', 'Modelo'], ['serial', 'Serie'], ['shared_name', 'Shared Name'], ['facility_location', 'Ubicacion'],
+                    ['asset_status', 'Estado'], ['static_ip', 'IP'], ['host_name', 'Host Name'], ['asset_tag', 'Asset Tag'],
+                    ['volume_number', 'Vol N'], ['switch_name', 'Switch'], ['physical_port', 'Physical Port'], ['bpcs_code', 'BPCs'],
+                    ['mac_address', 'MAC Address'], ['arrival_date', 'Fecha llegada'], ['notes', 'Notas'], ['actions', 'Acciones']
+                ]
+            }
+        };
+
+        function getTablePrefUserKey() {
+            try {
+                const user = JSON.parse(localStorage.getItem('auth_user') || '{}');
+                return String(user.username || user.sub || user.display_name || 'local').toLowerCase();
+            } catch (_) {
+                return 'local';
+            }
+        }
+
+        function getTablePrefStorageKey(tableKey) {
+            return 'ricoh_table_pref_' + getTablePrefUserKey() + '_' + tableKey;
+        }
+
+        function getTablePrefs(tableKey) {
+            const cfg = TABLE_PREF_CONFIGS[tableKey];
+            const defaults = { hidden: [], widths: {}, order: [] };
+            if (!cfg) return defaults;
+            try {
+                return { ...defaults, ...(JSON.parse(localStorage.getItem(getTablePrefStorageKey(tableKey)) || '{}')) };
+            } catch (_) {
+                return defaults;
+            }
+        }
+
+        function saveTablePrefs(tableKey, prefs) {
+            localStorage.setItem(getTablePrefStorageKey(tableKey), JSON.stringify(prefs));
+        }
+
+        function getVisibleColumnCount(tableKey) {
+            const cfg = TABLE_PREF_CONFIGS[tableKey];
+            const prefs = getTablePrefs(tableKey);
+            return (cfg?.columns || []).filter(([key]) => !prefs.hidden.includes(key)).length || 1;
+        }
+
+        function refreshTablePrefButton(tableKey) {
+            const cfg = TABLE_PREF_CONFIGS[tableKey];
+            const btn = document.querySelector('[data-table-pref="' + tableKey + '"]');
+            if (!cfg || !btn) return;
+            const visible = getVisibleColumnCount(tableKey);
+            const total = cfg.columns.length;
+            btn.title = 'Columnas visibles: ' + visible + ' de ' + total;
+        }
+
+        function getTableColumnKeys(tableKey) {
+            return (TABLE_PREF_CONFIGS[tableKey]?.columns || []).map(([key]) => key);
+        }
+
+        function getOrderedTableColumns(tableKey) {
+            const cfg = TABLE_PREF_CONFIGS[tableKey];
+            if (!cfg) return [];
+            const prefs = getTablePrefs(tableKey);
+            const valid = getTableColumnKeys(tableKey);
+            const fromPrefs = Array.isArray(prefs.order) ? prefs.order.filter(key => valid.includes(key)) : [];
+            const missing = valid.filter(key => !fromPrefs.includes(key));
+            const byKey = Object.fromEntries(cfg.columns.map(col => [col[0], col]));
+            return [...fromPrefs, ...missing].map(key => byKey[key]).filter(Boolean);
+        }
+
+        function configureTableHeaders(tableKey) {
+            const cfg = TABLE_PREF_CONFIGS[tableKey];
+            const table = cfg ? document.querySelector(cfg.table) : null;
+            if (!table) return;
+            table.dataset.tableKey = tableKey;
+            const headers = Array.from(table.querySelectorAll('thead tr th'));
+            headers.forEach((th, index) => {
+                const key = th.dataset.colKey || cfg.columns[index]?.[0];
+                if (!th) return;
+                if (!key) return;
+                th.dataset.colKey = key;
+                th.classList.add('table-resizable');
+                if (!th.querySelector('.table-resize-handle')) {
+                    const handle = document.createElement('span');
+                    handle.className = 'table-resize-handle';
+                    handle.title = 'Arrastra para cambiar ancho';
+                    handle.addEventListener('mousedown', (event) => startTableColumnResize(event, tableKey, key, th));
+                    handle.addEventListener('click', event => event.stopPropagation());
+                    handle.addEventListener('dblclick', event => event.stopPropagation());
+                    handle.addEventListener('dragstart', event => event.preventDefault());
+                    th.appendChild(handle);
+                }
+            });
+        }
+
+        function setTableColumnWidth(tableKey, columnKey, width) {
+            const cfg = TABLE_PREF_CONFIGS[tableKey];
+            const table = cfg ? document.querySelector(cfg.table) : null;
+            if (!table) return;
+            const px = Math.max(72, Math.round(width)) + 'px';
+            table.querySelectorAll('[data-col-key="' + columnKey + '"]').forEach(cell => {
+                cell.style.setProperty('width', px, 'important');
+                cell.style.setProperty('min-width', px, 'important');
+                cell.style.setProperty('max-width', px, 'important');
+            });
+        }
+
+        function applyTablePreferences(tableKey) {
+            const cfg = TABLE_PREF_CONFIGS[tableKey];
+            const table = cfg ? document.querySelector(cfg.table) : null;
+            if (!table) return;
+            configureTableHeaders(tableKey);
+            const prefs = getTablePrefs(tableKey);
+            const defaultKeys = getTableColumnKeys(tableKey);
+            const orderedColumns = getOrderedTableColumns(tableKey);
+            table.querySelectorAll('tr').forEach(row => {
+                if (row.children.length === 1 && row.children[0].hasAttribute('colspan')) {
+                    row.children[0].setAttribute('colspan', String(getVisibleColumnCount(tableKey)));
+                    return;
+                }
+                Array.from(row.children).forEach((cell, index) => {
+                    if (!cell.dataset.colKey) cell.dataset.colKey = defaultKeys[index] || '';
+                });
+                orderedColumns.forEach(([key]) => {
+                    const cell = Array.from(row.children).find(item => item.dataset.colKey === key);
+                    if (cell) row.appendChild(cell);
+                });
+            });
+            orderedColumns.forEach(([key]) => {
+                const hidden = prefs.hidden.includes(key);
+                const width = prefs.widths?.[key];
+                table.querySelectorAll('[data-col-key="' + key + '"]').forEach(cell => {
+                    cell.style.display = hidden ? 'none' : '';
+                    if (!hidden && width) {
+                        cell.style.setProperty('width', width + 'px', 'important');
+                        cell.style.setProperty('min-width', width + 'px', 'important');
+                        cell.style.setProperty('max-width', width + 'px', 'important');
+                    } else if (!hidden) {
+                        cell.style.removeProperty('width');
+                        cell.style.removeProperty('min-width');
+                        cell.style.removeProperty('max-width');
+                    }
+                });
+            });
+            refreshTablePrefButton(tableKey);
+        }
+
+        function startTableColumnResize(event, tableKey, columnKey, th) {
+            event.preventDefault();
+            event.stopPropagation();
+            const prefs = getTablePrefs(tableKey);
+            const startX = event.clientX;
+            const startWidth = th.getBoundingClientRect().width;
+            let nextWidth = Math.round(startWidth);
+            let frame = null;
+            document.body.classList.add('table-column-resizing');
+            const onMove = (moveEvent) => {
+                moveEvent.preventDefault();
+                nextWidth = Math.max(72, Math.round(startWidth + moveEvent.clientX - startX));
+                if (frame) return;
+                frame = requestAnimationFrame(() => {
+                    frame = null;
+                    setTableColumnWidth(tableKey, columnKey, nextWidth);
+                });
+            };
+            const onUp = (upEvent) => {
+                upEvent.preventDefault();
+                if (frame) {
+                    cancelAnimationFrame(frame);
+                    frame = null;
+                }
+                setTableColumnWidth(tableKey, columnKey, nextWidth);
+                prefs.widths = prefs.widths || {};
+                prefs.widths[columnKey] = nextWidth;
+                saveTablePrefs(tableKey, prefs);
+                document.body.classList.remove('table-column-resizing');
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onUp);
+            };
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+        }
+
+        function openTablePreferences(tableKey, anchor) {
+            const cfg = TABLE_PREF_CONFIGS[tableKey];
+            if (!cfg) return;
+            const currentPanel = document.querySelector('.table-pref-panel');
+            if (currentPanel?.dataset.tableKey === tableKey) {
+                closeTablePreferences();
+                return;
+            }
+            document.querySelectorAll('.table-pref-panel').forEach(p => p.remove());
+            const prefs = getTablePrefs(tableKey);
+            const panel = document.createElement('div');
+            panel.className = 'table-pref-panel';
+            panel.dataset.tableKey = tableKey;
+            panel.innerHTML = "<h4>Columnas - " + cfg.title + "</h4><p>Arrastra las columnas para cambiar el orden. Activa columnas aqui y ajusta el ancho desde el encabezado de la tabla.</p>" +
+                "<div class=\"table-pref-list\"></div>" +
+                "<div class=\"table-pref-actions\"><button class=\"toolbar-button\" type=\"button\" onclick=\"resetTablePreferences('" + tableKey + "')\">Restablecer</button><button class=\"action-button\" type=\"button\" onclick=\"closeTablePreferences()\">Cerrar</button></div>";
+            document.body.appendChild(panel);
+            const list = panel.querySelector('.table-pref-list');
+            getOrderedTableColumns(tableKey).forEach(([key, label]) => {
+                const checked = !prefs.hidden.includes(key);
+                const row = document.createElement('label');
+                row.className = 'table-pref-row';
+                row.draggable = true;
+                row.dataset.colKey = key;
+                row.innerHTML = "<span class=\"table-pref-left\"><span class=\"table-pref-grip\" title=\"Arrastra para ordenar\"></span><span>" + label + "</span></span><input type=\"checkbox\" " + (checked ? "checked" : "") + " onchange=\"toggleTableColumn('" + tableKey + "', '" + key + "', this.checked)\"><span class=\"table-pref-switch\" aria-hidden=\"true\"></span>";
+                row.addEventListener('dragstart', event => handleTablePrefDragStart(event, tableKey));
+                row.addEventListener('dragover', handleTablePrefDragOver);
+                row.addEventListener('dragleave', event => event.currentTarget.classList.remove('drag-over'));
+                row.addEventListener('drop', event => handleTablePrefDrop(event, tableKey));
+                row.addEventListener('dragend', handleTablePrefDragEnd);
+                list.appendChild(row);
+            });
+            const rect = anchor?.getBoundingClientRect?.() || { left: 18, bottom: 70 };
+            const belowSpace = window.innerHeight - rect.bottom - 16;
+            const aboveSpace = rect.top - 16;
+            const openBelow = belowSpace >= 260 || belowSpace >= aboveSpace;
+            panel.style.maxHeight = Math.max(240, openBelow ? belowSpace : aboveSpace) + 'px';
+            panel.style.left = Math.min(rect.left, window.innerWidth - panel.offsetWidth - 12) + 'px';
+            panel.style.top = (openBelow ? rect.bottom + 8 : Math.max(12, rect.top - panel.offsetHeight - 8)) + 'px';
+        }
+
+        function closeTablePreferences() {
+            document.querySelectorAll('.table-pref-panel').forEach(p => p.remove());
+        }
+
+        function toggleTableColumn(tableKey, columnKey, visible) {
+            const prefs = getTablePrefs(tableKey);
+            const cfg = TABLE_PREF_CONFIGS[tableKey];
+            const hidden = new Set(prefs.hidden || []);
+            if (visible) hidden.delete(columnKey);
+            else {
+                const currentlyVisible = cfg.columns.filter(([key]) => !hidden.has(key));
+                if (currentlyVisible.length <= 1) {
+                    showToast('Debe quedar al menos una columna visible', 'error');
+                    openTablePreferences(tableKey, document.querySelector('[data-table-pref="' + tableKey + '"]'));
+                    return;
+                }
+                hidden.add(columnKey);
+            }
+            prefs.hidden = [...hidden];
+            saveTablePrefs(tableKey, prefs);
+            applyTablePreferences(tableKey);
+        }
+
+        let tablePrefDragKey = null;
+
+        function handleTablePrefDragStart(event, tableKey) {
+            tablePrefDragKey = event.currentTarget.dataset.colKey;
+            event.currentTarget.classList.add('dragging');
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', tablePrefDragKey || '');
+        }
+
+        function handleTablePrefDragOver(event) {
+            event.preventDefault();
+            event.currentTarget.classList.add('drag-over');
+            event.dataTransfer.dropEffect = 'move';
+        }
+
+        function handleTablePrefDrop(event, tableKey) {
+            event.preventDefault();
+            const targetKey = event.currentTarget.dataset.colKey;
+            const sourceKey = tablePrefDragKey || event.dataTransfer.getData('text/plain');
+            document.querySelectorAll('.table-pref-row').forEach(row => row.classList.remove('drag-over', 'dragging'));
+            if (!sourceKey || !targetKey || sourceKey === targetKey) return;
+            const prefs = getTablePrefs(tableKey);
+            const current = getOrderedTableColumns(tableKey).map(([key]) => key);
+            const next = current.filter(key => key !== sourceKey);
+            const targetIndex = next.indexOf(targetKey);
+            next.splice(targetIndex < 0 ? next.length : targetIndex, 0, sourceKey);
+            prefs.order = next;
+            saveTablePrefs(tableKey, prefs);
+            applyTablePreferences(tableKey);
+            openTablePreferences(tableKey, document.querySelector('[data-table-pref="' + tableKey + '"]'));
+        }
+
+        function handleTablePrefDragEnd() {
+            tablePrefDragKey = null;
+            document.querySelectorAll('.table-pref-row').forEach(row => row.classList.remove('drag-over', 'dragging'));
+        }
+
+        function resetTablePreferences(tableKey) {
+            localStorage.removeItem(getTablePrefStorageKey(tableKey));
+            closeTablePreferences();
+            applyTablePreferences(tableKey);
+            showToast('Vista de tabla restablecida', 'success');
+        }
+
+        function initTablePreferences() {
+            Object.keys(TABLE_PREF_CONFIGS).forEach(tableKey => {
+                const cfg = TABLE_PREF_CONFIGS[tableKey];
+                const target = document.querySelector(cfg.buttonTarget);
+                if (target && !target.querySelector('[data-table-pref="' + tableKey + '"]')) {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'table-pref-button';
+                    btn.dataset.tablePref = tableKey;
+                    btn.innerHTML = '<span class="table-pref-button-icon" aria-hidden="true"><span></span><span></span><span></span></span><span class="table-pref-button-text">Columnas</span>';
+                    btn.onclick = (event) => openTablePreferences(tableKey, event.currentTarget);
+                    target.appendChild(btn);
+                }
+                applyTablePreferences(tableKey);
+                refreshTablePrefButton(tableKey);
+            });
+        }
+
         const I18N = {
             es: {
                 menu_dashboard: 'Dashboard', menu_printers: 'Impresoras', menu_counters: 'Contadores', menu_inventory: 'Control de Inventario', menu_toner_control: 'Control de Toner', menu_config: 'Configuración',
@@ -6059,11 +6675,11 @@
         function getInventoryTypeBadge(type) { const t = (type || '').toLowerCase(); if (t === 'toner') return '<span class="status-badge" style="background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.3)">Toner</span>'; if (t === 'drum') return '<span class="status-badge" style="background:rgba(139,92,246,.15);color:#a78bfa;border:1px solid rgba(139,92,246,.3)">Drum</span>'; if (t === 'fuser') return '<span class="status-badge" style="background:rgba(249,115,22,.15);color:#fb923c;border:1px solid rgba(249,115,22,.3)">Fuser</span>'; return '<span class="status-badge" style="background:#1f2937;color:#9ca3af">' + type + '</span>'; }
         function getStockIndicator(qty, min) { if (qty <= 0) return '<span class="critical-text" style="font-size:14px;font-weight:700">' + qty + ' <i class="bi bi-exclamation-circle"></i></span>'; if (qty <= min) return '<span class="warning-text" style="font-size:14px;font-weight:700">' + qty + ' <i class="bi bi-exclamation-triangle"></i></span>'; return '<span style="color:#22c55e;font-weight:600">' + qty + '</span>'; }
         async function updateInventoryQty(itemId, el) { var qty = parseInt(el.value, 10); var item = inventoryRawData.find(function (i) { return i.id === itemId; }); if (!item) return; if (isNaN(qty) || qty < 0) { el.value = item.quantity; showToast(t('invalid_qty'), 'error'); return; } try { var payload = { name: item.name, model: item.model, type: item.type, quantity: qty, min_stock: item.min_stock, part_number: item.part_number || null, location: item.location || null, notes: item.notes || null }; var r = await fetch('/inventory/' + itemId, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); if (!r.ok) throw new Error('Error'); item.quantity = qty; el.className = 'inv-qty-input ' + (qty <= 0 ? 'qty-critical' : qty <= item.min_stock ? 'qty-low' : 'qty-ok'); var tr = el.closest('tr'); if (tr) { if (qty <= item.min_stock) tr.classList.add('row-error'); else tr.classList.remove('row-error'); } updateInventorySummary(inventoryRawData); showToast(t('qty_updated'), 'success'); } catch (e) { el.value = item.quantity; showToast(t('error_updating_qty'), 'error'); console.error(e); } }
-        function renderInventoryTable() { const list = document.getElementById('inventoryList'); if (!list) return; const search = (document.getElementById('invSearch')?.value || '').toLowerCase().trim(); const typeFilter = document.getElementById('invTypeFilter')?.value || 'all'; const stockFilter = document.getElementById('invStockFilter')?.value || 'all'; let data = [...inventoryRawData]; if (search) { data = data.filter(i => ((i.name || '') + ' ' + (i.model || '') + ' ' + (i.part_number || '')).toLowerCase().includes(search)); } if (typeFilter !== 'all') { data = data.filter(i => i.type === typeFilter); } if (stockFilter === 'low') { data = data.filter(i => i.quantity <= i.min_stock); } else if (stockFilter === 'ok') { data = data.filter(i => i.quantity > i.min_stock); } data.sort((a, b) => { const col = inventorySortColumn; if (col === 'id' || col === 'quantity' || col === 'min_stock') { const av = Number(a[col]) || 0; const bv = Number(b[col]) || 0; return inventorySortDirection === 'asc' ? av - bv : bv - av; } const av = ((a[col] ?? '') + '').toLowerCase(); const bv = ((b[col] ?? '') + '').toLowerCase(); const r = av.localeCompare(bv); return inventorySortDirection === 'desc' ? -r : r; }); updateInventorySortIndicators(); if (!data.length) { list.innerHTML = '<tr><td colspan="10"><div class="empty-state" style="margin:20px 0"><i class="bi bi-search" style="font-size:36px;color:#475569;display:block;margin-bottom:10px"></i><div style="font-size:15px;font-weight:600;margin-bottom:4px">' + t('no_results') + '</div><div style="font-size:13px;color:#64748b">' + t('no_items_match') + '</div></div></td></tr>'; return; } list.innerHTML = ''; data.forEach((item, index) => { const lowStock = item.quantity <= item.min_stock; const qtyClass = item.quantity <= 0 ? 'qty-critical' : item.quantity <= item.min_stock ? 'qty-low' : 'qty-ok'; list.innerHTML += '<tr class="' + (lowStock ? 'row-error ' : '') + ' stagger-row" style="animation-delay:' + String(index * 30) + 'ms"><td>' + item.id + '</td><td><strong>' + (item.name || '-') + '</strong></td><td>' + (item.model || '-') + '</td><td>' + getInventoryTypeBadge(item.type) + '</td><td>' + (item.part_number || '-') + '</td><td><input type="number" class="inv-qty-input ' + qtyClass + '" value="' + item.quantity + '" min="0" onchange="updateInventoryQty(' + item.id + ',this)"></td><td>' + item.min_stock + '</td><td>' + (item.location || '-') + '</td><td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (item.notes || '') + '">' + (item.notes || '-') + '</td><td><div class="action-row" style="margin-bottom:0;gap:6px;"><button class="action-button" style="padding:6px 10px;font-size:12px;" onclick="editInventoryItem(' + item.id + ')"><i class="bi bi-pencil-square"></i> ' + t('btn_edit') + '</button><button class="action-button action-button-danger" style="padding:6px 10px;font-size:12px;" onclick="deleteInventoryItem(' + item.id + ')"><i class="bi bi-trash3"></i> ' + t('btn_delete') + '</button></div></td></tr>'; }); } function resetInventoryFilters() { document.getElementById('invSearch').value = ''; document.getElementById('invTypeFilter').value = 'all'; document.getElementById('invStockFilter').value = 'all'; renderInventoryTable(); }
+        function renderInventoryTable() { const list = document.getElementById('inventoryList'); if (!list) return; const search = (document.getElementById('invSearch')?.value || '').toLowerCase().trim(); const typeFilter = document.getElementById('invTypeFilter')?.value || 'all'; const stockFilter = document.getElementById('invStockFilter')?.value || 'all'; let data = [...inventoryRawData]; if (search) { data = data.filter(i => ((i.name || '') + ' ' + (i.model || '') + ' ' + (i.part_number || '')).toLowerCase().includes(search)); } if (typeFilter !== 'all') { data = data.filter(i => i.type === typeFilter); } if (stockFilter === 'low') { data = data.filter(i => i.quantity <= i.min_stock); } else if (stockFilter === 'ok') { data = data.filter(i => i.quantity > i.min_stock); } data.sort((a, b) => { const col = inventorySortColumn; if (col === 'id' || col === 'quantity' || col === 'min_stock') { const av = Number(a[col]) || 0; const bv = Number(b[col]) || 0; return inventorySortDirection === 'asc' ? av - bv : bv - av; } const av = ((a[col] ?? '') + '').toLowerCase(); const bv = ((b[col] ?? '') + '').toLowerCase(); const r = av.localeCompare(bv); return inventorySortDirection === 'desc' ? -r : r; }); updateInventorySortIndicators(); if (!data.length) { list.innerHTML = '<tr><td colspan="10"><div class="empty-state" style="margin:20px 0"><i class="bi bi-search" style="font-size:36px;color:#475569;display:block;margin-bottom:10px"></i><div style="font-size:15px;font-weight:600;margin-bottom:4px">' + t('no_results') + '</div><div style="font-size:13px;color:#64748b">' + t('no_items_match') + '</div></div></td></tr>'; applyTablePreferences('inventory'); return; } list.innerHTML = ''; data.forEach((item, index) => { const lowStock = item.quantity <= item.min_stock; const qtyClass = item.quantity <= 0 ? 'qty-critical' : item.quantity <= item.min_stock ? 'qty-low' : 'qty-ok'; list.innerHTML += '<tr class="' + (lowStock ? 'row-error ' : '') + ' stagger-row" style="animation-delay:' + String(index * 30) + 'ms"><td>' + item.id + '</td><td><strong>' + (item.name || '-') + '</strong></td><td>' + (item.model || '-') + '</td><td>' + getInventoryTypeBadge(item.type) + '</td><td>' + (item.part_number || '-') + '</td><td><input type="number" class="inv-qty-input ' + qtyClass + '" value="' + item.quantity + '" min="0" onchange="updateInventoryQty(' + item.id + ',this)"></td><td>' + item.min_stock + '</td><td>' + (item.location || '-') + '</td><td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (item.notes || '') + '">' + (item.notes || '-') + '</td><td><div class="action-row" style="margin-bottom:0;gap:6px;"><button class="action-button" style="padding:6px 10px;font-size:12px;" onclick="editInventoryItem(' + item.id + ')"><i class="bi bi-pencil-square"></i> ' + t('btn_edit') + '</button><button class="action-button action-button-danger" style="padding:6px 10px;font-size:12px;" onclick="deleteInventoryItem(' + item.id + ')"><i class="bi bi-trash3"></i> ' + t('btn_delete') + '</button></div></td></tr>'; }); applyTablePreferences('inventory'); } function resetInventoryFilters() { document.getElementById('invSearch').value = ''; document.getElementById('invTypeFilter').value = 'all'; document.getElementById('invStockFilter').value = 'all'; renderInventoryTable(); }
         function toggleInventorySort(column) { if (inventorySortColumn === column) { inventorySortDirection = inventorySortDirection === 'asc' ? 'desc' : 'asc'; } else { inventorySortColumn = column; inventorySortDirection = 'asc'; } renderInventoryTable(); }
         function updateInventorySortIndicators() { ['id', 'name', 'model', 'type', 'part_number', 'quantity', 'min_stock', 'location'].forEach(c => { const el = document.getElementById('invsort_' + c); if (!el) return; el.textContent = c === inventorySortColumn ? (inventorySortDirection === 'asc' ? '↑' : '↓') : '↕'; }); }
         function updateTonerControlSortIndicators() { ['shared_name', 'check_date', 'toner_black', 'location'].forEach(c => { const el = document.getElementById('tcsort_' + c); if (!el) return; el.textContent = c === tonerControlSortColumn ? (tonerControlSortDirection === 'asc' ? '↑' : '↓') : '↕'; }); }
-        async function loadInventory() { const list = document.getElementById('inventoryList'); if (!list) return; try { showLoadingIn('inventoryList', 10, t('loading_inventory')); const response = await fetch('/inventory/'); const data = await response.json(); if (!Array.isArray(data)) { inventoryRawData = []; list.innerHTML = '<tr><td colspan="10">' + t('error_loading_inventory') + '</td></tr>'; updateInventorySummary([]); return; } inventoryRawData = data; updateInventorySummary(data); if (!data.length) { list.innerHTML = '<tr><td colspan="10"><div class="empty-state" style="margin:20px 0"><i class="bi bi-inbox" style="font-size:48px;color:#475569;display:block;margin-bottom:12px"></i><div style="font-size:16px;font-weight:600;margin-bottom:6px">' + t('no_inventory_items') + '</div><div style="font-size:13px;color:#64748b">' + t('inv_empty_hint') + '</div></div></td></tr>'; return; } renderInventoryTable(); } catch (error) { list.innerHTML = '<tr><td colspan="10">' + t('error_loading_inventory') + '</td></tr>'; updateInventorySummary([]); console.error('loadInventory error:', error); } }
+        async function loadInventory() { const list = document.getElementById('inventoryList'); if (!list) return; try { showLoadingIn('inventoryList', 10, t('loading_inventory')); const response = await fetch('/inventory/'); const data = await response.json(); if (!Array.isArray(data)) { inventoryRawData = []; list.innerHTML = '<tr><td colspan="10">' + t('error_loading_inventory') + '</td></tr>'; applyTablePreferences('inventory'); updateInventorySummary([]); return; } inventoryRawData = data; updateInventorySummary(data); if (!data.length) { list.innerHTML = '<tr><td colspan="10"><div class="empty-state" style="margin:20px 0"><i class="bi bi-inbox" style="font-size:48px;color:#475569;display:block;margin-bottom:12px"></i><div style="font-size:16px;font-weight:600;margin-bottom:6px">' + t('no_inventory_items') + '</div><div style="font-size:13px;color:#64748b">' + t('inv_empty_hint') + '</div></div></td></tr>'; applyTablePreferences('inventory'); return; } renderInventoryTable(); } catch (error) { list.innerHTML = '<tr><td colspan="10">' + t('error_loading_inventory') + '</td></tr>'; applyTablePreferences('inventory'); updateInventorySummary([]); console.error('loadInventory error:', error); } }
         async function addInventoryItem() { const editId = (document.getElementById('invEditId')?.value || '').trim(); const name = (document.getElementById('invName')?.value || '').trim(); const model = (document.getElementById('invModel')?.value || '').trim(); const type = document.getElementById('invType')?.value || 'toner'; const part_number = (document.getElementById('invPartNumber')?.value || '').trim(); const quantity = parseInt(document.getElementById('invQty')?.value, 10); const min_stock = parseInt(document.getElementById('invMin')?.value, 10); const location = (document.getElementById('invLocation')?.value || '').trim(); const notes = (document.getElementById('invNotes')?.value || '').trim(); if (!name || !model) { showToast(t('name_model_required'), 'error'); return; } if (isNaN(quantity) || isNaN(min_stock)) { showToast(t('qty_must_be_number'), 'error'); return; } const payload = { name, model, type, quantity, min_stock, part_number: part_number || null, location: location || null, notes: notes || null }; try { let response; if (editId) { response = await fetch(`/inventory/${editId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); } else { response = await fetch('/inventory/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); } if (!response.ok) { const d = await response.json(); throw new Error(d.detail || 'Error'); } showToast(editId ? t('item_updated') : t('item_added'), 'success'); resetInventoryForm(); loadInventory(); } catch (error) { showToast(error.message || t('could_not_save_item'), 'error'); console.error(error); } } function editInventoryItem(itemId) { const item = inventoryRawData.find(i => i.id === itemId); if (!item) return; document.getElementById('invEditId').value = item.id; document.getElementById('invType').value = item.type || 'toner'; onInvTypeChange(); document.getElementById('invName').value = item.name || ''; document.getElementById('invModel').value = item.model || ''; document.getElementById('invPartNumber').value = item.part_number || ''; document.getElementById('invQty').value = item.quantity ?? ''; document.getElementById('invMin').value = item.min_stock ?? ''; document.getElementById('invLocation').value = item.location || ''; document.getElementById('invNotes').value = item.notes || ''; const titleEl = document.getElementById('invFormTitle'); if (titleEl) titleEl.textContent = t('edit_inv_item_title'); const subEl = document.getElementById('invFormSubtitle'); if (subEl) subEl.textContent = t('edit_inv_item_subtitle'); document.getElementById('inventoryFormModal')?.classList.add('open'); }
         async function deleteInventoryItem(itemId) { if (!await appConfirm(t('delete_item_title'), t('delete_item_msg'))) return; try { await fetch(`/inventory/${itemId}`, { method: 'DELETE' }); showToast(t('item_deleted'), 'success'); loadInventory(); } catch (error) { showToast(t('error_deleting_item'), 'error'); console.error(error); } } function getTonerCellClass(value, color) { const v = safeValue(value); if (v === null) return 'tc-cell-' + color; if (v < 10) return 'tc-cell-' + color + ' tc-crit'; if (v < 30) return 'tc-cell-' + color + ' tc-low'; return 'tc-cell-' + color; }
         function getTonerStatus(p) { const vals = [safeValue(p.toner_black)]; if (p.is_color) { vals.push(safeValue(p.toner_cyan), safeValue(p.toner_magenta), safeValue(p.toner_yellow)); } const valid = vals.filter(v => v !== null); if (!valid.length) return 'ok'; if (valid.some(v => v < 10)) return 'critical'; if (valid.some(v => v < 30)) return 'low'; return 'ok'; }
@@ -6073,9 +6689,9 @@
         function toggleTonerControlSort(column) { if (tonerControlSortColumn === column) { tonerControlSortDirection = tonerControlSortDirection === 'asc' ? 'desc' : 'asc'; } else { tonerControlSortColumn = column; tonerControlSortDirection = 'asc'; } renderTonerControlTable(); }
         function filterTonerControlByCard(type) { const tonerSel = document.getElementById('tcTonerFilter'); if (type === 'nobackup') { tcBackupFilterActive = true; if (tonerSel) tonerSel.value = 'all'; } else { tcBackupFilterActive = false; if (tonerSel) tonerSel.value = type; } document.getElementById('tcTypeFilter').value = 'all'; document.getElementById('tcSearch').value = ''; renderTonerControlTable(); }
         function resetTonerControlFilters() { document.getElementById('tcSearch').value = ''; document.getElementById('tcTonerFilter').value = 'all'; document.getElementById('tcTypeFilter').value = 'all'; tcBackupFilterActive = false; renderTonerControlTable(); }
-        function renderTonerControlTable() { const list = document.getElementById('tonerControlList'); if (!list) return; const search = (document.getElementById('tcSearch')?.value || '').toLowerCase().trim(); const tonerFilter = document.getElementById('tcTonerFilter')?.value || 'all'; const typeFilter = document.getElementById('tcTypeFilter')?.value || 'all'; let data = [...tonerControlRawData]; if (search) { data = data.filter(p => ((p.shared_name || '') + ' ' + (p.name || '') + ' ' + (p.model || '') + ' ' + (p.serial || '') + ' ' + (p.ip || '')).toLowerCase().includes(search)); } if (tonerFilter !== 'all') { data = data.filter(p => { const st = getTonerStatus(p); if (tonerFilter === 'low') return st === 'low'; if (tonerFilter === 'critical') return st === 'critical'; if (tonerFilter === 'ok') return st === 'ok'; return true; }); } if (typeFilter !== 'all') { data = data.filter(p => typeFilter === 'color' ? p.is_color : !p.is_color); } if (tcBackupFilterActive) { data = data.filter(p => hasNoBackup(p)); } data.sort((a, b) => { const col = tonerControlSortColumn; if (col === 'toner_black') { const av = safeValue(a.toner_black) ?? 999; const bv = safeValue(b.toner_black) ?? 999; return tonerControlSortDirection === 'asc' ? av - bv : bv - av; } if (col === 'check_date') { const av = normalizeHtmlDate(a.check_date) || ''; const bv = normalizeHtmlDate(b.check_date) || ''; return tonerControlSortDirection === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av); } const av = ((a[col] ?? '') + '').toLowerCase(); const bv = ((b[col] ?? '') + '').toLowerCase(); const r = av.localeCompare(bv); return tonerControlSortDirection === 'desc' ? -r : r; }); updateTonerControlSortIndicators(); if (!data.length) { list.innerHTML = '<tr><td colspan="4">' + t('no_data_filters') + '</td></tr>'; return; } const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); list.innerHTML = ''; data.forEach((p, index) => { const pid = p.printer_id; const shared = esc(p.shared_name || p.name || '-'); const subModel = esc(p.model || ''); const subIp = esc(p.ip || ''); const subHtml = subModel ? '<span class="tc-model">' + subModel + '</span>' : ''; const ipHtml = subIp ? '<span class="tc-ip">' + subIp + '</span>' : ''; const subSerial = esc(p.serial || ''); const serialHtml = subSerial ? '<span class="tc-ip" style="color:#94a3b8">S/N: ' + subSerial + '</span>' : ''; const subLoc = esc(p.location || ''); const locHtml2 = subLoc ? '<span class="tc-ip" style="color:#94a3b8"><i class="bi bi-geo-alt" style="font-size:9px"></i> ' + subLoc + '</span>' : ''; const printerCell = '<div class="tc-printer-cell"><span class="tc-pname clickable-name" onclick="openTcCounterHistory(' + pid + ')">' + shared + '</span><div class="tc-psub">' + subHtml + ipHtml + '</div>' + (serialHtml || locHtml2 ? '<div class="tc-psub" style="margin-top:2px">' + serialHtml + locHtml2 + '</div>' : '') + '</div>'; const checkCell = '<input type="date" class="tc-inline-date" data-tc="check_date" value="' + normalizeHtmlDate(p.check_date) + '" onchange="saveTonerControlInline(' + pid + ')">'; const bk = safeValue(p.toner_black); const tonerRows = ['<div class="tc-toner-row"><span class="tc-toner-lbl tc-toner-lbl-k">K</span><div class="tc-toner-bar"><div class="fill bar-black" style="width:' + Math.max(0, Math.min(100, bk ?? 0)) + '%"></div></div><span class="tc-toner-pct ' + (bk === null ? 'tc-ok' : bk < 10 ? 'tc-crit' : bk < 30 ? 'tc-low' : 'tc-ok') + '">' + (bk === null ? '-' : bk + '%') + '</span></div>']; if (p.is_color) { const cv = safeValue(p.toner_cyan); const mv = safeValue(p.toner_magenta); const yv = safeValue(p.toner_yellow); tonerRows.push('<div class="tc-toner-row"><span class="tc-toner-lbl tc-toner-lbl-c">C</span><div class="tc-toner-bar"><div class="fill bar-cyan" style="width:' + Math.max(0, Math.min(100, cv ?? 0)) + '%"></div></div><span class="tc-toner-pct ' + (cv === null ? 'tc-ok' : cv < 10 ? 'tc-crit' : cv < 30 ? 'tc-low' : 'tc-ok') + '">' + (cv === null ? '-' : cv + '%') + '</span></div>'); tonerRows.push('<div class="tc-toner-row"><span class="tc-toner-lbl tc-toner-lbl-m">M</span><div class="tc-toner-bar"><div class="fill bar-magenta" style="width:' + Math.max(0, Math.min(100, mv ?? 0)) + '%"></div></div><span class="tc-toner-pct ' + (mv === null ? 'tc-ok' : mv < 10 ? 'tc-crit' : mv < 30 ? 'tc-low' : 'tc-ok') + '">' + (mv === null ? '-' : mv + '%') + '</span></div>'); tonerRows.push('<div class="tc-toner-row"><span class="tc-toner-lbl tc-toner-lbl-y">Y</span><div class="tc-toner-bar"><div class="fill bar-yellow" style="width:' + Math.max(0, Math.min(100, yv ?? 0)) + '%"></div></div><span class="tc-toner-pct ' + (yv === null ? 'tc-ok' : yv < 10 ? 'tc-crit' : yv < 30 ? 'tc-low' : 'tc-ok') + '">' + (yv === null ? '-' : yv + '%') + '</span></div>'); } const tonerCell = '<div class="tc-toner-stack">' + tonerRows.join('') + '</div>'; const bkK = Math.round(Number(p.backup_black) || 0); const bkC = Math.round(Number(p.backup_cyan) || 0); const bkM = Math.round(Number(p.backup_magenta) || 0); const bkY = Math.round(Number(p.backup_yellow) || 0); let backupParts = '<div class="tc-bk-row tc-bk-k"><span class="tc-toner-lbl tc-toner-lbl-k">K</span><input type="number" min="0" class="tc-bk-input ' + (bkK <= 0 ? 'bk-zero' : 'bk-ok') + '" data-tc="backup_black" value="' + bkK + '" onchange="saveTonerControlInline(' + pid + ')"></div>'; if (p.is_color) { backupParts += '<div class="tc-bk-row tc-bk-c"><span class="tc-toner-lbl tc-toner-lbl-c">C</span><input type="number" min="0" class="tc-bk-input ' + (bkC <= 0 ? 'bk-zero' : 'bk-ok') + '" data-tc="backup_cyan" value="' + bkC + '" onchange="saveTonerControlInline(' + pid + ')"></div>'; backupParts += '<div class="tc-bk-row tc-bk-m"><span class="tc-toner-lbl tc-toner-lbl-m">M</span><input type="number" min="0" class="tc-bk-input ' + (bkM <= 0 ? 'bk-zero' : 'bk-ok') + '" data-tc="backup_magenta" value="' + bkM + '" onchange="saveTonerControlInline(' + pid + ')"></div>'; backupParts += '<div class="tc-bk-row tc-bk-y"><span class="tc-toner-lbl tc-toner-lbl-y">Y</span><input type="number" min="0" class="tc-bk-input ' + (bkY <= 0 ? 'bk-zero' : 'bk-ok') + '" data-tc="backup_yellow" value="' + bkY + '" onchange="saveTonerControlInline(' + pid + ')"></div>'; } const backupCell = '<div class="tc-backup-group">' + backupParts + '</div>'; const followCell = '<div class="tc-follow-cell"><label class="tc-mini-field"><span>Check</span>' + checkCell + '</label><label class="tc-mini-field"><span>Pedido</span><input type="text" class="tc-inline tc-inline-text" data-tc="pedido" value="' + esc(p.pedido || '') + '" placeholder="-" onchange="saveTonerControlInline(' + pid + ')"></label><label class="tc-mini-field"><span>WO</span><input type="text" class="tc-inline tc-inline-text" data-tc="work_order" value="' + esc(p.work_order || '') + '" placeholder="-" onchange="saveTonerControlInline(' + pid + ')"></label><label class="tc-mini-field tc-mini-field-notes"><span>Notas</span><input type="text" class="tc-inline tc-inline-notes" data-tc="notas" value="' + esc(p.notas || '') + '" placeholder="-" onchange="saveTonerControlInline(' + pid + ')"></label></div>'; const ts = getTonerStatus(p); const rowCls = ts === 'critical' ? 'row-error' : ts === 'low' ? 'row-low' : ''; list.innerHTML += '<tr id="tcrow_' + pid + '" class="' + rowCls + ' stagger-row" style="animation-delay:' + String(index * 25) + 'ms"><td>' + printerCell + '</td><td>' + tonerCell + '</td><td>' + backupCell + '</td><td>' + followCell + '</td></tr>'; }); }
+        function renderTonerControlTable() { const list = document.getElementById('tonerControlList'); if (!list) return; const search = (document.getElementById('tcSearch')?.value || '').toLowerCase().trim(); const tonerFilter = document.getElementById('tcTonerFilter')?.value || 'all'; const typeFilter = document.getElementById('tcTypeFilter')?.value || 'all'; let data = [...tonerControlRawData]; if (search) { data = data.filter(p => ((p.shared_name || '') + ' ' + (p.name || '') + ' ' + (p.model || '') + ' ' + (p.serial || '') + ' ' + (p.ip || '')).toLowerCase().includes(search)); } if (tonerFilter !== 'all') { data = data.filter(p => { const st = getTonerStatus(p); if (tonerFilter === 'low') return st === 'low'; if (tonerFilter === 'critical') return st === 'critical'; if (tonerFilter === 'ok') return st === 'ok'; return true; }); } if (typeFilter !== 'all') { data = data.filter(p => typeFilter === 'color' ? p.is_color : !p.is_color); } if (tcBackupFilterActive) { data = data.filter(p => hasNoBackup(p)); } data.sort((a, b) => { const col = tonerControlSortColumn; if (col === 'toner_black') { const av = safeValue(a.toner_black) ?? 999; const bv = safeValue(b.toner_black) ?? 999; return tonerControlSortDirection === 'asc' ? av - bv : bv - av; } if (col === 'check_date') { const av = normalizeHtmlDate(a.check_date) || ''; const bv = normalizeHtmlDate(b.check_date) || ''; return tonerControlSortDirection === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av); } const av = ((a[col] ?? '') + '').toLowerCase(); const bv = ((b[col] ?? '') + '').toLowerCase(); const r = av.localeCompare(bv); return tonerControlSortDirection === 'desc' ? -r : r; }); updateTonerControlSortIndicators(); if (!data.length) { list.innerHTML = '<tr><td colspan="4">' + t('no_data_filters') + '</td></tr>'; applyTablePreferences('tonerControl'); return; } const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); list.innerHTML = ''; data.forEach((p, index) => { const pid = p.printer_id; const shared = esc(p.shared_name || p.name || '-'); const subModel = esc(p.model || ''); const subIp = esc(p.ip || ''); const subHtml = subModel ? '<span class="tc-model">' + subModel + '</span>' : ''; const ipHtml = subIp ? '<span class="tc-ip">' + subIp + '</span>' : ''; const subSerial = esc(p.serial || ''); const serialHtml = subSerial ? '<span class="tc-ip" style="color:#94a3b8">S/N: ' + subSerial + '</span>' : ''; const subLoc = esc(p.location || ''); const locHtml2 = subLoc ? '<span class="tc-ip" style="color:#94a3b8"><i class="bi bi-geo-alt" style="font-size:9px"></i> ' + subLoc + '</span>' : ''; const printerCell = '<div class="tc-printer-cell"><span class="tc-pname clickable-name" onclick="openTcCounterHistory(' + pid + ')">' + shared + '</span><div class="tc-psub">' + subHtml + ipHtml + '</div>' + (serialHtml || locHtml2 ? '<div class="tc-psub" style="margin-top:2px">' + serialHtml + locHtml2 + '</div>' : '') + '</div>'; const checkCell = '<input type="date" class="tc-inline-date" data-tc="check_date" value="' + normalizeHtmlDate(p.check_date) + '" onchange="saveTonerControlInline(' + pid + ')">'; const bk = safeValue(p.toner_black); const tonerRows = ['<div class="tc-toner-row"><span class="tc-toner-lbl tc-toner-lbl-k">K</span><div class="tc-toner-bar"><div class="fill bar-black" style="width:' + Math.max(0, Math.min(100, bk ?? 0)) + '%"></div></div><span class="tc-toner-pct ' + (bk === null ? 'tc-ok' : bk < 10 ? 'tc-crit' : bk < 30 ? 'tc-low' : 'tc-ok') + '">' + (bk === null ? '-' : bk + '%') + '</span></div>']; if (p.is_color) { const cv = safeValue(p.toner_cyan); const mv = safeValue(p.toner_magenta); const yv = safeValue(p.toner_yellow); tonerRows.push('<div class="tc-toner-row"><span class="tc-toner-lbl tc-toner-lbl-c">C</span><div class="tc-toner-bar"><div class="fill bar-cyan" style="width:' + Math.max(0, Math.min(100, cv ?? 0)) + '%"></div></div><span class="tc-toner-pct ' + (cv === null ? 'tc-ok' : cv < 10 ? 'tc-crit' : cv < 30 ? 'tc-low' : 'tc-ok') + '">' + (cv === null ? '-' : cv + '%') + '</span></div>'); tonerRows.push('<div class="tc-toner-row"><span class="tc-toner-lbl tc-toner-lbl-m">M</span><div class="tc-toner-bar"><div class="fill bar-magenta" style="width:' + Math.max(0, Math.min(100, mv ?? 0)) + '%"></div></div><span class="tc-toner-pct ' + (mv === null ? 'tc-ok' : mv < 10 ? 'tc-crit' : mv < 30 ? 'tc-low' : 'tc-ok') + '">' + (mv === null ? '-' : mv + '%') + '</span></div>'); tonerRows.push('<div class="tc-toner-row"><span class="tc-toner-lbl tc-toner-lbl-y">Y</span><div class="tc-toner-bar"><div class="fill bar-yellow" style="width:' + Math.max(0, Math.min(100, yv ?? 0)) + '%"></div></div><span class="tc-toner-pct ' + (yv === null ? 'tc-ok' : yv < 10 ? 'tc-crit' : yv < 30 ? 'tc-low' : 'tc-ok') + '">' + (yv === null ? '-' : yv + '%') + '</span></div>'); } const tonerCell = '<div class="tc-toner-stack">' + tonerRows.join('') + '</div>'; const bkK = Math.round(Number(p.backup_black) || 0); const bkC = Math.round(Number(p.backup_cyan) || 0); const bkM = Math.round(Number(p.backup_magenta) || 0); const bkY = Math.round(Number(p.backup_yellow) || 0); let backupParts = '<div class="tc-bk-row tc-bk-k"><span class="tc-toner-lbl tc-toner-lbl-k">K</span><input type="number" min="0" class="tc-bk-input ' + (bkK <= 0 ? 'bk-zero' : 'bk-ok') + '" data-tc="backup_black" value="' + bkK + '" onchange="saveTonerControlInline(' + pid + ')"></div>'; if (p.is_color) { backupParts += '<div class="tc-bk-row tc-bk-c"><span class="tc-toner-lbl tc-toner-lbl-c">C</span><input type="number" min="0" class="tc-bk-input ' + (bkC <= 0 ? 'bk-zero' : 'bk-ok') + '" data-tc="backup_cyan" value="' + bkC + '" onchange="saveTonerControlInline(' + pid + ')"></div>'; backupParts += '<div class="tc-bk-row tc-bk-m"><span class="tc-toner-lbl tc-toner-lbl-m">M</span><input type="number" min="0" class="tc-bk-input ' + (bkM <= 0 ? 'bk-zero' : 'bk-ok') + '" data-tc="backup_magenta" value="' + bkM + '" onchange="saveTonerControlInline(' + pid + ')"></div>'; backupParts += '<div class="tc-bk-row tc-bk-y"><span class="tc-toner-lbl tc-toner-lbl-y">Y</span><input type="number" min="0" class="tc-bk-input ' + (bkY <= 0 ? 'bk-zero' : 'bk-ok') + '" data-tc="backup_yellow" value="' + bkY + '" onchange="saveTonerControlInline(' + pid + ')"></div>'; } const backupCell = '<div class="tc-backup-group">' + backupParts + '</div>'; const followCell = '<div class="tc-follow-cell"><label class="tc-mini-field"><span>Check</span>' + checkCell + '</label><label class="tc-mini-field"><span>Pedido</span><input type="text" class="tc-inline tc-inline-text" data-tc="pedido" value="' + esc(p.pedido || '') + '" placeholder="-" onchange="saveTonerControlInline(' + pid + ')"></label><label class="tc-mini-field"><span>WO</span><input type="text" class="tc-inline tc-inline-text" data-tc="work_order" value="' + esc(p.work_order || '') + '" placeholder="-" onchange="saveTonerControlInline(' + pid + ')"></label><label class="tc-mini-field tc-mini-field-notes"><span>Notas</span><input type="text" class="tc-inline tc-inline-notes" data-tc="notas" value="' + esc(p.notas || '') + '" placeholder="-" onchange="saveTonerControlInline(' + pid + ')"></label></div>'; const ts = getTonerStatus(p); const rowCls = ts === 'critical' ? 'row-error' : ts === 'low' ? 'row-low' : ''; list.innerHTML += '<tr id="tcrow_' + pid + '" class="' + rowCls + ' stagger-row" style="animation-delay:' + String(index * 25) + 'ms"><td>' + printerCell + '</td><td>' + tonerCell + '</td><td>' + backupCell + '</td><td>' + followCell + '</td></tr>'; }); applyTablePreferences('tonerControl'); }
         function openTcEditModal(printerId) { currentTonerControlPrinterId = printerId; const row = tonerControlRawData.find(r => r.printer_id === printerId); if (!row) return; const sub = document.getElementById('tonerControlModalSubtitle'); if (sub) sub.textContent = (row.shared_name || row.name || '-') + ' | ' + (row.model || '-') + ' | IP: ' + (row.ip || '-'); document.getElementById('tcDate').value = normalizeHtmlDate(row.check_date); document.getElementById('tcBackupK').value = row.backup_black || 0; document.getElementById('tcBackupC').value = row.backup_cyan || 0; document.getElementById('tcBackupM').value = row.backup_magenta || 0; document.getElementById('tcBackupY').value = row.backup_yellow || 0; document.getElementById('tcPedido').value = row.pedido || ''; document.getElementById('tcWO').value = row.work_order || ''; document.getElementById('tcNotas').value = row.notas || ''; document.getElementById('tonerControlModal')?.classList.add('open'); }
-        async function saveTonerControlInline(printerId) { const row = tonerControlRawData.find(r => r.printer_id === printerId); if (!row) return; const tr = document.getElementById('tcrow_' + printerId); const g = k => tr ? tr.querySelector('[data-tc="' + k + '"]') : null; const payload = { check_date: (g('check_date')?.value) || null, backup_black: parseFloat(g('backup_black')?.value) || 0, backup_cyan: parseFloat(g('backup_cyan')?.value) || 0, backup_magenta: parseFloat(g('backup_magenta')?.value) || 0, backup_yellow: parseFloat(g('backup_yellow')?.value) || 0, pedido: (g('pedido')?.value || '').trim(), work_order: (g('work_order')?.value || '').trim(), notas: (g('notas')?.value || '').trim() }; if (tr) tr.classList.add('tc-saving'); try { const response = await fetch('/toner-control/' + printerId, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); if (!response.ok) { const d = await response.json(); throw new Error(d.detail || 'Error'); } row.check_date = payload.check_date || ''; row.backup_black = payload.backup_black; row.backup_cyan = payload.backup_cyan; row.backup_magenta = payload.backup_magenta; row.backup_yellow = payload.backup_yellow; row.pedido = payload.pedido; row.work_order = payload.work_order; row.notas = payload.notas; updateTonerControlSummary(tonerControlRawData); showToast(t('saved'), 'success'); } catch (error) { showToast(error.message || t('error_saving'), 'error'); console.error(error); } finally { if (tr) tr.classList.remove('tc-saving'); } } async function loadTonerControl() { const list = document.getElementById('tonerControlList'); if (!list) return; try { showLoadingIn('tonerControlList', 6, t('loading_toner_control')); const response = await fetch('/toner-control/'); const data = await response.json(); if (!Array.isArray(data) || !data.length) { list.innerHTML = '<tr><td colspan="6">' + t('no_toner_data') + '</td></tr>'; tonerControlRawData = []; updateTonerControlSummary([]); return; } tonerControlRawData = data; updateTonerControlSummary(data); renderTonerControlTable(); } catch (error) { list.innerHTML = '<tr><td colspan="6">' + t('error_loading_toner') + '</td></tr>'; console.error('loadTonerControl error:', error); } }
+        async function saveTonerControlInline(printerId) { const row = tonerControlRawData.find(r => r.printer_id === printerId); if (!row) return; const tr = document.getElementById('tcrow_' + printerId); const g = k => tr ? tr.querySelector('[data-tc="' + k + '"]') : null; const payload = { check_date: (g('check_date')?.value) || null, backup_black: parseFloat(g('backup_black')?.value) || 0, backup_cyan: parseFloat(g('backup_cyan')?.value) || 0, backup_magenta: parseFloat(g('backup_magenta')?.value) || 0, backup_yellow: parseFloat(g('backup_yellow')?.value) || 0, pedido: (g('pedido')?.value || '').trim(), work_order: (g('work_order')?.value || '').trim(), notas: (g('notas')?.value || '').trim() }; if (tr) tr.classList.add('tc-saving'); try { const response = await fetch('/toner-control/' + printerId, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); if (!response.ok) { const d = await response.json(); throw new Error(d.detail || 'Error'); } row.check_date = payload.check_date || ''; row.backup_black = payload.backup_black; row.backup_cyan = payload.backup_cyan; row.backup_magenta = payload.backup_magenta; row.backup_yellow = payload.backup_yellow; row.pedido = payload.pedido; row.work_order = payload.work_order; row.notas = payload.notas; updateTonerControlSummary(tonerControlRawData); showToast(t('saved'), 'success'); } catch (error) { showToast(error.message || t('error_saving'), 'error'); console.error(error); } finally { if (tr) tr.classList.remove('tc-saving'); } } async function loadTonerControl() { const list = document.getElementById('tonerControlList'); if (!list) return; try { showLoadingIn('tonerControlList', 6, t('loading_toner_control')); const response = await fetch('/toner-control/'); const data = await response.json(); if (!Array.isArray(data) || !data.length) { list.innerHTML = '<tr><td colspan="6">' + t('no_toner_data') + '</td></tr>'; tonerControlRawData = []; updateTonerControlSummary([]); applyTablePreferences('tonerControl'); return; } tonerControlRawData = data; updateTonerControlSummary(data); renderTonerControlTable(); } catch (error) { list.innerHTML = '<tr><td colspan="6">' + t('error_loading_toner') + '</td></tr>'; applyTablePreferences('tonerControl'); console.error('loadTonerControl error:', error); } }
         function exportTonerControlCSV() { if (!tonerControlRawData.length) { showToast(t('no_data_export'), 'error'); return; } const headers = ['Shared Name', 'Modelo', 'Serie', 'IP', 'Check', 'K%', 'C%', 'M%', 'Y%', 'Backup K', 'Backup C', 'Backup M', 'Backup Y', 'Ubicación', 'Pedido', 'WO', 'Notas']; const csvEsc = v => { const s = String(v ?? ''); return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g, '""') + '"' : s; }; const rows = tonerControlRawData.map(p => [p.shared_name || '', p.model || '', p.serial || '', p.ip || '', p.check_date || '', safeValue(p.toner_black) ?? '', p.is_color ? (safeValue(p.toner_cyan) ?? '') : '', p.is_color ? (safeValue(p.toner_magenta) ?? '') : '', p.is_color ? (safeValue(p.toner_yellow) ?? '') : '', Math.round(Number(p.backup_black) || 0), p.is_color ? Math.round(Number(p.backup_cyan) || 0) : '', p.is_color ? Math.round(Number(p.backup_magenta) || 0) : '', p.is_color ? Math.round(Number(p.backup_yellow) || 0) : '', p.location || '', p.pedido || '', p.work_order || '', p.notas || ''].map(csvEsc).join(',')); const csv = '\uFEFF' + headers.map(csvEsc).join(',') + '\n' + rows.join('\n'); const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'control_toner_' + new Date().toISOString().slice(0, 10) + '.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); showToast(t('csv_exported'), 'success'); } function editTonerControl(printerId) { currentTonerControlPrinterId = printerId; const row = tonerControlRawData.find(r => r.printer_id === printerId); const sub = document.getElementById('tonerControlModalSubtitle'); if (sub) sub.textContent = row ? ((row.shared_name || row.name || '-') + ' | ' + (row.model || '-') + ' | IP: ' + (row.ip || '-')) : ''; document.getElementById('tcDate').value = normalizeHtmlDate(row?.check_date); document.getElementById('tcBackupK').value = row?.backup_black || 0; document.getElementById('tcBackupC').value = row?.backup_cyan || 0; document.getElementById('tcBackupM').value = row?.backup_magenta || 0; document.getElementById('tcBackupY').value = row?.backup_yellow || 0; document.getElementById('tcPedido').value = row?.pedido || ''; document.getElementById('tcWO').value = row?.work_order || ''; document.getElementById('tcNotas').value = row?.notas || ''; document.getElementById('tonerControlModal')?.classList.add('open'); }
         function closeTonerControlModal() { document.getElementById('tonerControlModal')?.classList.remove('open'); }
         async function saveTonerControl() { if (!currentTonerControlPrinterId) return; const payload = { check_date: document.getElementById('tcDate').value || null, backup_black: parseFloat(document.getElementById('tcBackupK').value) || 0, backup_cyan: parseFloat(document.getElementById('tcBackupC').value) || 0, backup_magenta: parseFloat(document.getElementById('tcBackupM').value) || 0, backup_yellow: parseFloat(document.getElementById('tcBackupY').value) || 0, pedido: document.getElementById('tcPedido').value.trim() || '', work_order: document.getElementById('tcWO').value.trim() || '', notas: document.getElementById('tcNotas').value.trim() || '' }; try { const response = await fetch('/toner-control/' + currentTonerControlPrinterId, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); if (!response.ok) { const d = await response.json(); throw new Error(d.detail || 'Error'); } const row = tonerControlRawData.find(r => r.printer_id === currentTonerControlPrinterId); if (row) { row.check_date = payload.check_date || ''; row.backup_black = payload.backup_black; row.backup_cyan = payload.backup_cyan; row.backup_magenta = payload.backup_magenta; row.backup_yellow = payload.backup_yellow; row.pedido = payload.pedido; row.work_order = payload.work_order; row.notas = payload.notas; } closeTonerControlModal(); updateTonerControlSummary(tonerControlRawData); renderTonerControlTable(); showToast(t('toner_control_updated'), 'success'); } catch (error) { showToast(error.message || t('error_updating_control'), 'error'); console.error(error); } } function showToast(message, type, duration) { type = type || 'success'; duration = duration || 3000; const toast = document.getElementById('appToast'); if (!toast) return; const icon = type === 'success' ? '<i class="bi bi-check-circle-fill" style="color:#22c55e;margin-right:8px"></i>' : '<i class="bi bi-x-circle-fill" style="color:#ef4444;margin-right:8px"></i>'; toast.innerHTML = icon + '<span>' + message + '</span>'; toast.className = 'toast toast-' + type; void toast.offsetWidth; toast.classList.add('show'); clearTimeout(toast._timer); toast._timer = setTimeout(() => toast.classList.remove('show'), duration); }
@@ -6167,6 +6783,7 @@
 
             if (!data.length) {
                 list.innerHTML = '<tr><td colspan="16">' + (t('pa_no_assets') || 'Sin activos registrados') + '</td></tr>';
+                applyTablePreferences('printerAssets');
                 return;
             }
 
@@ -6233,6 +6850,7 @@
             if (paTotal) animateCountUp(paTotal, total);
             if (paActive) animateCountUp(paActive, active);
             if (paInactive) animateCountUp(paInactive, inactive);
+            applyTablePreferences('printerAssets');
             animateSummaryCards('printerAssets');
 
 
@@ -6355,7 +6973,7 @@
             }
         }
         document.addEventListener('click', function (e) { const btn = e.target.closest('.action-button,.filter-toggle-btn,.toolbar-button'); if (!btn) return; const rect = btn.getBoundingClientRect(); const ripple = document.createElement('span'); ripple.className = 'btn-ripple'; const size = Math.max(rect.width, rect.height); ripple.style.width = ripple.style.height = size + 'px'; ripple.style.left = (e.clientX - rect.left - size / 2) + 'px'; ripple.style.top = (e.clientY - rect.top - size / 2) + 'px'; btn.appendChild(ripple); ripple.addEventListener('animationend', () => ripple.remove()); });
-        (function attachFilterListeners() { restoreDashboardFilters(); const searchEl = document.getElementById('searchInput'); if (searchEl) searchEl.addEventListener('input', scheduleDashboardSearchReload);['viewMode', 'densityMode', 'statusFilter', 'typeFilter', 'errorFilter', 'sortFilter'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('change', () => { loadPrinters(); saveDashboardFilters(); }); }); const printerIpEl = document.getElementById('printerIp'); if (printerIpEl) { printerIpEl.addEventListener('input', () => validatePrinterIpField()); printerIpEl.addEventListener('blur', () => { validatePrinterIpField(); autofillPrinterNameFromIp(); }); printerIpEl.addEventListener('change', () => { validatePrinterIpField(); autofillPrinterNameFromIp(); }); } ['discoverStartIp', 'discoverEndIp', 'discoverSingleIp'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('input', () => validateDiscoverFields()); }); toggleDiscoverModeFields(); document.addEventListener('keydown', function (e) { if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); const panel = document.getElementById('dashboardFilters'); if (panel && panel.classList.contains('closed')) toggleDashboardFilters(); const s = document.getElementById('searchInput'); if (s) { s.focus(); s.select(); } return; } if (e.key === 'Escape') { const modals = document.querySelectorAll('.modal-overlay.open'); if (modals.length) { const top = modals[modals.length - 1]; if (top.id === 'appConfirmModal') resolveAppConfirm(false); else if (top.id === 'addressBookFormModal') resolveAddressBookForm(null); else if (top.id === 'discoverPrinterCard') closeDiscoverPrintersModal(); else top.classList.remove('open'); return; } const drawer = document.getElementById('drawerPanel'); if (drawer && drawer.classList.contains('open')) { closeDrawer(); return; } } }); })();
+        (function attachFilterListeners() { restoreDashboardFilters(); const searchEl = document.getElementById('searchInput'); if (searchEl) searchEl.addEventListener('input', scheduleDashboardSearchReload);['viewMode', 'densityMode', 'statusFilter', 'typeFilter', 'errorFilter', 'sortFilter'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('change', () => { loadPrinters(); saveDashboardFilters(); }); }); const printerIpEl = document.getElementById('printerIp'); if (printerIpEl) { printerIpEl.addEventListener('input', () => validatePrinterIpField()); printerIpEl.addEventListener('blur', () => { validatePrinterIpField(); autofillPrinterNameFromIp(); }); printerIpEl.addEventListener('change', () => { validatePrinterIpField(); autofillPrinterNameFromIp(); }); } ['discoverStartIp', 'discoverEndIp', 'discoverSingleIp'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('input', () => validateDiscoverFields()); }); toggleDiscoverModeFields(); initTablePreferences(); document.addEventListener('click', e => { if (!e.target.closest('.table-pref-panel') && !e.target.closest('.table-pref-button')) closeTablePreferences(); }); document.addEventListener('keydown', function (e) { if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); const panel = document.getElementById('dashboardFilters'); if (panel && panel.classList.contains('closed')) toggleDashboardFilters(); const s = document.getElementById('searchInput'); if (s) { s.focus(); s.select(); } return; } if (e.key === 'Escape') { if (document.querySelector('.table-pref-panel')) { closeTablePreferences(); return; } const modals = document.querySelectorAll('.modal-overlay.open'); if (modals.length) { const top = modals[modals.length - 1]; if (top.id === 'appConfirmModal') resolveAppConfirm(false); else if (top.id === 'addressBookFormModal') resolveAddressBookForm(null); else if (top.id === 'discoverPrinterCard') closeDiscoverPrintersModal(); else top.classList.remove('open'); return; } const drawer = document.getElementById('drawerPanel'); if (drawer && drawer.classList.contains('open')) { closeDrawer(); return; } } }); })();
         function isShortcutTypingTarget(event) {
             const el = event.target;
             return !!(el && el.closest && el.closest('input, textarea, select, [contenteditable="true"]'));
@@ -6951,6 +7569,7 @@
                 cardsView.style.display = viewMode === 'cards' ? 'block' : 'none';
                 tableView.style.display = viewMode === 'table' ? 'block' : 'none';
                 updateDashboardSortIndicators();
+                applyTablePreferences('dashboard');
             } catch (error) {
                 if (error.name !== 'AbortError') console.error('loadPrinters error:', error);
             } finally {
