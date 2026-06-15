@@ -6,7 +6,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 RICOH_HTTP_DEBUG = False
-RICOH_HTTP_TIMEOUT = 2
+RICOH_HTTP_TIMEOUT = 6
 
 
 def _parse_int(text):

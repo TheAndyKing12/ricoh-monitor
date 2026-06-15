@@ -584,8 +584,7 @@ def build_printer_counters(printer):
     print_color = None
 
     http_used = False
-    snmp_has_basic = total_pages is not None and bw_pages is not None and (not is_color or color_pages is not None)
-    http_data = None if snmp_has_basic else get_ricoh_http_counters(printer.ip)
+    http_data = get_ricoh_http_counters(printer.ip)
     if http_data:
         if http_data.get("bw_pages") is not None:
             bw_pages = safe_int(http_data["bw_pages"])
@@ -631,7 +630,9 @@ def build_printer_counters(printer):
         if (bw_pages is not None) and (color_pages is not None):
             total_pages = bw_pages + color_pages
     else:
-        if bw_pages is not None:
+        if bw_pages is None and total_pages is not None:
+            bw_pages = total_pages
+        elif bw_pages is not None:
             total_pages = bw_pages
         color_pages = None
         copy_color = None
@@ -1023,6 +1024,10 @@ def _get_latest_counter_snapshot_rows(db: Session) -> list[dict]:
             or snapshot.copy_color is not None
             or snapshot.print_color is not None
         )
+        total_pages = snapshot.total_pages if snapshot else None
+        bw_pages = snapshot.bw_pages if snapshot else None
+        if snapshot and not is_color and bw_pages is None and total_pages is not None:
+            bw_pages = total_pages
         rows.append({
             "id": printer.id,
             "name": getattr(printer, "shared_name", None) or printer.name or printer.model,
@@ -1031,12 +1036,12 @@ def _get_latest_counter_snapshot_rows(db: Session) -> list[dict]:
             "is_color": is_color,
             "counter_status": "online" if has_counters else "offline",
             "counter_source": snapshot.source if snapshot else "cache",
-            "total_pages": snapshot.total_pages if snapshot else None,
+            "total_pages": total_pages,
             "copy_bw": snapshot.copy_bw if snapshot else None,
             "copy_color": snapshot.copy_color if color_present else None,
             "print_bw": snapshot.print_bw if snapshot else None,
             "print_color": snapshot.print_color if color_present else None,
-            "bw_pages": snapshot.bw_pages if snapshot else None,
+            "bw_pages": bw_pages,
             "color_pages": snapshot.color_pages if color_present else None,
             "is_complete": bool(snapshot.is_complete) if snapshot else False,
         })
