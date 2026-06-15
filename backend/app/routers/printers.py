@@ -571,7 +571,9 @@ def build_printer_counters(printer):
 
     total_pages = safe_int(_v(oids[0]))
     bw_pages = safe_int(_v(oids[1]))
-    color_pages = safe_int(_v(oids[2])) if is_color else None
+    color_pages = safe_int(_v(oids[2]))
+    if not is_color and color_pages is not None:
+        is_color = True
 
     snmp_present = any(_v(oid) is not None for oid in oids)
 
@@ -588,8 +590,9 @@ def build_printer_counters(printer):
         if http_data.get("bw_pages") is not None:
             bw_pages = safe_int(http_data["bw_pages"])
             http_used = True
-        if is_color and http_data.get("color_pages") is not None:
+        if http_data.get("color_pages") is not None:
             color_pages = safe_int(http_data["color_pages"])
+            is_color = True
             http_used = True
         if http_data.get("total_pages") is not None:
             total_pages = safe_int(http_data["total_pages"])
@@ -597,20 +600,23 @@ def build_printer_counters(printer):
         if http_data.get("copy_bw") is not None:
             copy_bw = safe_int(http_data["copy_bw"])
             http_used = True
-        if is_color and http_data.get("copy_color") is not None:
+        if http_data.get("copy_color") is not None:
             copy_color = safe_int(http_data["copy_color"])
+            is_color = True
             http_used = True
         if http_data.get("print_bw") is not None:
             print_bw = safe_int(http_data["print_bw"])
             http_used = True
-        if is_color and http_data.get("print_color") is not None:
+        if http_data.get("print_color") is not None:
             print_color = safe_int(http_data["print_color"])
+            is_color = True
             http_used = True
 
     # if copy/print counters are available prefer summing them for BW and Color
     if copy_bw is not None or print_bw is not None:
         bw_pages = (copy_bw or 0) + (print_bw or 0)
-    if is_color and (copy_color is not None or print_color is not None):
+    if (copy_color is not None or print_color is not None):
+        is_color = True
         color_pages = (copy_color or 0) + (print_color or 0)
 
     # Some Ricoh models expose total and B/W counters but not the private color
@@ -998,13 +1004,24 @@ def _get_latest_counter_snapshot_rows(db: Session) -> list[dict]:
     for printer in printers:
         snapshot = latest_by_printer.get(printer.id)
         is_color = detect_is_color(printer)
+        if snapshot and (
+            snapshot.color_pages is not None
+            or snapshot.copy_color is not None
+            or snapshot.print_color is not None
+        ):
+            is_color = True
         has_counters = bool(
             snapshot
             and (
                 snapshot.total_pages is not None
                 or snapshot.bw_pages is not None
-                or (is_color and snapshot.color_pages is not None)
+                or snapshot.color_pages is not None
             )
+        )
+        color_present = snapshot and (
+            snapshot.color_pages is not None
+            or snapshot.copy_color is not None
+            or snapshot.print_color is not None
         )
         rows.append({
             "id": printer.id,
@@ -1016,11 +1033,11 @@ def _get_latest_counter_snapshot_rows(db: Session) -> list[dict]:
             "counter_source": snapshot.source if snapshot else "cache",
             "total_pages": snapshot.total_pages if snapshot else None,
             "copy_bw": snapshot.copy_bw if snapshot else None,
-            "copy_color": snapshot.copy_color if snapshot and is_color else None,
+            "copy_color": snapshot.copy_color if color_present else None,
             "print_bw": snapshot.print_bw if snapshot else None,
-            "print_color": snapshot.print_color if snapshot and is_color else None,
+            "print_color": snapshot.print_color if color_present else None,
             "bw_pages": snapshot.bw_pages if snapshot else None,
-            "color_pages": snapshot.color_pages if snapshot and is_color else None,
+            "color_pages": snapshot.color_pages if color_present else None,
             "is_complete": bool(snapshot.is_complete) if snapshot else False,
         })
     return rows
