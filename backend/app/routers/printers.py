@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from datetime import datetime, timezone
 import csv
 import io
+import re
 
 from sqlalchemy.orm import Session
 
@@ -558,7 +559,20 @@ def build_printer_counters(printer):
         "1.3.6.1.4.1.367.3.2.1.7.2.9.1.2.1",  # bw pages
         "1.3.6.1.4.1.367.3.2.1.7.2.9.1.2.3"   # color pages
     ]
-    is_color = detect_is_color(printer)
+    model_hint = " ".join(
+        str(getattr(printer, attr, "") or "")
+        for attr in ("shared_name", "name", "model")
+    ).upper()
+    model_says_color = detect_is_color_from_model(model_hint)
+    model_says_mono = (
+        "BNW" in model_hint
+        or "B/N" in model_hint
+        or "B&W" in model_hint
+        or "BLACK" in model_hint
+        or "MONO" in model_hint
+        or bool(re.search(r"\bIM\s*\d{3,5}\b", model_hint))
+    ) and not model_says_color
+    is_color = False if model_says_mono else (detect_is_color(printer) or model_says_color)
     try:
         vals = get_snmp_values(printer.ip, printer.snmp_community, oids)
     except Exception:
@@ -572,7 +586,9 @@ def build_printer_counters(printer):
     total_pages = safe_int(_v(oids[0]))
     bw_pages = safe_int(_v(oids[1]))
     color_pages = safe_int(_v(oids[2]))
-    if not is_color and color_pages is not None:
+    if model_says_mono:
+        color_pages = None
+    elif not is_color and color_pages is not None:
         is_color = True
 
     snmp_present = any(_v(oid) is not None for oid in oids)
@@ -589,9 +605,8 @@ def build_printer_counters(printer):
         if http_data.get("bw_pages") is not None:
             bw_pages = safe_int(http_data["bw_pages"])
             http_used = True
-        if http_data.get("color_pages") is not None:
+        if is_color and http_data.get("color_pages") is not None:
             color_pages = safe_int(http_data["color_pages"])
-            is_color = True
             http_used = True
         if http_data.get("total_pages") is not None:
             total_pages = safe_int(http_data["total_pages"])
@@ -599,23 +614,20 @@ def build_printer_counters(printer):
         if http_data.get("copy_bw") is not None:
             copy_bw = safe_int(http_data["copy_bw"])
             http_used = True
-        if http_data.get("copy_color") is not None:
+        if is_color and http_data.get("copy_color") is not None:
             copy_color = safe_int(http_data["copy_color"])
-            is_color = True
             http_used = True
         if http_data.get("print_bw") is not None:
             print_bw = safe_int(http_data["print_bw"])
             http_used = True
-        if http_data.get("print_color") is not None:
+        if is_color and http_data.get("print_color") is not None:
             print_color = safe_int(http_data["print_color"])
-            is_color = True
             http_used = True
 
     # if copy/print counters are available prefer summing them for BW and Color
     if copy_bw is not None or print_bw is not None:
         bw_pages = (copy_bw or 0) + (print_bw or 0)
-    if (copy_color is not None or print_color is not None):
-        is_color = True
+    if is_color and (copy_color is not None or print_color is not None):
         color_pages = (copy_color or 0) + (print_color or 0)
 
     # Some Ricoh models expose total and B/W counters but not the private color
@@ -1004,8 +1016,21 @@ def _get_latest_counter_snapshot_rows(db: Session) -> list[dict]:
     rows = []
     for printer in printers:
         snapshot = latest_by_printer.get(printer.id)
-        is_color = detect_is_color(printer)
-        if snapshot and (
+        model_hint = " ".join(
+            str(getattr(printer, attr, "") or "")
+            for attr in ("shared_name", "name", "model")
+        ).upper()
+        model_says_color = detect_is_color_from_model(model_hint)
+        model_says_mono = (
+            "BNW" in model_hint
+            or "B/N" in model_hint
+            or "B&W" in model_hint
+            or "BLACK" in model_hint
+            or "MONO" in model_hint
+            or bool(re.search(r"\bIM\s*\d{3,5}\b", model_hint))
+        ) and not model_says_color
+        is_color = False if model_says_mono else (detect_is_color(printer) or model_says_color)
+        if not model_says_mono and snapshot and (
             snapshot.color_pages is not None
             or snapshot.copy_color is not None
             or snapshot.print_color is not None
@@ -1019,7 +1044,7 @@ def _get_latest_counter_snapshot_rows(db: Session) -> list[dict]:
                 or snapshot.color_pages is not None
             )
         )
-        color_present = snapshot and (
+        color_present = snapshot and is_color and (
             snapshot.color_pages is not None
             or snapshot.copy_color is not None
             or snapshot.print_color is not None
