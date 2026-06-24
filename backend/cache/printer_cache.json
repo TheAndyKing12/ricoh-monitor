@@ -16,7 +16,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-15T00:31:18.713704"
+      "cached_at": "2026-06-24T03:05:26.595526"
     },
     "2": {
       "id": 2,
@@ -34,7 +34,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-15T00:31:20.718097"
+      "cached_at": "2026-06-24T03:05:28.607938"
     },
     "29": {
       "id": 29,
@@ -52,7 +52,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-15T00:31:22.731795"
+      "cached_at": "2026-06-24T03:05:30.608902"
     },
     "30": {
       "id": 30,
@@ -67,7 +67,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-15T00:31:24.745199"
+      "cached_at": "2026-06-24T03:05:32.612664"
     },
     "31": {
       "id": 31,
@@ -82,7 +82,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-15T00:31:26.756111"
+      "cached_at": "2026-06-24T03:05:34.624103"
     },
     "35": {
       "id": 35,
@@ -100,7 +100,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-15T00:31:28.763166"
+      "cached_at": "2026-06-24T03:05:36.625314"
     },
     "36": {
       "id": 36,
@@ -115,7 +115,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-15T00:31:30.773678"
+      "cached_at": "2026-06-24T03:05:38.628074"
     },
     "37": {
       "id": 37,
@@ -130,7 +130,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-15T00:31:32.779250"
+      "cached_at": "2026-06-24T03:05:40.641073"
     },
     "38": {
       "id": 38,
@@ -148,7 +148,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-15T00:31:34.784150"
+      "cached_at": "2026-06-24T03:05:42.647592"
     },
     "39": {
       "id": 39,
@@ -163,7 +163,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-15T00:31:36.794789"
+      "cached_at": "2026-06-24T03:05:44.656500"
     },
     "40": {
       "id": 40,
@@ -178,7 +178,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-15T00:31:38.805364"
+      "cached_at": "2026-06-24T03:05:46.663843"
     },
     "42": {
       "id": 42,
@@ -196,7 +196,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-15T00:31:40.815226"
+      "cached_at": "2026-06-24T03:05:48.673904"
     },
     "43": {
       "id": 43,
@@ -211,7 +211,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-15T00:31:42.825749"
+      "cached_at": "2026-06-24T03:05:50.674613"
     },
     "44": {
       "id": 44,
@@ -226,7 +226,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-15T00:31:44.840971"
+      "cached_at": "2026-06-24T03:05:52.681293"
     },
     "45": {
       "id": 45,
@@ -241,7 +241,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-15T00:31:46.854195"
+      "cached_at": "2026-06-24T03:05:54.684397"
     },
     "46": {
       "id": 46,
@@ -256,7 +256,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-15T00:31:48.865697"
+      "cached_at": "2026-06-24T03:05:56.699380"
     },
     "47": {
       "id": 47,
@@ -274,7 +274,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-15T00:31:50.873574"
+      "cached_at": "2026-06-24T03:05:58.714405"
     },
     "48": {
       "id": 48,
@@ -289,7 +289,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-15T00:31:52.877766"
+      "cached_at": "2026-06-24T03:06:00.717346"
     },
     "49": {
       "id": 49,
@@ -307,7 +307,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-15T00:31:54.887394"
+      "cached_at": "2026-06-24T03:06:02.723045"
     },
     "50": {
       "id": 50,
@@ -325,7 +325,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-15T00:31:56.896924"
+      "cached_at": "2026-06-24T03:06:04.738800"
     },
     "51": {
       "id": 51,
@@ -343,7 +343,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-15T00:31:58.910056"
+      "cached_at": "2026-06-24T03:06:06.747014"
     },
     "52": {
       "id": 52,
@@ -358,7 +358,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-15T00:32:00.914319"
+      "cached_at": "2026-06-24T03:06:08.752345"
     },
     "53": {
       "id": 53,
@@ -373,7 +373,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-15T00:32:02.925261"
+      "cached_at": "2026-06-24T03:06:10.765715"
     },
     "54": {
       "id": 54,
@@ -391,7 +391,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-15T00:32:04.931143"
+      "cached_at": "2026-06-24T03:06:12.774306"
     },
     "55": {
       "id": 55,
@@ -406,7 +406,7 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-15T00:32:06.945741"
+      "cached_at": "2026-06-24T03:06:14.786991"
     },
     "56": {
       "id": 56,
@@ -424,7 +424,7 @@
       "toner_cyan": null,
       "toner_magenta": null,
       "toner_yellow": null,
-      "cached_at": "2026-06-15T00:32:08.954312"
+      "cached_at": "2026-06-24T03:06:16.796110"
     },
     "57": {
       "id": 57,
@@ -439,7 +439,25 @@
       "printer_state": "unknown",
       "error_message": "Sin respuesta SNMP",
       "toner_black": null,
-      "cached_at": "2026-06-15T00:32:10.956217"
+      "cached_at": "2026-06-24T03:06:18.808438"
+    },
+    "58": {
+      "id": 58,
+      "shared_name": "test",
+      "name": "test2",
+      "model": "test2",
+      "serial": "test2",
+      "ip": "192.168.1.240",
+      "location": null,
+      "is_color": true,
+      "status": "offline",
+      "printer_state": "unknown",
+      "error_message": "Sin respuesta SNMP",
+      "toner_black": null,
+      "toner_cyan": null,
+      "toner_magenta": null,
+      "toner_yellow": null,
+      "cached_at": "2026-06-24T03:06:20.811261"
     }
   },
   "counters": {
@@ -1137,8 +1155,8 @@
     }
   ],
   "metadata": {
-    "last_full_sync": "2026-06-15T00:32:10.956282",
+    "last_full_sync": "2026-06-24T03:06:20.811335",
     "last_counter_sync": "2026-06-14T04:57:07.522500",
-    "last_toner_sync": "2026-06-15T00:26:16.705396"
+    "last_toner_sync": "2026-06-24T03:05:24.592267"
   }
 }

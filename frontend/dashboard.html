@@ -4634,8 +4634,13 @@
                     <button class="action-button action-button-secondary" type="button" onclick="showTab('printers')" data-i18n="back_to_printers">Volver a impresoras</button>
                     <button class="action-button action-button-warning" type="button" onclick="createAddressBookEntry()" data-i18n="add_user">Agregar usuario</button>
                     <button class="action-button" type="button" onclick="loadAddressBookEntries()" data-i18n="btn_refresh">Refrescar</button>
+                    <button class="action-button action-button-secondary" type="button" onclick="exportAddressBook('csv')"><i class="bi bi-filetype-csv"></i> CSV</button>
+                    <button class="action-button action-button-secondary" type="button" onclick="exportAddressBook('xlsx')"><i class="bi bi-file-earmark-excel"></i> Excel</button>
+                    <button class="action-button action-button-secondary" type="button" onclick="document.getElementById('addressBookImportFile').click()"><i class="bi bi-upload"></i> Importar</button>
+                    <input id="addressBookImportFile" type="file" accept=".csv,.xlsx,.xlsm" style="display:none" onchange="importAddressBookFile(this.files[0]);this.value=''">
                     <button class="action-button action-button-secondary" type="button" onclick="closeAddressBookSession()" data-i18n="close_session">Cerrar sesión</button>
-                    <button class="action-button action-button-secondary" type="button" onclick="applyAddressBookChanges()" data-i18n="apply_changes_printer">Aplicar cambios a impresora</button>
+                    <button id="addressBookApplyBtn" class="action-button action-button-secondary" type="button" onclick="applyAddressBookChanges()" data-i18n="apply_changes_printer" style="display:none">Aplicar cambios a impresora</button>
+                    <div class="table-search" style="margin-left:auto;min-width:240px"><i class="bi bi-search"></i><input id="addressBookSearch" placeholder="Buscar usuario, correo o registro..." oninput="filterAddressBookEntries()"></div>
                 </div>
                 <div class="card">
                     <h3 id="addressBookPrinterTitle" style="margin-top:0;" data-i18n="select_a_printer_title">Seleccione una impresora</h3>
@@ -5488,6 +5493,9 @@
         let currentAddressBookPrinter = null;
         let abSessionToken = null;
         let abCredentials = { admin: null };
+        let addressBookEntriesCache = [];
+        let addressBookStorageMode = 'ricoh-real';
+        let addressBookBusy = false;
         let currentModalPrinter = null;
         let currentTonerControlPrinterId = null;
         let tonerControlRawData = [];
@@ -6257,10 +6265,11 @@
         function setDensityMode(mode) { document.body.classList.remove('density-compact', 'density-standard', 'density-large'); document.body.classList.add(mode === 'compact' ? 'density-compact' : mode === 'large' ? 'density-large' : 'density-standard'); }
         function isValidIpv4(ip) { return /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/.test((ip || '').trim()); }
         function setFieldValidation(inputId, helpId, message = '', state = '') { const input = document.getElementById(inputId); const help = document.getElementById(helpId); if (!input) return; input.classList.remove('input-valid', 'input-invalid'); if (state === 'valid') input.classList.add('input-valid'); if (state === 'invalid') input.classList.add('input-invalid'); if (help) { help.textContent = message; help.className = `field-help${state === 'invalid' ? ' error' : state === 'valid' ? ' success' : ''}`; } }
-        function validatePrinterIpField() { const ip = document.getElementById('printerIp')?.value.trim() || ''; if (!ip) { setFieldValidation('printerIp', 'printerIpHelp', ''); return false; } if (!isValidIpv4(ip)) { setFieldValidation('printerIp', 'printerIpHelp', 'IP inválida', 'invalid'); return false; } setFieldValidation('printerIp', 'printerIpHelp', 'IP válida', 'valid'); return true; }
+        function isPrivateIpv4(ip) { const parts = String(ip || '').split('.').map(Number); return parts[0] === 10 || (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) || (parts[0] === 192 && parts[1] === 168); }
+        function validatePrinterIpField() { const ip = document.getElementById('printerIp')?.value.trim() || ''; if (!ip) { setFieldValidation('printerIp', 'printerIpHelp', ''); return false; } if (!isValidIpv4(ip)) { setFieldValidation('printerIp', 'printerIpHelp', 'IP inválida', 'invalid'); return false; } if (!isPrivateIpv4(ip)) { setFieldValidation('printerIp', 'printerIpHelp', 'IP válida, pero es pública. Revise si quiso escribir 192.168.x.x', 'invalid'); return true; } setFieldValidation('printerIp', 'printerIpHelp', 'IP válida', 'valid'); return true; }
         function toggleDiscoverModeFields() { const mode = document.getElementById('discoverMode')?.value || 'range'; const startWrap = document.getElementById('discoverStartWrap'); const endWrap = document.getElementById('discoverEndWrap'); const singleWrap = document.getElementById('discoverSingleWrap'); if (startWrap) startWrap.style.display = mode === 'range' ? '' : 'none'; if (endWrap) endWrap.style.display = mode === 'range' ? '' : 'none'; if (singleWrap) singleWrap.style.display = mode === 'ip' ? '' : 'none'; }
         function validateDiscoverFields() { const mode = document.getElementById('discoverMode')?.value || 'range'; const startIp = document.getElementById('discoverStartIp')?.value.trim() || ''; const endIp = document.getElementById('discoverEndIp')?.value.trim() || ''; const singleIp = document.getElementById('discoverSingleIp')?.value.trim() || ''; let valid = true; if (mode === 'range') { if (!startIp || !isValidIpv4(startIp)) { setFieldValidation('discoverStartIp', 'discoverStartIpHelp', 'IP inicial inválida', 'invalid'); valid = false; } else setFieldValidation('discoverStartIp', 'discoverStartIpHelp', 'OK', 'valid'); if (!endIp || !isValidIpv4(endIp)) { setFieldValidation('discoverEndIp', 'discoverEndIpHelp', 'IP final inválida', 'invalid'); valid = false; } else setFieldValidation('discoverEndIp', 'discoverEndIpHelp', 'OK', 'valid'); } else { setFieldValidation('discoverStartIp', 'discoverStartIpHelp', ''); setFieldValidation('discoverEndIp', 'discoverEndIpHelp', ''); if (!singleIp || !isValidIpv4(singleIp)) { setFieldValidation('discoverSingleIp', 'discoverSingleIpHelp', 'IP inválida', 'invalid'); valid = false; } else setFieldValidation('discoverSingleIp', 'discoverSingleIpHelp', 'OK', 'valid'); } return valid; }
-        async function autofillPrinterNameFromIp() { const ipEl = document.getElementById('printerIp'); const nameEl = document.getElementById('printerName'); const communityEl = document.getElementById('printerCommunity'); if (!ipEl || !nameEl) return; const ip = ipEl.value.trim(); const community = (communityEl?.value || 'public').trim() || 'public'; if (!isValidIpv4(ip)) return; if (hostnameLookupController) { try { hostnameLookupController.abort(); } catch (e) { } } hostnameLookupController = new AbortController(); try { const response = await fetch(`/printers/resolve-hostname?ip=${encodeURIComponent(ip)}&community=${encodeURIComponent(community)}`, { signal: hostnameLookupController.signal }); const data = await response.json(); if (data?.hostname && !nameEl.value.trim()) { nameEl.value = data.hostname; nameEl.dataset.autoFilled = 'true'; } } catch (error) { if (error.name !== 'AbortError') console.warn('No se pudo resolver el hostname.', error); } finally { hostnameLookupController = null; } }
+        async function autofillPrinterNameFromIp() { const ipEl = document.getElementById('printerIp'); const nameEl = document.getElementById('printerName'); const communityEl = document.getElementById('printerCommunity'); if (!ipEl || !nameEl) return; const ip = ipEl.value.trim(); const community = (communityEl?.value || 'public').trim() || 'public'; if (!isValidIpv4(ip)) return; if (hostnameLookupController) { try { hostnameLookupController.abort(); } catch (e) { } } const controller = new AbortController(); hostnameLookupController = controller; const timer = setTimeout(() => controller.abort(), 7000); try { const response = await fetch(`/printers/resolve-hostname?ip=${encodeURIComponent(ip)}&community=${encodeURIComponent(community)}`, { signal: controller.signal }); const data = await response.json(); if (data?.hostname && !nameEl.value.trim()) { nameEl.value = data.hostname; nameEl.dataset.autoFilled = 'true'; } } catch (error) { if (error.name !== 'AbortError') console.warn('No se pudo resolver el hostname.', error); } finally { clearTimeout(timer); if (hostnameLookupController === controller) hostnameLookupController = null; } }
         function safeValue(value) { if (value === null || value === undefined || value === '') return null; const n = Number(value); return Number.isNaN(n) ? null : n; }
         function renderTonerMini(label, value, cssClass) { const numeric = safeValue(value); if (numeric === null) return `<span class="tc-muted">-</span>`; const width = Math.max(0, Math.min(100, numeric)); return `<div class="toner-mini" title="${label}: ${numeric}%"><div class="mini-bar"><div class="fill ${cssClass} bar-fill-anim" style="--bar-w:${width}%"></div></div><span class="mini-label">${numeric}%</span></div>`; } function normalizeErrorType(errorText) { const text = (errorText || 'Sin error').toLowerCase(); if (!text || text === 'sin error') return 'ok'; if (text.includes('crítico') || text.includes('critical')) return 'critical'; if (text.includes('low toner') || text.includes('tóner bajo')) return 'low'; return 'other'; }
         function getErrorClass(errorText, status) { if ((status || '').toLowerCase() !== 'online') return 'error-critical'; const type = normalizeErrorType(errorText); if (type === 'critical') return 'error-critical'; if (type === 'low') return 'error-warn'; if (type === 'other') return 'error-critical'; return 'error-ok'; }
@@ -6293,6 +6302,10 @@
             currentAddressBookPrinter = printer || null;
             abCredentials = { admin: null };
             abSessionToken = null;
+            addressBookEntriesCache = [];
+            addressBookStorageMode = 'ricoh-real';
+            const search = document.getElementById('addressBookSearch');
+            if (search) search.value = '';
             document.getElementById('addressBookAdmin').value = '';
             document.getElementById('addressBookPassword').value = '';
             document.getElementById('addressBookAuthStatus').textContent = '';
@@ -6426,6 +6439,187 @@
                 console.error('Error closing session:', error);
                 showToast('Error de conexión al cerrar sesión', 'error');
             }
+        }
+        // Address Book v3: stable row actions, search, session handling and file tools.
+        function escapeAddressBookText(value) {
+            const div = document.createElement('div');
+            div.textContent = value === null || value === undefined || value === '' ? '-' : String(value);
+            return div.innerHTML;
+        }
+        async function addressBookFetch(url, options) {
+            const opts = { ...(options || {}) };
+            opts.headers = Object.assign({}, opts.headers || {});
+            if (abSessionToken) opts.headers['X-Address-Book-Session'] = abSessionToken;
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 120000);
+            opts.signal = controller.signal;
+            try { return await fetch(url, opts); }
+            finally { clearTimeout(timer); }
+        }
+        async function readAddressBookResponse(response, fallback) {
+            let data = {};
+            try { data = await response.json(); } catch (_) { }
+            if (!response.ok) {
+                if (response.status === 401 || response.status === 403) abSessionToken = null;
+                const detail = typeof data.detail === 'string' ? data.detail : data.detail?.message;
+                const error = new Error(detail || fallback || 'Error de libreta de direcciones');
+                error.status = response.status;
+                throw error;
+            }
+            return data;
+        }
+        function setAddressBookBusy(busy, message) {
+            addressBookBusy = !!busy;
+            document.querySelectorAll('#addressBook > .action-row button').forEach(button => button.disabled = addressBookBusy);
+            const status = document.getElementById('addressBookStatus');
+            if (busy && status) status.textContent = message || 'Procesando...';
+        }
+        function setAddressBookRowBusy(registrationNo, busy) {
+            const row = Array.from(document.querySelectorAll('#addressBookList tr')).find(item => item.dataset.registrationNo === String(registrationNo));
+            if (!row) return;
+            row.style.opacity = busy ? '.55' : '';
+            row.style.pointerEvents = busy ? 'none' : '';
+        }
+        function renderAddressBookRows(entries) {
+            const list = document.getElementById('addressBookList');
+            if (!list) return;
+            if (!entries.length) {
+                list.innerHTML = '<tr><td colspan="12"><div class="empty-state" style="margin:12px 0"><i class="bi bi-person-lines-fill"></i><strong>' + t('no_registered_users') + '</strong></div></td></tr>';
+                return;
+            }
+            list.innerHTML = entries.map(entry => {
+                const reg = String(entry.registration_no || '');
+                const encodedReg = encodeURIComponent(reg);
+                return `<tr data-registration-no="${escapeAddressBookText(reg)}"><td>${escapeAddressBookText(reg)}</td><td><strong>${escapeAddressBookText(entry.name)}</strong></td><td>${escapeAddressBookText(entry.key_display)}</td><td>${entry.freq ? 'Si' : 'No'}</td><td>${escapeAddressBookText(entry.title1)}</td><td>${escapeAddressBookText(entry.title2)}</td><td>${escapeAddressBookText(entry.title3)}</td><td>${escapeAddressBookText(entry.user_code)}</td><td>${escapeAddressBookText(entry.email_address)}</td><td>${escapeAddressBookText(entry.folder)}</td><td><span class="status-badge status-badge-online">${escapeAddressBookText(entry.status || 'Activo')}</span></td><td><div class="action-row" style="margin-bottom:0;gap:6px"><button class="action-button" type="button" title="Editar" onclick="editAddressBookEntryByRegistration('${encodedReg}')"><i class="bi bi-pencil"></i></button><button class="action-button action-button-danger" type="button" title="Eliminar" onclick="deleteAddressBookEntry('${encodedReg}')"><i class="bi bi-trash3"></i></button></div></td></tr>`;
+            }).join('');
+        }
+        function filterAddressBookEntries() {
+            const search = (document.getElementById('addressBookSearch')?.value || '').trim().toLowerCase();
+            const filtered = !search ? addressBookEntriesCache : addressBookEntriesCache.filter(entry =>
+                [entry.registration_no, entry.name, entry.key_display, entry.email_address, entry.user_code, entry.folder]
+                    .some(value => String(value || '').toLowerCase().includes(search))
+            );
+            renderAddressBookRows(filtered);
+        }
+        function renderAddressBookEntries(entries, storageMode) {
+            addressBookEntriesCache = Array.isArray(entries) ? entries : [];
+            addressBookStorageMode = storageMode || 'ricoh-real';
+            const status = document.getElementById('addressBookStatus');
+            const applyBtn = document.getElementById('addressBookApplyBtn');
+            if (status) status.textContent = (addressBookStorageMode === 'ricoh-real' ? 'Conectado a Ricoh' : 'Modo local') + ' | Registros: ' + addressBookEntriesCache.length;
+            if (applyBtn) applyBtn.style.display = addressBookStorageMode === 'local-safe' ? '' : 'none';
+            filterAddressBookEntries();
+        }
+        async function loadAddressBookEntries() {
+            const list = document.getElementById('addressBookList');
+            if (!currentAddressBookPrinter) { if (list) list.innerHTML = '<tr><td colspan="12">Seleccione una impresora.</td></tr>'; return; }
+            setAddressBookBusy(true, 'Cargando libreta...');
+            try {
+                showLoadingIn('addressBookList', 12, t('loading_address_book'));
+                const response = await addressBookFetch(`/printers/${currentAddressBookPrinter.id}/address-book`);
+                const data = await readAddressBookResponse(response, t('could_not_load_address_book'));
+                renderAddressBookEntries(data.entries, data.storage_mode);
+            } catch (error) {
+                if (list) list.innerHTML = '<tr><td colspan="12"><div class="empty-state">' + escapeAddressBookText(error.message) + '</div></td></tr>';
+                showToast(error.status === 401 ? 'La sesion expiro. Conecte nuevamente.' : error.message, 'error', 5000);
+            } finally { setAddressBookBusy(false); }
+        }
+        async function createAddressBookEntry() {
+            if (!currentAddressBookPrinter || addressBookBusy) return;
+            const payload = await openAddressBookFormModal(null);
+            if (!payload) return;
+            setAddressBookBusy(true, 'Creando usuario en Ricoh...');
+            try {
+                const response = await addressBookFetch(`/printers/${currentAddressBookPrinter.id}/address-book`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const data = await readAddressBookResponse(response, t('could_not_add_user'));
+                renderAddressBookEntries(data.entries || [...addressBookEntriesCache, data.entry], data.storage_mode || addressBookStorageMode);
+                showToast(t('user_added'), 'success');
+            } catch (error) { showToast(error.message, 'error', 5000); }
+            finally { setAddressBookBusy(false); }
+        }
+        async function editAddressBookEntryByRegistration(encodedRegistrationNo) {
+            const reg = decodeURIComponent(encodedRegistrationNo || '');
+            const entry = addressBookEntriesCache.find(item => String(item.registration_no) === reg);
+            if (entry) await editAddressBookEntry(entry);
+        }
+        async function editAddressBookEntry(entry) {
+            if (!currentAddressBookPrinter || !entry || addressBookBusy) return;
+            const payload = await openAddressBookFormModal(entry);
+            if (!payload) return;
+            const reg = String(entry.registration_no || '');
+            setAddressBookBusy(true, 'Actualizando usuario ' + reg + '...');
+            setAddressBookRowBusy(reg, true);
+            try {
+                const response = await addressBookFetch(`/printers/${currentAddressBookPrinter.id}/address-book/${encodeURIComponent(reg)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const data = await readAddressBookResponse(response, t('could_not_update_user'));
+                const fallback = addressBookEntriesCache.map(item => String(item.registration_no) === reg ? { ...item, ...payload } : item);
+                renderAddressBookEntries(data.entries || fallback, data.storage_mode || addressBookStorageMode);
+                showToast(t('user_updated'), 'success');
+            } catch (error) { showToast(error.message, 'error', 5000); }
+            finally { setAddressBookRowBusy(reg, false); setAddressBookBusy(false); }
+        }
+        async function deleteAddressBookEntry(encodedRegistrationNo) {
+            if (!currentAddressBookPrinter || addressBookBusy) return;
+            const reg = decodeURIComponent(encodedRegistrationNo || '');
+            if (!await appConfirm(t('delete_record'), t('delete_record_msg') + ' ' + reg + '?')) return;
+            setAddressBookBusy(true, 'Eliminando usuario ' + reg + '...');
+            setAddressBookRowBusy(reg, true);
+            try {
+                const response = await addressBookFetch(`/printers/${currentAddressBookPrinter.id}/address-book/${encodeURIComponent(reg)}`, { method: 'DELETE' });
+                const data = await readAddressBookResponse(response, t('could_not_delete_user'));
+                const fallback = addressBookEntriesCache.filter(item => String(item.registration_no) !== reg);
+                renderAddressBookEntries(Array.isArray(data.entries) ? data.entries : fallback, data.storage_mode || addressBookStorageMode);
+                showToast(t('user_deleted'), 'success');
+            } catch (error) { showToast(error.message, 'error', 5000); }
+            finally { setAddressBookRowBusy(reg, false); setAddressBookBusy(false); }
+        }
+        async function exportAddressBook(format) {
+            if (!currentAddressBookPrinter || addressBookBusy) return;
+            setAddressBookBusy(true, 'Preparando exportacion...');
+            try {
+                const response = await addressBookFetch(`/printers/${currentAddressBookPrinter.id}/address-book/export?format=${encodeURIComponent(format)}`);
+                if (!response.ok) await readAddressBookResponse(response, 'No se pudo exportar la libreta.');
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                const label = (currentAddressBookPrinter.shared_name || currentAddressBookPrinter.name || 'printer').replace(/[^A-Za-z0-9_-]+/g, '_');
+                link.href = url; link.download = `address_book_${label}.${format === 'xlsx' ? 'xlsx' : 'csv'}`;
+                document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+                showToast('Libreta exportada', 'success');
+            } catch (error) { showToast(error.message, 'error', 5000); }
+            finally { setAddressBookBusy(false); }
+        }
+        function arrayBufferToBase64(buffer) {
+            const bytes = new Uint8Array(buffer); let binary = '';
+            for (let offset = 0; offset < bytes.length; offset += 0x8000) binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+            return btoa(binary);
+        }
+        async function importAddressBookFile(file) {
+            if (!file || !currentAddressBookPrinter || addressBookBusy) return;
+            if (file.size > 10 * 1024 * 1024) { showToast('El archivo supera 10 MB.', 'error'); return; }
+            if (!await appConfirm('Importar libreta', `Se importaran los registros de ${file.name}. Los numeros existentes se actualizaran.`)) return;
+            setAddressBookBusy(true, 'Importando libreta...');
+            try {
+                const content_base64 = arrayBufferToBase64(await file.arrayBuffer());
+                const response = await addressBookFetch(`/printers/${currentAddressBookPrinter.id}/address-book/import`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: file.name, content_base64 }) });
+                const data = await readAddressBookResponse(response, 'No se pudo importar la libreta.');
+                renderAddressBookEntries(data.entries, data.storage_mode || addressBookStorageMode);
+                const errorText = data.errors?.length ? ` | ${data.errors.length} filas con error` : '';
+                showToast(`Importados: ${data.imported} (${data.created} nuevos, ${data.updated} actualizados)${errorText}`, data.errors?.length ? 'error' : 'success', 6000);
+            } catch (error) { showToast(error.message, 'error', 6000); }
+            finally { setAddressBookBusy(false); }
+        }
+        async function closeAddressBookSession() {
+            if (!currentAddressBookPrinter) return;
+            setAddressBookBusy(true, 'Cerrando sesion...');
+            try {
+                const response = await addressBookFetch(`/printers/${currentAddressBookPrinter.id}/address-book/session/close`, { method: 'POST' });
+                await readAddressBookResponse(response, 'No se pudo cerrar la sesion.');
+                abCredentials = { admin: null }; abSessionToken = null; addressBookEntriesCache = [];
+                renderAddressBookRows([]);
+                showToast('Sesion cerrada correctamente', 'success');
+            } catch (error) { showToast(error.message, 'error'); }
+            finally { setAddressBookBusy(false); }
         }
         function hasCounterValues(row) {
             return row && ['total_pages', 'copy_bw', 'copy_color', 'print_bw', 'print_color', 'bw_pages', 'color_pages'].some(key => row[key] !== null && row[key] !== undefined && row[key] !== '');
@@ -6573,6 +6767,47 @@
         function openDrawer(printer) { const overlay = document.getElementById('drawerOverlay'); const panel = document.getElementById('drawerPanel'); const title = document.getElementById('drawerTitle'); resetPrinterForm(); if (printer) { document.getElementById('editingPrinterId').value = printer.id; document.getElementById('printerSharedName').value = printer.shared_name || ''; document.getElementById('printerName').value = printer.name || ''; document.getElementById('printerModel').value = printer.model || ''; document.getElementById('printerIp').value = printer.ip || ''; document.getElementById('printerSerial').value = printer.serial || ''; document.getElementById('printerLocation').value = printer.location || ''; document.getElementById('printerIsColor').value = printer.is_color ? 'true' : 'false'; document.getElementById('printerCommunity').value = printer.snmp_community || 'public'; if (title) title.textContent = t('edit_printer'); } else { if (title) title.textContent = t('add_printer'); } if (overlay) overlay.classList.add('open'); if (panel) panel.classList.add('open'); } function closeDrawer() { const overlay = document.getElementById('drawerOverlay'); const panel = document.getElementById('drawerPanel'); if (panel) { panel.classList.remove('open'); panel.classList.add('closing'); setTimeout(() => { panel.classList.remove('closing'); if (overlay) overlay.classList.remove('open'); }, 280); } else { if (overlay) overlay.classList.remove('open'); } }
         function resetPrinterForm() { document.getElementById('editingPrinterId').value = ''; document.getElementById('printerSharedName').value = ''; document.getElementById('printerName').value = ''; document.getElementById('printerModel').value = ''; document.getElementById('printerIp').value = ''; document.getElementById('printerSerial').value = ''; document.getElementById('printerLocation').value = ''; document.getElementById('printerIsColor').value = 'true'; document.getElementById('printerCommunity').value = 'public'; setFieldValidation('printerIp', 'printerIpHelp', ''); }
         async function savePrinter() { const id = document.getElementById('editingPrinterId')?.value || ''; const shared_name = (document.getElementById('printerSharedName')?.value || '').trim(); const name = (document.getElementById('printerName')?.value || '').trim(); const model = (document.getElementById('printerModel')?.value || '').trim(); const ip = (document.getElementById('printerIp')?.value || '').trim(); const serial = (document.getElementById('printerSerial')?.value || '').trim(); const location = (document.getElementById('printerLocation')?.value || '').trim(); const is_color = document.getElementById('printerIsColor')?.value === 'true'; const snmp_community = (document.getElementById('printerCommunity')?.value || 'public').trim() || 'public'; if (!model || !ip) { showToast(t('model_ip_required'), 'error'); return; } if (!isValidIpv4(ip)) { showToast(t('invalid_ip'), 'error'); return; } const payload = { shared_name: shared_name || null, name: name || null, model, ip, serial: serial || null, location: location || null, is_color, snmp_community }; try { let response; if (id) { response = await fetch(`/printers/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); } else { response = await fetch('/printers/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); } const data = await response.json(); if (!response.ok) throw new Error(data.detail || 'No se pudo guardar la impresora'); closeDrawer(); showToast(id ? t('printer_updated') : t('printer_saved'), 'success'); loadSavedPrinters(); } catch (error) { showToast(error.message || t('error_saving_printer'), 'error'); console.error(error); } } async function deletePrinter(printerId) { if (!await appConfirm(t('delete_printer_title'), t('delete_printer_msg'))) return; try { const response = await fetch(`/printers/${printerId}`, { method: 'DELETE' }); const data = await response.json(); if (!response.ok) throw new Error(data.detail || 'No se pudo eliminar'); showToast(t('printer_deleted'), 'success'); loadSavedPrinters(); } catch (error) { showToast(error.message || t('error_deleting_printer'), 'error'); console.error(error); } }
+        async function savePrinter() {
+            const id = document.getElementById('editingPrinterId')?.value || '';
+            const ip = (document.getElementById('printerIp')?.value || '').trim();
+            const model = (document.getElementById('printerModel')?.value || '').trim();
+            if (!model || !ip) { showToast(t('model_ip_required'), 'error'); return; }
+            if (!isValidIpv4(ip)) { showToast(t('invalid_ip'), 'error'); return; }
+            const payload = {
+                shared_name: (document.getElementById('printerSharedName')?.value || '').trim() || null,
+                name: (document.getElementById('printerName')?.value || '').trim() || null,
+                model,
+                ip,
+                serial: (document.getElementById('printerSerial')?.value || '').trim() || null,
+                location: (document.getElementById('printerLocation')?.value || '').trim() || null,
+                is_color: document.getElementById('printerIsColor')?.value === 'true',
+                snmp_community: (document.getElementById('printerCommunity')?.value || 'public').trim() || 'public'
+            };
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 15000);
+            try {
+                const response = await fetch(id ? `/printers/${id}` : '/printers/', {
+                    method: id ? 'PUT' : 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    signal: controller.signal
+                });
+                let data = {};
+                try { data = await response.json(); } catch (_) { }
+                if (!response.ok) throw new Error(data.detail || 'No se pudo guardar la impresora');
+                closeDrawer();
+                showToast(id ? t('printer_updated') : t('printer_saved'), 'success');
+                loadSavedPrinters();
+            } catch (error) {
+                const message = error.name === 'AbortError'
+                    ? 'La impresora no respondio a tiempo. Revise la IP; el formulario ya fue liberado.'
+                    : (error.message || t('error_saving_printer'));
+                showToast(message, 'error', 6000);
+                console.error(error);
+            } finally {
+                clearTimeout(timer);
+            }
+        }
         async function loadSavedPrinters() { const list = document.getElementById('savedPrintersList'); if (!list) return; try { showLoadingIn('savedPrintersList', 8, t('loading_printers')); const response = await fetch('/printers/'); const data = await response.json(); if (!Array.isArray(data)) { list.innerHTML = '<tr><td colspan="8">' + t('error_loading_printers') + '</td></tr>'; return; } savedPrintersData = data; renderSavedPrinters(); } catch (error) { list.innerHTML = '<tr><td colspan="8">' + t('could_not_load_printers') + '</td></tr>'; console.error('loadSavedPrinters error:', error); } }
         function renderSavedPrinters() { const list = document.getElementById('savedPrintersList'); if (!list) return; const search = (document.getElementById('printerSearch')?.value || '').toLowerCase().trim(); let data = [...savedPrintersData]; if (search) { data = data.filter(p => ((p.shared_name || '') + ' ' + (p.name || '') + ' ' + (p.ip || '') + ' ' + (p.model || '') + ' ' + (p.serial || '')).toLowerCase().includes(search)); } data.sort((a, b) => { let av = ((a[savedPrintersSortColumn] ?? '') + '').toLowerCase(); let bv = ((b[savedPrintersSortColumn] ?? '') + '').toLowerCase(); if (savedPrintersSortColumn === 'id') { av = Number(a.id) || 0; bv = Number(b.id) || 0; return savedPrintersSortDirection === 'asc' ? av - bv : bv - av; } if (savedPrintersSortColumn === 'ip') { return savedPrintersSortDirection === 'asc' ? ipToNumber(a.ip) - ipToNumber(b.ip) : ipToNumber(b.ip) - ipToNumber(a.ip); } let r = av.localeCompare ? av.localeCompare(bv) : (av < bv ? -1 : av > bv ? 1 : 0); return savedPrintersSortDirection === 'desc' ? -r : r; }); updateSortIndicators('savedPrintersSort_', savedPrintersSortColumn, savedPrintersSortDirection); if (!data.length) { list.innerHTML = '<tr><td colspan="8">' + t('no_registered_printers') + '</td></tr>'; return; } list.innerHTML = ''; data.forEach(p => { const pJson = JSON.stringify(p).replace(/"/g, '&quot;'); list.innerHTML += `<tr><td>${p.id}</td><td>${p.shared_name ?? '-'}</td><td>${p.name ?? '-'}</td><td>${p.ip ?? '-'}</td><td>${p.model ?? '-'}</td><td>${p.serial ?? '-'}</td><td>${p.is_color ? 'Color' : 'B/N'}</td><td><div class="action-row" style="margin-bottom:0;gap:6px;"><button class="action-button" style="padding:6px 10px;font-size:12px;" onclick='openDrawer(${pJson})'>${t('btn_edit')}</button><button class="action-button action-button-danger" style="padding:6px 10px;font-size:12px;" onclick="deletePrinter(${p.id})">${t('btn_delete')}</button><button class="action-button action-button-warning" style="padding:6px 10px;font-size:12px;" onclick='openAddressBook(${pJson})'>${t('address_book_title')}</button></div></td></tr>`; }); } function filterSavedPrinters() { renderSavedPrinters(); }
         function toggleSavedPrintersSort(column) { if (savedPrintersSortColumn === column) { savedPrintersSortDirection = savedPrintersSortDirection === 'asc' ? 'desc' : 'asc'; } else { savedPrintersSortColumn = column; savedPrintersSortDirection = 'asc'; } updateSortIndicators('savedPrintersSort_', savedPrintersSortColumn, savedPrintersSortDirection); renderSavedPrinters(); }
@@ -7633,7 +7868,9 @@
         applyTabPermissions();
         showTab('dashboard');
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/frontend/sw.js').catch(e => console.warn('SW:', e));
+            navigator.serviceWorker.register('/frontend/sw.js', { updateViaCache: 'none' })
+                .then(registration => registration.update())
+                .catch(e => console.warn('SW:', e));
         }
         // === Notificaciones SSE + Panel ===
         let _notifItems = [];

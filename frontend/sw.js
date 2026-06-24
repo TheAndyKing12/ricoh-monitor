@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ricoh-monitor-v8';
+const CACHE_NAME = 'ricoh-monitor-v9';
 const STATIC_ASSETS = [
     '/frontend/dashboard.html',
     '/frontend/style.css',

@@ -6,13 +6,16 @@ import secrets
 import threading
 import time
 import base64
+import csv
+import io
+import unicodedata
 import html as html_lib
 import traceback
 from pathlib import Path
 from typing import List
 
 import requests
-from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app import crud
@@ -226,6 +229,11 @@ class AddressBookAuthRequest(BaseModel):
     password: str
 
 
+class AddressBookImportRequest(BaseModel):
+    filename: str
+    content_base64: str
+
+
 def _ensure_store_dir():
     STORE_PATH.parent.mkdir(parents=True, exist_ok=True)
 
@@ -300,7 +308,7 @@ def _create_local_entry(printer_id: int, payload: AddressBookEntryCreate) -> dic
         registration_no = (payload.registration_no or "").strip() or _next_registration_no(entries)
         if any(str(item.get("registration_no")) == registration_no for item in entries):
             raise HTTPException(status_code=400, detail="Registration number already exists")
-        entry = payload.dict()
+        entry = payload.model_dump()
         entry["registration_no"] = registration_no
         entries.append(entry)
         store[str(printer_id)] = _sort_entries(entries)
@@ -315,7 +323,7 @@ def _update_local_entry(printer_id: int, registration_no: str, payload: AddressB
         target = next((item for item in entries if str(item.get("registration_no")) == registration_no), None)
         if not target:
             raise HTTPException(status_code=404, detail="Address book entry not found")
-        for key, value in payload.dict(exclude_unset=True).items():
+        for key, value in payload.model_dump(exclude_unset=True).items():
             target[key] = value
         store[str(printer_id)] = _sort_entries(entries)
         _save_store(store)
@@ -703,16 +711,13 @@ def test_login_diagnostics(printer_id: int, admin: str = "admin", password: str 
     }
 
 
-@router.get("/{printer_id}/address-book", response_model=AddressBookListResponse)
-def list_address_book(
-    printer_id: int,
-    storage_mode: str | None = Query(default=None),
-    admin: str | None = Query(default=None),
-    password: str | None = Query(default=None),
-    address_book_session: str | None = Header(default=None, alias="X-Address-Book-Session"),
-    db: Session = Depends(get_db),
-):
-    printer = _get_printer_or_404(db, printer_id)
+def _load_address_book_for_printer(
+    printer,
+    storage_mode: str | None = None,
+    admin: str | None = None,
+    password: str | None = None,
+    address_book_session: str | None = None,
+) -> tuple[str, list[dict]]:
     storage_mode = _get_storage_mode(storage_mode)
     if storage_mode == "ricoh-real":
         lock = _get_ricoh_session_lock(printer.ip)
@@ -722,12 +727,7 @@ def list_address_book(
                 if not address_book_session:
                     _ricoh_login_address_book(session, printer.ip, admin, password)
                 entries = _ricoh_load_entries_with_session(session, printer.ip, dump=False, admin=admin, password=password)
-                return {
-                    "printer_id": printer.id,
-                    "printer_ip": printer.ip,
-                    "storage_mode": "ricoh-real",
-                    "entries": entries or [],
-                }
+                return "ricoh-real", _sort_entries(entries or [])
             except HTTPException:
                 raise
             except Exception as ex:
@@ -739,13 +739,257 @@ def list_address_book(
                     except Exception:
                         pass
     else:
+        return "local-safe", _get_local_entries(printer.id)
+
+
+@router.get("/{printer_id}/address-book", response_model=AddressBookListResponse)
+def list_address_book(
+    printer_id: int,
+    storage_mode: str | None = Query(default=None),
+    admin: str | None = Query(default=None),
+    password: str | None = Query(default=None),
+    address_book_session: str | None = Header(default=None, alias="X-Address-Book-Session"),
+    db: Session = Depends(get_db),
+):
+    printer = _get_printer_or_404(db, printer_id)
+    resolved_mode, entries = _load_address_book_for_printer(
+        printer,
+        storage_mode=storage_mode,
+        admin=admin,
+        password=password,
+        address_book_session=address_book_session,
+    )
+    return {
+        "printer_id": printer.id,
+        "printer_ip": printer.ip,
+        "storage_mode": resolved_mode,
+        "entries": entries,
+    }
+
+
+ADDRESS_BOOK_EXPORT_FIELDS = [
+    ("registration_no", "Registration No."),
+    ("name", "Name"),
+    ("key_display", "Key Display"),
+    ("freq", "Freq."),
+    ("title1", "Title 1"),
+    ("title2", "Title 2"),
+    ("title3", "Title 3"),
+    ("user_code", "User Code"),
+    ("email_address", "E-mail Address"),
+    ("folder", "Folder"),
+    ("status", "Status"),
+]
+
+
+def _normalize_import_header(value) -> str:
+    text = unicodedata.normalize("NFKD", str(value or ""))
+    text = "".join(ch for ch in text if not unicodedata.combining(ch)).lower().strip()
+    return re.sub(r"[^a-z0-9]+", "_", text).strip("_")
+
+
+ADDRESS_BOOK_IMPORT_ALIASES = {
+    "registration_no": {"registration_no", "registration_number", "registro", "numero_registro", "n_registro", "id"},
+    "name": {"name", "nombre"},
+    "key_display": {"key_display", "display", "nombre_mostrar", "tecla"},
+    "freq": {"freq", "frecuente", "frecuencia"},
+    "title1": {"title_1", "title1", "titulo_1", "titulo1"},
+    "title2": {"title_2", "title2", "titulo_2", "titulo2"},
+    "title3": {"title_3", "title3", "titulo_3", "titulo3"},
+    "user_code": {"user_code", "codigo_usuario", "codigo"},
+    "email_address": {"e_mail_address", "email_address", "email", "correo"},
+    "folder": {"folder", "carpeta", "ruta"},
+    "status": {"status", "estado"},
+}
+
+
+def _parse_import_bool(value) -> bool:
+    return str(value or "").strip().lower() not in {"0", "false", "no", "n", "off"}
+
+
+def _map_address_book_import_row(row: dict) -> dict:
+    normalized = {_normalize_import_header(key): value for key, value in (row or {}).items()}
+    mapped: dict = {}
+    for field, aliases in ADDRESS_BOOK_IMPORT_ALIASES.items():
+        for alias in aliases:
+            if alias in normalized:
+                mapped[field] = normalized[alias]
+                break
+    reg = str(mapped.get("registration_no") or "").strip()
+    if reg:
+        if not reg.isdigit():
+            raise ValueError(f"Registration No. invalido: {reg}")
+        mapped["registration_no"] = reg.zfill(5)
+    else:
+        mapped["registration_no"] = None
+    mapped["name"] = str(mapped.get("name") or "").strip()
+    if not mapped["name"]:
+        raise ValueError("Name/Nombre es obligatorio")
+    mapped["freq"] = _parse_import_bool(mapped.get("freq", True))
+    for field in ("key_display", "title1", "title2", "title3", "user_code", "email_address", "folder", "status"):
+        value = str(mapped.get(field) or "").strip()
+        mapped[field] = value or None
+    mapped["key_display"] = mapped["key_display"] or mapped["name"]
+    mapped["status"] = mapped["status"] or "Activo"
+    return mapped
+
+
+def _parse_address_book_import_file(filename: str, raw: bytes) -> list[dict]:
+    suffix = Path(filename or "").suffix.lower()
+    rows: list[dict] = []
+    if suffix == ".csv":
+        text = raw.decode("utf-8-sig", errors="replace")
+        sample = text[:4096]
+        try:
+            dialect = csv.Sniffer().sniff(sample, delimiters=",;\t")
+        except csv.Error:
+            dialect = csv.excel
+        rows = list(csv.DictReader(io.StringIO(text), dialect=dialect))
+    elif suffix in {".xlsx", ".xlsm"}:
+        try:
+            from openpyxl import load_workbook
+        except ImportError as ex:
+            raise HTTPException(status_code=500, detail="openpyxl no esta disponible") from ex
+        workbook = load_workbook(io.BytesIO(raw), read_only=True, data_only=True)
+        sheet = workbook.active
+        values = list(sheet.iter_rows(values_only=True))
+        if values:
+            headers = [str(value or "") for value in values[0]]
+            rows = [dict(zip(headers, row)) for row in values[1:] if any(value not in (None, "") for value in row)]
+    else:
+        raise HTTPException(status_code=400, detail="Formato no soportado. Use CSV o XLSX.")
+    if not rows:
+        raise HTTPException(status_code=400, detail="El archivo no contiene registros.")
+    return rows
+
+
+@router.get("/{printer_id}/address-book/export")
+def export_address_book(
+    printer_id: int,
+    file_format: str = Query(default="csv", alias="format"),
+    storage_mode: str | None = Query(default=None),
+    address_book_session: str | None = Header(default=None, alias="X-Address-Book-Session"),
+    db: Session = Depends(get_db),
+):
+    printer = _get_printer_or_404(db, printer_id)
+    _, entries = _load_address_book_for_printer(
+        printer,
+        storage_mode=storage_mode,
+        address_book_session=address_book_session,
+    )
+    safe_name = re.sub(r"[^A-Za-z0-9_-]+", "_", printer.shared_name or printer.name or printer.ip).strip("_") or "printer"
+    fields = [field for field, _ in ADDRESS_BOOK_EXPORT_FIELDS]
+    labels = [label for _, label in ADDRESS_BOOK_EXPORT_FIELDS]
+    if file_format.lower() == "xlsx":
+        from openpyxl import Workbook
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = "Address Book"
+        sheet.append(labels)
+        for entry in entries:
+            sheet.append([entry.get(field) for field in fields])
+        sheet.freeze_panes = "A2"
+        for cells in sheet.columns:
+            max_len = max(len(str(cell.value or "")) for cell in cells)
+            sheet.column_dimensions[cells[0].column_letter].width = min(max(max_len + 2, 12), 42)
+        output = io.BytesIO()
+        workbook.save(output)
+        return Response(
+            output.getvalue(),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f'attachment; filename="address_book_{safe_name}.xlsx"'},
+        )
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(labels)
+    for entry in entries:
+        writer.writerow([entry.get(field) for field in fields])
+    return Response(
+        "\ufeff" + output.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="address_book_{safe_name}.csv"'},
+    )
+
+
+@router.post("/{printer_id}/address-book/import")
+def import_address_book(
+    printer_id: int,
+    payload: AddressBookImportRequest,
+    storage_mode: str | None = Query(default=None),
+    address_book_session: str | None = Header(default=None, alias="X-Address-Book-Session"),
+    db: Session = Depends(get_db),
+):
+    printer = _get_printer_or_404(db, printer_id)
+    try:
+        raw = base64.b64decode(payload.content_base64, validate=True)
+    except Exception as ex:
+        raise HTTPException(status_code=400, detail="Contenido de archivo invalido.") from ex
+    raw_rows = _parse_address_book_import_file(payload.filename, raw)
+    parsed: list[dict] = []
+    errors: list[dict] = []
+    seen_regs: set[str] = set()
+    for index, raw_row in enumerate(raw_rows, start=2):
+        try:
+            entry = _map_address_book_import_row(raw_row)
+            reg = entry.get("registration_no")
+            if reg and reg in seen_regs:
+                raise ValueError(f"Registration No. duplicado: {reg}")
+            if reg:
+                seen_regs.add(reg)
+            parsed.append(entry)
+        except ValueError as ex:
+            errors.append({"row": index, "error": str(ex)})
+    if not parsed:
+        raise HTTPException(status_code=400, detail={"message": "No hay registros validos.", "errors": errors[:20]})
+
+    mode = _get_storage_mode(storage_mode)
+    created = 0
+    updated = 0
+    if mode == "local-safe":
+        existing = {item["registration_no"]: item for item in _get_local_entries(printer.id)}
+        for data in parsed:
+            reg = data.get("registration_no")
+            if reg and reg in existing:
+                _update_local_entry(printer.id, reg, AddressBookEntryUpdate(**data))
+                updated += 1
+            else:
+                _create_local_entry(printer.id, AddressBookEntryCreate(**data))
+                created += 1
         entries = _get_local_entries(printer.id)
-        return {
-            "printer_id": printer.id,
-            "printer_ip": printer.ip,
-            "storage_mode": "local-safe",
-            "entries": entries,
-        }
+    else:
+        lock = _get_ricoh_session_lock(printer.ip)
+        with lock:
+            session = _get_address_book_client_session(address_book_session, printer.ip)
+            if session is None:
+                raise HTTPException(status_code=401, detail="Conecte la libreta de direcciones antes de importar.")
+            remote = _ricoh_load_entries_with_session(session, printer.ip, dump=False)
+            remote_regs = {str(item.get("registration_no") or "").strip().zfill(5) for item in remote or []}
+            next_entries = list(remote or [])
+            for index, data in enumerate(parsed, start=2):
+                try:
+                    reg = data.get("registration_no")
+                    if not reg:
+                        reg = _next_registration_no(next_entries)
+                        data["registration_no"] = reg
+                    mode_name = "MODUSER" if reg in remote_regs else "ADDUSER"
+                    _ricoh_set_user(session, printer.ip, data, mode_name)
+                    if mode_name == "MODUSER":
+                        updated += 1
+                    else:
+                        created += 1
+                        remote_regs.add(reg)
+                    next_entries.append(data)
+                except Exception as ex:
+                    errors.append({"row": index, "error": str(ex)[:180]})
+            entries = _ricoh_load_entries_with_session(session, printer.ip, dump=False)
+    return {
+        "imported": created + updated,
+        "created": created,
+        "updated": updated,
+        "errors": errors[:50],
+        "entries": entries or [],
+        "storage_mode": mode,
+    }
 
 
 def _clear_local_entries(printer_id: int):
@@ -997,7 +1241,10 @@ def _ricoh_set_user(session: requests.Session, printer_ip: str, entry: dict, mod
         "entryIndexIn": reg if mode == "MODUSER" else "",
         "wimToken": token,
     }
-    session.post(f"http://{printer_ip}/web/entry/es/address/adrsGetUser.cgi", data=get_payload, timeout=RICOH_HTTP_TIMEOUT)
+    get_resp = session.post(f"http://{printer_ip}/web/entry/es/address/adrsGetUser.cgi", data=get_payload, timeout=RICOH_HTTP_TIMEOUT)
+    if get_resp.status_code != 200:
+        raise HTTPException(status_code=502, detail=f"Ricoh adrsGetUser failed ({get_resp.status_code})")
+    token = _ricoh_extract_wim_token(get_resp.text) or token
 
     key_display = str(entry.get("key_display") or name).strip() or name
     email = str(entry.get("email_address") or "").strip()
@@ -1005,6 +1252,7 @@ def _ricoh_set_user(session: requests.Session, printer_ip: str, entry: dict, mod
     folder = str(entry.get("folder") or "").strip()
 
     post_data = [
+        ("mode", mode),
         ("inputSpecifyModeIn", "WRITE"),
         ("outputSpecifyModeIn", "PROGRAMMED"),
         ("entryIndexIn", reg),
@@ -1341,6 +1589,8 @@ def _create_ricoh_entry(printer, payload: AddressBookEntryCreate, admin: str | N
                 entry["registration_no"] = _next_registration_no(existing or [])
             _ricoh_set_user(session, printer.ip, entry, "ADDUSER")
             entries = _ricoh_load_entries_with_session(session, printer.ip, dump=False, admin=admin, password=password)
+            if entries and not any(str(item.get("registration_no") or "").strip().zfill(5) == entry["registration_no"].zfill(5) for item in entries):
+                raise HTTPException(status_code=502, detail="Ricoh no confirmo la creacion del usuario.")
             return {"entry": entry, "entries": entries or []}
         except Exception as ex:
             # Si falla, limpiar sesión del pool
@@ -1371,6 +1621,9 @@ def _update_ricoh_entry(printer, registration_no: str, payload: AddressBookEntry
             session = _get_address_book_client_session(address_book_session, printer.ip) or _get_or_create_ricoh_session(printer.ip, admin, password)
             _ricoh_set_user(session, printer.ip, entry, "MODUSER")
             entries = _ricoh_load_entries_with_session(session, printer.ip, dump=False, admin=admin, password=password)
+            refreshed = next((item for item in entries or [] if str(item.get("registration_no") or "").strip().zfill(5) == str(registration_no).strip().zfill(5)), None)
+            if entries and (not refreshed or str(refreshed.get("name") or "").strip() != entry["name"]):
+                raise HTTPException(status_code=502, detail="Ricoh no confirmo la actualizacion del usuario.")
             return {"entry": entry, "entries": entries or []}
         except Exception as ex:
             if address_book_session:
@@ -1400,6 +1653,8 @@ def _delete_ricoh_entry(printer, registration_no: str, admin: str | None = None,
             if resp.status_code != 200:
                 raise HTTPException(status_code=502, detail=f"Ricoh delete user failed ({resp.status_code})")
             entries = _ricoh_load_entries_with_session(session, printer.ip, dump=False, admin=admin, password=password)
+            if entries and any(str(item.get("registration_no") or "").strip().zfill(5) == reg for item in entries):
+                raise HTTPException(status_code=502, detail="Ricoh no confirmo la eliminacion del usuario.")
             return {"entries": entries or []}
         except Exception as ex:
             if address_book_session:

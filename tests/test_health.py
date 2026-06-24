@@ -12,6 +12,7 @@ os.environ.setdefault("DATABASE_URL", f"sqlite:///{TEST_DB.as_posix()}")
 os.environ.setdefault("APP_SECRET_KEY", "test-secret")
 
 from app.main import app
+from app.routers import printers as printers_router
 
 
 client = TestClient(app)
@@ -77,3 +78,21 @@ def test_dashboard_readonly_login_is_limited_to_dashboard():
     assert client.get("/cache/printer-status", headers=headers).status_code == 200
     assert client.get("/inventory/", headers=headers).status_code == 403
     assert client.get("/auth/users", headers=headers).status_code == 403
+
+
+def test_printer_identity_fast_path_does_not_use_http(monkeypatch):
+    values = {oid: None for oid in printers_router.PRINTER_IDENTITY_OIDS.values()}
+    values[printers_router.PRINTER_IDENTITY_OIDS["sys_name"]] = "TEST-PRINTER"
+    values[printers_router.PRINTER_IDENTITY_OIDS["hr_descr_1"]] = "RICOH IM C3000"
+    values[printers_router.PRINTER_IDENTITY_OIDS["serial"]] = "SERIAL-1"
+    monkeypatch.setattr(printers_router, "get_snmp_values", lambda *args, **kwargs: values)
+    monkeypatch.setattr(
+        printers_router,
+        "resolve_hostname_value",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("HTTP hostname lookup should not run")),
+    )
+
+    identity = printers_router.get_printer_identity("192.0.2.1", "public")
+
+    assert identity["name"] == "TEST-PRINTER"
+    assert identity["serial"] == "SERIAL-1"

@@ -2,6 +2,7 @@ import requests
 import re
 import html as html_lib
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -244,16 +245,25 @@ def get_ricoh_http_hostname(ip):
 
     session = requests.Session()
     session.headers.update({"User-Agent": "Mozilla/5.0 (compatible)"})
+    deadline = time.monotonic() + 3.0
 
     def try_get(u):
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return None
+        timeout = max(0.2, min(1.5, remaining))
         try:
-            r = session.get(u, timeout=6, allow_redirects=True)
+            r = session.get(u, timeout=timeout, allow_redirects=True)
             if r is not None and r.status_code == 200 and r.text:
                 return r.text
         except Exception:
             pass
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return None
+        timeout = max(0.2, min(1.5, remaining))
         try:
-            r = session.get(u, timeout=6, auth=("admin", ""), allow_redirects=True)
+            r = session.get(u, timeout=timeout, auth=("admin", ""), allow_redirects=True)
             if r is not None and r.status_code == 200 and r.text:
                 return r.text
         except Exception:
@@ -261,6 +271,8 @@ def get_ricoh_http_hostname(ip):
         return None
 
     for url in candidate_urls:
+        if time.monotonic() >= deadline:
+            break
         html = try_get(url)
         if not html:
             continue
@@ -273,6 +285,8 @@ def get_ricoh_http_hostname(ip):
         if re.search(r"<frameset|<frame", html, re.IGNORECASE):
             frames = re.findall(r"<frame[^>]+src=[\"']([^\"']+)[\"']", html, re.IGNORECASE)
             for src in frames:
+                if time.monotonic() >= deadline:
+                    break
                 if src.lower().startswith("http"):
                     src_url = src
                 elif src.startswith("/"):

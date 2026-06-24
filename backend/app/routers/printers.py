@@ -76,13 +76,15 @@ def _looks_like_color_from_live_data(model, cyan_toner):
     return None
 
 
-def get_printer_identity(ip: str, community: str = "public") -> dict:
+def get_printer_identity(ip: str, community: str = "public", resolve_network_name: bool = False) -> dict:
     """Best-effort identity lookup for reconciling a reused printer IP."""
     oids = list(PRINTER_IDENTITY_OIDS.values())
     values = get_snmp_values(ip, community, oids, timeout=2, retries=0)
     by_key = {key: values.get(oid) for key, oid in PRINTER_IDENTITY_OIDS.items()}
 
-    name = resolve_hostname_value(ip, community)
+    name = _clean_snmp_text(by_key.get("sys_name")) or _clean_snmp_text(by_key.get("printer_name"))
+    if resolve_network_name and not name:
+        name = resolve_hostname_value(ip, community)
     model = (
         _normalize_ricoh_model(by_key.get("hr_descr_1"))
         or _normalize_ricoh_model(by_key.get("hr_descr_2"))
@@ -129,7 +131,7 @@ def _sync_hostname_for_printer(printer_id: int):
         printer = crud.get_printer_by_id(db, printer_id)
         if not printer:
             return
-        identity = get_printer_identity(printer.ip, printer.snmp_community)
+        identity = get_printer_identity(printer.ip, printer.snmp_community, resolve_network_name=True)
         data = _build_reconcile_data(printer, {}, identity)
         if data:
             crud.update_printer(db, printer_id, data)
@@ -326,7 +328,15 @@ def resolve_hostname_value(ip: str, community: str = "public") -> str | None:
     hostname = None
 
     try:
-        hostname = get_ricoh_http_hostname(ip)
+        snmp_name = get_snmp_value(
+            ip,
+            community,
+            "1.3.6.1.2.1.1.5.0",
+            timeout=2,
+            retries=0,
+        )
+        if snmp_name is not None:
+            hostname = str(snmp_name).strip()
     except Exception:
         hostname = None
 
@@ -338,9 +348,7 @@ def resolve_hostname_value(ip: str, community: str = "public") -> str | None:
 
     if not hostname:
         try:
-            snmp_name = get_snmp_value(ip, community, "1.3.6.1.2.1.1.5.0")
-            if snmp_name is not None:
-                hostname = str(snmp_name).strip()
+            hostname = get_ricoh_http_hostname(ip)
         except Exception:
             hostname = None
 

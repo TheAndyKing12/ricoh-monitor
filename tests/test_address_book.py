@@ -31,3 +31,59 @@ def test_address_book_client_session_token_is_scoped_to_printer():
         address_book._get_address_book_client_session(token, "10.0.0.11")
     assert exc_info.value.status_code == 403
     assert address_book._close_address_book_client_session(token=token) is True
+
+
+def test_address_book_import_maps_spanish_headers():
+    row = {
+        "Numero registro": "27",
+        "Nombre": "Recepcion",
+        "Correo": "recepcion@example.com",
+        "Frecuente": "si",
+    }
+
+    mapped = address_book._map_address_book_import_row(row)
+
+    assert mapped["registration_no"] == "00027"
+    assert mapped["name"] == "Recepcion"
+    assert mapped["key_display"] == "Recepcion"
+    assert mapped["email_address"] == "recepcion@example.com"
+    assert mapped["freq"] is True
+
+
+def test_address_book_import_parses_csv_with_semicolon():
+    raw = "Registration No.;Name;E-mail Address\n1;User One;one@example.com\n".encode("utf-8")
+
+    rows = address_book._parse_address_book_import_file("book.csv", raw)
+    mapped = address_book._map_address_book_import_row(rows[0])
+
+    assert mapped["registration_no"] == "00001"
+    assert mapped["name"] == "User One"
+
+
+def test_address_book_import_rejects_missing_name():
+    with pytest.raises(ValueError, match="obligatorio"):
+        address_book._map_address_book_import_row({"Registration No.": "1"})
+
+
+def test_address_book_local_crud_roundtrip(tmp_path, monkeypatch):
+    monkeypatch.setattr(address_book, "STORE_PATH", tmp_path / "address_book.json")
+    created = address_book._create_local_entry(
+        10,
+        address_book.AddressBookEntryCreate(
+            registration_no="00001",
+            name="Original",
+            email_address="original@example.com",
+        ),
+    )
+    assert created["name"] == "Original"
+
+    updated = address_book._update_local_entry(
+        10,
+        "00001",
+        address_book.AddressBookEntryUpdate(name="Updated", email_address="updated@example.com"),
+    )
+    assert updated["name"] == "Updated"
+    assert address_book._get_local_entries(10)[0]["email_address"] == "updated@example.com"
+
+    address_book._delete_local_entry(10, "00001")
+    assert address_book._get_local_entries(10) == []
