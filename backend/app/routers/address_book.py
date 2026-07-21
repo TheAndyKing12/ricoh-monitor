@@ -359,6 +359,60 @@ def _ricoh_build_session(printer_ip: str) -> requests.Session:
     return session
 
 
+def _ricoh_web_candidates(printer_ip: str, open_path: str = "address/adrsList.cgi") -> list[dict[str, str]]:
+    candidates: list[dict[str, str]] = []
+    for guest_prefix, entry_prefix in (
+        ("guest/es", "entry/es"),
+        ("guest", "entry"),
+        ("entry/es", "entry/es"),
+        ("entry", "entry"),
+    ):
+        candidates.append({
+            "auth_url": f"http://{printer_ip}/web/{guest_prefix}/websys/webArch/authForm.cgi?open={open_path}",
+            "login_url": f"http://{printer_ip}/web/{guest_prefix}/websys/webArch/login.cgi",
+            "page_url": f"http://{printer_ip}/web/{entry_prefix}/{open_path}",
+            "entry_prefix": entry_prefix,
+        })
+    return candidates
+
+
+def _ricoh_entry_urls(printer_ip: str, path: str) -> list[str]:
+    return [
+        f"http://{printer_ip}/web/entry/es/{path}",
+        f"http://{printer_ip}/web/entry/{path}",
+    ]
+
+
+def _ricoh_get_first_ok(session: requests.Session, printer_ip: str, path: str):
+    last_resp = None
+    for url in _ricoh_entry_urls(printer_ip, path):
+        try:
+            resp = session.get(url, timeout=RICOH_HTTP_TIMEOUT)
+        except Exception:
+            continue
+        last_resp = resp
+        if resp.status_code == 200:
+            return resp, url
+    if last_resp is not None:
+        return last_resp, _ricoh_entry_urls(printer_ip, path)[0]
+    raise HTTPException(status_code=502, detail=f"Ricoh page not available: {path}")
+
+
+def _ricoh_post_first_ok(session: requests.Session, printer_ip: str, path: str, **kwargs):
+    last_resp = None
+    for url in _ricoh_entry_urls(printer_ip, path):
+        try:
+            resp = session.post(url, timeout=RICOH_HTTP_TIMEOUT, **kwargs)
+        except Exception:
+            continue
+        last_resp = resp
+        if resp.status_code == 200:
+            return resp, url
+    if last_resp is not None:
+        return last_resp, _ricoh_entry_urls(printer_ip, path)[0]
+    raise HTTPException(status_code=502, detail=f"Ricoh endpoint not available: {path}")
+
+
 def _ricoh_login_address_book(session: requests.Session, printer_ip: str, admin: str | None = None, password: str | None = None):
     def _has_max_users_error(text: str) -> bool:
         t = (text or "").lower()
@@ -372,18 +426,7 @@ def _ricoh_login_address_book(session: requests.Session, printer_ip: str, admin:
         return "authform.cgi" in t and ("document.form1.submit" in t or "<form name='form1'" in t or "<form name=\"form1\"" in t)
 
     user, secret = _ricoh_credentials(admin, password)
-    candidates = [
-        {
-            "auth_url": f"http://{printer_ip}/web/guest/es/websys/webArch/authForm.cgi?open=address/adrsList.cgi",
-            "login_url": f"http://{printer_ip}/web/guest/es/websys/webArch/login.cgi",
-            "page_url": f"http://{printer_ip}/web/entry/es/address/adrsList.cgi",
-        },
-        {
-            "auth_url": f"http://{printer_ip}/web/guest/websys/webArch/authForm.cgi?open=address/adrsList.cgi",
-            "login_url": f"http://{printer_ip}/web/guest/websys/webArch/login.cgi",
-            "page_url": f"http://{printer_ip}/web/entry/address/adrsList.cgi",
-        },
-    ]
+    candidates = _ricoh_web_candidates(printer_ip)
 
     diagnostics: list[str] = []
     auth_form_available = False
@@ -530,9 +573,10 @@ def debug_address_book_login(printer_id: int, payload: AddressBookAuthRequest, d
             except Exception:
                 return "error_reading_cookies"
 
-        auth_url = f"http://{printer.ip}/web/guest/es/websys/webArch/authForm.cgi?open=address/adrsList.cgi"
-        login_url = f"http://{printer.ip}/web/guest/es/websys/webArch/login.cgi"
-        page_url = f"http://{printer.ip}/web/entry/es/address/adrsList.cgi"
+        candidate = _ricoh_web_candidates(printer.ip)[0]
+        auth_url = candidate["auth_url"]
+        login_url = candidate["login_url"]
+        page_url = candidate["page_url"]
 
         # Step 1: GET auth form
         try:
@@ -652,7 +696,8 @@ def test_login_diagnostics(printer_id: int, admin: str = "admin", password: str 
     session = _ricoh_build_session(printer.ip)
     
     # Test auth form
-    auth_url = f"http://{printer.ip}/web/guest/es/websys/webArch/authForm.cgi?open=address/adrsList.cgi"
+    candidate = _ricoh_web_candidates(printer.ip)[0]
+    auth_url = candidate["auth_url"]
     try:
         auth_resp = session.get(auth_url, timeout=RICOH_HTTP_TIMEOUT)
         auth_status = auth_resp.status_code
@@ -679,7 +724,7 @@ def test_login_diagnostics(printer_id: int, admin: str = "admin", password: str 
     }
     
     # Test login POST
-    login_url = f"http://{printer.ip}/web/guest/es/websys/webArch/login.cgi"
+    login_url = candidate["login_url"]
     try:
         login_resp = session.post(login_url, data=payload, timeout=RICOH_HTTP_TIMEOUT)
         login_status = login_resp.status_code
@@ -1103,10 +1148,7 @@ def _ricoh_load_entries_with_session(session: requests.Session, printer_ip: str,
     diagnostics: list[str] = []
     saw_auth_redirect = False
 
-    list_page_urls = (
-        f"http://{printer_ip}/web/entry/es/address/adrsList.cgi",
-        f"http://{printer_ip}/web/entry/address/adrsList.cgi",
-    )
+    list_page_urls = tuple(_ricoh_entry_urls(printer_ip, "address/adrsList.cgi"))
 
     list_page_resp = None
     list_page_url = ""
@@ -1157,10 +1199,7 @@ def _ricoh_load_entries_with_session(session: requests.Session, printer_ip: str,
     if pre_entries:
         return _sort_entries(pre_entries)
 
-    endpoint_candidates = (
-        f"http://{printer_ip}/web/entry/es/address/adrsListLoadEntry.cgi",
-        f"http://{printer_ip}/web/entry/address/adrsListLoadEntry.cgi",
-    )
+    endpoint_candidates = tuple(_ricoh_entry_urls(printer_ip, "address/adrsListLoadEntry.cgi"))
     param_variants = (
         {"_": str(int(time.time() * 1000)), "listCountIn": "50", "getCountIn": "1"},
         {"_": str(int(time.time() * 1000)), "listCountIn": "100", "getCountIn": "1"},
@@ -1230,7 +1269,7 @@ def _ricoh_set_user(session: requests.Session, printer_ip: str, entry: dict, mod
     if not _is_plausible_reg(reg) or not name:
         raise HTTPException(status_code=400, detail="Invalid staged entry")
 
-    list_page = session.get(f"http://{printer_ip}/web/entry/es/address/adrsList.cgi", timeout=RICOH_HTTP_TIMEOUT)
+    list_page, _ = _ricoh_get_first_ok(session, printer_ip, "address/adrsList.cgi")
     token = _ricoh_extract_wim_token(list_page.text)
     if not token:
         raise HTTPException(status_code=502, detail="Ricoh wimToken not found")
@@ -1241,7 +1280,7 @@ def _ricoh_set_user(session: requests.Session, printer_ip: str, entry: dict, mod
         "entryIndexIn": reg if mode == "MODUSER" else "",
         "wimToken": token,
     }
-    get_resp = session.post(f"http://{printer_ip}/web/entry/es/address/adrsGetUser.cgi", data=get_payload, timeout=RICOH_HTTP_TIMEOUT)
+    get_resp, _ = _ricoh_post_first_ok(session, printer_ip, "address/adrsGetUser.cgi", data=get_payload)
     if get_resp.status_code != 200:
         raise HTTPException(status_code=502, detail=f"Ricoh adrsGetUser failed ({get_resp.status_code})")
     token = _ricoh_extract_wim_token(get_resp.text) or token
@@ -1269,7 +1308,7 @@ def _ricoh_set_user(session: requests.Session, printer_ip: str, entry: dict, mod
         ("protection", ""),
     ]
 
-    set_resp = session.post(f"http://{printer_ip}/web/entry/es/address/adrsSetUser.cgi", data=post_data, timeout=RICOH_HTTP_TIMEOUT)
+    set_resp, _ = _ricoh_post_first_ok(session, printer_ip, "address/adrsSetUser.cgi", data=post_data)
     if set_resp.status_code != 200:
         raise HTTPException(status_code=502, detail=f"Ricoh adrsSetUser failed ({set_resp.status_code})")
 
@@ -1369,16 +1408,7 @@ def _ricoh_load_entries_with_browser(printer_ip: str, admin: str | None, passwor
         t = (text or "").lower()
         return "authform.cgi" in t and ("document.form1.submit" in t or "<form name='form1'" in t or "<form name=\"form1\"" in t)
 
-    candidates = [
-        {
-            "auth_url": f"http://{printer_ip}/web/guest/es/websys/webArch/authForm.cgi?open=address/adrsList.cgi",
-            "page_url": f"http://{printer_ip}/web/entry/es/address/adrsList.cgi",
-        },
-        {
-            "auth_url": f"http://{printer_ip}/web/guest/websys/webArch/authForm.cgi?open=address/adrsList.cgi",
-            "page_url": f"http://{printer_ip}/web/entry/address/adrsList.cgi",
-        },
-    ]
+    candidates = _ricoh_web_candidates(printer_ip)
 
     user, secret = _ricoh_credentials(admin, password)
 
@@ -1639,7 +1669,7 @@ def _delete_ricoh_entry(printer, registration_no: str, admin: str | None = None,
     with lock:
         try:
             session = _get_address_book_client_session(address_book_session, printer.ip) or _get_or_create_ricoh_session(printer.ip, admin, password)
-            list_page = session.get(f"http://{printer.ip}/web/entry/es/address/adrsList.cgi", timeout=RICOH_HTTP_TIMEOUT)
+            list_page, _ = _ricoh_get_first_ok(session, printer.ip, "address/adrsList.cgi")
             token = _ricoh_extract_wim_token(list_page.text)
             if not token:
                 raise HTTPException(status_code=502, detail="Ricoh wimToken not found")
@@ -1649,7 +1679,7 @@ def _delete_ricoh_entry(printer, registration_no: str, admin: str | None = None,
                 "entryIndexIn": reg,
                 "checkBoxIn": reg,
             }
-            resp = session.post(f"http://{printer.ip}/web/entry/es/address/adrsSetUser.cgi", data=delete_payload, timeout=RICOH_HTTP_TIMEOUT)
+            resp, _ = _ricoh_post_first_ok(session, printer.ip, "address/adrsSetUser.cgi", data=delete_payload)
             if resp.status_code != 200:
                 raise HTTPException(status_code=502, detail=f"Ricoh delete user failed ({resp.status_code})")
             entries = _ricoh_load_entries_with_session(session, printer.ip, dump=False, admin=admin, password=password)

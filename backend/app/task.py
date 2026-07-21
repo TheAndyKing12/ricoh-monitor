@@ -29,7 +29,7 @@ job_stats = {}
 
 # Directorio de caché en disco (backup)
 CACHE_DIR = settings.cache_dir
-CACHE_DIR.mkdir(exist_ok=True)
+CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def _record_job_start(job_id: str) -> float:
@@ -187,6 +187,17 @@ def sync_all_printer_status():
                 })
 
             # 🟡 TÓNER CRÍTICO: cualquier color < 10%
+            new_error = (new.get("error_message") or "").strip()
+            prev_error = (prev.get("error_message") or "").strip()
+            ignored_errors = {"", "Sin error", "Cargando...", "No SNMP response"}
+            if new_error != prev_error and new_error not in ignored_errors:
+                push_event_sync("printer_error", {
+                    "printer": name,
+                    "old": prev_error,
+                    "new": new_error,
+                    "message": f"{name}: {new_error}",
+                })
+
             toner_keys = ["toner_black", "toner_cyan", "toner_magenta", "toner_yellow"]
             for key in toner_keys:
                 val = new.get(key)

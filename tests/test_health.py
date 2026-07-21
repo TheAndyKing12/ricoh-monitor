@@ -12,6 +12,7 @@ os.environ.setdefault("DATABASE_URL", f"sqlite:///{TEST_DB.as_posix()}")
 os.environ.setdefault("APP_SECRET_KEY", "test-secret")
 
 from app.main import app
+from app import ricoh_mib
 from app.routers import printers as printers_router
 
 
@@ -54,7 +55,7 @@ def test_logs_endpoint_returns_list():
 
 
 def test_inventory_requires_matching_tab_permission():
-    response = client.get("/logs/?limit=5")
+    response = client.get("/inventory/")
     assert response.status_code == 401
 
     response = client.get("/inventory/", headers=_auth_headers(is_admin=False, allowed_tabs="dashboard"))
@@ -96,3 +97,32 @@ def test_printer_identity_fast_path_does_not_use_http(monkeypatch):
 
     assert identity["name"] == "TEST-PRINTER"
     assert identity["serial"] == "SERIAL-1"
+
+
+def test_counter_normalization_keeps_mono_models_black_and_white():
+    values = {
+        ricoh_mib.OID["printer_total"]: 1574285,
+        ricoh_mib.OID["ricoh_bw_pages"]: 1040667,
+        ricoh_mib.OID["ricoh_color_pages"]: 533618,
+    }
+
+    reading, is_color = ricoh_mib.normalize_counter_reading(values, model_text="RICOH IM 4000 B/N", db_is_color=True)
+
+    assert is_color is False
+    assert reading.total_pages == 1040667
+    assert reading.bw_pages == 1040667
+    assert reading.color_pages is None
+
+
+def test_counter_normalization_derives_color_for_color_models_when_safe():
+    values = {
+        ricoh_mib.OID["printer_total"]: 1000,
+        ricoh_mib.OID["ricoh_bw_pages"]: 700,
+    }
+
+    reading, is_color = ricoh_mib.normalize_counter_reading(values, model_text="RICOH IM C3000", db_is_color=None)
+
+    assert is_color is True
+    assert reading.total_pages == 1000
+    assert reading.bw_pages == 700
+    assert reading.color_pages == 300

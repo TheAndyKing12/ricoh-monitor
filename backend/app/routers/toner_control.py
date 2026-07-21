@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from ..database import SessionLocal
 from .. import crud, schemas
 from .. import utils
+from .. import ricoh_mib
 from ..utils import safe_int, detect_is_color, get_db
 from ..snmp import get_snmp_values
 from .auth import require_tab
@@ -14,26 +15,33 @@ router = APIRouter(prefix="/toner-control", tags=["Toner Control"], dependencies
 
 
 
-OID_K = "1.3.6.1.2.1.43.11.1.1.9.1.1"
-OID_C = "1.3.6.1.2.1.43.11.1.1.9.1.2"
-OID_M = "1.3.6.1.2.1.43.11.1.1.9.1.3"
-OID_Y = "1.3.6.1.2.1.43.11.1.1.9.1.4"
+OID_K = ricoh_mib.OID["marker_black"]
+OID_C = ricoh_mib.OID["marker_cyan"]
+OID_M = ricoh_mib.OID["marker_magenta"]
+OID_Y = ricoh_mib.OID["marker_yellow"]
 
 
 def _query_printer_toner(ip, community, is_color):
     """Query toner levels for a single printer via SNMP (batch call)."""
-    oids = [OID_K]
+    oids = [OID_K, ricoh_mib.OID["ricoh_toner_black"]]
     if is_color:
-        oids.extend([OID_C, OID_M, OID_Y])
+        oids.extend([
+            OID_C,
+            OID_M,
+            OID_Y,
+            ricoh_mib.OID["ricoh_toner_cyan"],
+            ricoh_mib.OID["ricoh_toner_magenta"],
+            ricoh_mib.OID["ricoh_toner_yellow"],
+        ])
     try:
         vals = get_snmp_values(ip, community, oids, timeout=2, retries=0)
     except Exception:
         vals = {}
     return {
-        "toner_black": safe_int(vals.get(OID_K)),
-        "toner_cyan": safe_int(vals.get(OID_C)) if is_color else None,
-        "toner_magenta": safe_int(vals.get(OID_M)) if is_color else None,
-        "toner_yellow": safe_int(vals.get(OID_Y)) if is_color else None,
+        "toner_black": ricoh_mib.choose_toner(vals, "marker_black", "ricoh_toner_black"),
+        "toner_cyan": ricoh_mib.choose_toner(vals, "marker_cyan", "ricoh_toner_cyan") if is_color else None,
+        "toner_magenta": ricoh_mib.choose_toner(vals, "marker_magenta", "ricoh_toner_magenta") if is_color else None,
+        "toner_yellow": ricoh_mib.choose_toner(vals, "marker_yellow", "ricoh_toner_yellow") if is_color else None,
     }
 
 
@@ -46,7 +54,11 @@ def get_controls(db: Session = Depends(get_db)):
     # Pre-compute color detection
     printer_info = []
     for p in printers:
-        is_color = detect_is_color(p)
+        model_hint = " ".join(str(getattr(p, attr, "") or "") for attr in ("shared_name", "name", "model"))
+        if ricoh_mib.model_says_mono(model_hint):
+            is_color = False
+        else:
+            is_color = bool(detect_is_color(p) or ricoh_mib.model_says_color(model_hint))
         printer_info.append((p, is_color))
 
     # Query all printers in parallel

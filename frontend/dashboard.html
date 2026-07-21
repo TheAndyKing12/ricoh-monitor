@@ -914,8 +914,116 @@
         }
 
         .discover-select-col {
-            width: 56px;
+            width: 44px;
             text-align: center
+        }
+
+        .discovery-modal-overlay.open {
+            display: flex !important;
+            align-items: flex-start !important;
+            justify-content: center !important;
+            padding: 96px 20px 20px !important
+        }
+
+        #discoverPrinterCard .discovery-modal-box {
+            width: min(760px, calc(100vw - 40px)) !important;
+            max-width: 760px !important;
+            max-height: calc(100vh - 40px) !important;
+            padding: 22px 24px !important;
+            border-radius: 16px !important;
+            position: relative !important;
+            inset: auto !important;
+            overflow-y: auto
+        }
+
+        .discover-card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            padding-right: 36px;
+            margin-bottom: 16px
+        }
+
+        .discovery-modal-section {
+            padding-top: 0
+        }
+
+        .form-actions-inline {
+            margin: 4px 0 14px;
+            padding-top: 14px;
+            border-top: 1px solid #334155
+        }
+
+        .discovery-results-table {
+            max-height: 260px;
+            border-radius: 10px
+        }
+
+        .discovery-results-table table {
+            min-width: 0 !important;
+            table-layout: fixed
+        }
+
+        .discovery-results-table th,
+        .discovery-results-table td {
+            padding: 10px 12px;
+            white-space: normal;
+            word-break: break-word
+        }
+
+        .discovery-results-table th:nth-child(1),
+        .discovery-results-table td:nth-child(1) {
+            width: 44px
+        }
+
+        .discovery-results-table th:nth-child(3),
+        .discovery-results-table td:nth-child(3) {
+            width: 112px
+        }
+
+        .discovery-results-table th:nth-child(5),
+        .discovery-results-table td:nth-child(5) {
+            width: 70px
+        }
+
+        .discover-device-main {
+            font-weight: 700;
+            color: #f8fafc
+        }
+
+        .discover-device-sub {
+            margin-top: 3px;
+            font-size: 12px;
+            color: #94a3b8
+        }
+
+        @media (max-width: 700px) {
+            .discovery-modal-overlay.open {
+                align-items: flex-start !important;
+                padding: 72px 10px 10px !important
+            }
+
+            #discoverPrinterCard .discovery-modal-box {
+                width: calc(100vw - 20px) !important;
+                max-height: calc(100vh - 20px) !important;
+                padding: 18px !important
+            }
+
+            .discover-fields {
+                grid-template-columns: 1fr
+            }
+
+            .discover-card-header {
+                flex-direction: column;
+                gap: 8px
+            }
+
+            .discovery-results-table th,
+            .discovery-results-table td {
+                padding: 9px 8px;
+                font-size: 12px
+            }
         }
 
         .discover-checkbox {
@@ -4491,10 +4599,686 @@
             background: rgba(71,85,105,.52);
         }
 
+        /* Ricoh Command Center layer */
+        body.command-center {
+            --cmd-bg: #050b16;
+            --cmd-surface: rgba(15, 23, 42, .82);
+            --cmd-surface-2: rgba(20, 32, 52, .88);
+            --cmd-line: rgba(125, 211, 252, .20);
+            --cmd-line-strong: rgba(96, 165, 250, .38);
+            --cmd-text: #e5eefc;
+            --cmd-muted: #8ea3bd;
+            --cmd-green: #22c55e;
+            --cmd-yellow: #facc15;
+            --cmd-red: #fb4d5d;
+            --cmd-cyan: #22d3ee;
+            background:
+                radial-gradient(circle at 22% 0%, rgba(34, 211, 238, .16), transparent 30%),
+                radial-gradient(circle at 85% 10%, rgba(59, 130, 246, .14), transparent 28%),
+                linear-gradient(135deg, #030712 0%, #07111f 44%, #091525 100%);
+            color: var(--cmd-text);
+        }
+
+        body.command-center::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            background-image:
+                linear-gradient(rgba(125, 211, 252, .035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(125, 211, 252, .03) 1px, transparent 1px);
+            background-size: 42px 42px;
+            mask-image: linear-gradient(to bottom, rgba(0,0,0,.9), rgba(0,0,0,.25));
+        }
+
+        .command-center .layout {
+            position: relative;
+            z-index: 1;
+            background: transparent;
+        }
+
+        .command-center .content {
+            background: transparent;
+        }
+
+        .command-center .sidebar {
+            background: linear-gradient(180deg, rgba(2, 6, 23, .98), rgba(8, 16, 32, .96));
+            border-right: 1px solid var(--cmd-line);
+            box-shadow: 16px 0 40px rgba(0,0,0,.28);
+        }
+
+        .command-center .sidebar h2 {
+            letter-spacing: .02em;
+            color: #f8fbff;
+        }
+
+        .command-center .menu-button {
+            background: transparent;
+            border-color: transparent;
+            color: #a9bad1;
+            border-radius: 8px;
+        }
+
+        .command-center .menu-button:hover {
+            background: rgba(96, 165, 250, .10);
+            border-color: rgba(96, 165, 250, .18);
+            color: #eaf3ff;
+        }
+
+        .command-center .menu-button.active {
+            background: linear-gradient(90deg, rgba(37, 99, 235, .30), rgba(14, 165, 233, .08));
+            border-color: rgba(96, 165, 250, .42);
+            box-shadow: inset 3px 0 0 #38bdf8, 0 10px 24px rgba(14, 165, 233, .12);
+            color: #fff;
+        }
+
+        .command-center header,
+        .command-center .card,
+        .command-center .summary-card,
+        .command-center .table-wrapper,
+        .command-center .tc-toolbar,
+        .command-center .inv-toolbar {
+            background: linear-gradient(180deg, var(--cmd-surface-2), rgba(10, 17, 31, .88));
+            border: 1px solid var(--cmd-line);
+            box-shadow: 0 18px 50px rgba(0,0,0,.24);
+        }
+
+        .command-center .dashboard-shell > header {
+            border-radius: 0;
+            border-left: 0;
+            border-right: 0;
+            border-top: 0;
+            padding: 18px 20px;
+            background:
+                linear-gradient(90deg, rgba(14, 165, 233, .10), transparent 45%),
+                linear-gradient(180deg, rgba(15, 23, 42, .96), rgba(8, 13, 25, .92));
+        }
+
+        .command-center .dashboard-title {
+            font-size: 22px;
+            letter-spacing: -.02em;
+            color: #f8fbff;
+        }
+
+        .command-center .badge,
+        .command-center .status-badge,
+        .command-center .filter-toggle-btn,
+        .command-center .toolbar-input,
+        .command-center .toolbar-select,
+        .command-center .toolbar-button,
+        .command-center input,
+        .command-center select,
+        .command-center textarea {
+            background: rgba(5, 12, 26, .72);
+            border-color: rgba(125, 211, 252, .20);
+            color: #e5eefc;
+        }
+
+        .command-center .filter-toggle-btn:hover,
+        .command-center .toolbar-button:hover {
+            border-color: var(--cmd-line-strong);
+            background: rgba(37, 99, 235, .18);
+        }
+
+        .command-center .summary {
+            gap: 12px;
+        }
+
+        .command-center .summary-card {
+            min-height: 116px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .command-center .summary-card h3 {
+            color: var(--cmd-muted);
+            letter-spacing: .06em;
+        }
+
+        .command-center .summary-card .value {
+            color: #f8fbff;
+            font-size: 34px;
+        }
+
+        .command-center .summary-card::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: #38bdf8;
+            opacity: .95;
+        }
+
+        .command-center .summary-card-online::before { background: var(--cmd-green); }
+        .command-center .summary-card-offline::before { background: var(--cmd-red); }
+        .command-center .summary-card-toner::before { background: var(--cmd-yellow); }
+
+        .live-ops-grid {
+            display: grid;
+            grid-template-columns: minmax(320px, 1.1fr) minmax(280px, .95fr) minmax(280px, .95fr);
+            gap: 14px;
+            padding: 14px 0 18px;
+        }
+
+        .ops-panel {
+            position: relative;
+            min-height: 188px;
+            padding: 16px;
+            border-radius: 10px;
+            background:
+                linear-gradient(135deg, rgba(15, 23, 42, .94), rgba(8, 14, 28, .92)),
+                radial-gradient(circle at top right, rgba(34, 211, 238, .10), transparent 34%);
+            border: 1px solid var(--cmd-line);
+            box-shadow: 0 18px 50px rgba(0,0,0,.26);
+            overflow: hidden;
+        }
+
+        .ops-panel::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: linear-gradient(90deg, transparent, rgba(125, 211, 252, .05), transparent);
+            transform: translateX(-100%);
+            animation: opsSweep 9s linear infinite;
+        }
+
+        @keyframes opsSweep {
+            0%, 74% { transform: translateX(-100%); opacity: 0; }
+            78% { opacity: 1; }
+            100% { transform: translateX(100%); opacity: 0; }
+        }
+
+        .ops-panel-head {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .ops-kicker {
+            display: block;
+            color: #7dd3fc;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .ops-panel h3 {
+            margin: 0;
+            color: #f8fbff;
+            font-size: 18px;
+            letter-spacing: -.01em;
+        }
+
+        .ops-health-pill,
+        .ops-count-pill,
+        .ops-mini-button {
+            position: relative;
+            z-index: 1;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            border: 1px solid rgba(125, 211, 252, .22);
+            background: rgba(7, 13, 27, .74);
+            color: #cfe8ff;
+            border-radius: 999px;
+            padding: 7px 10px;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .ops-health-pill.ok { color: #bbf7d0; border-color: rgba(34, 197, 94, .36); }
+        .ops-health-pill.warn { color: #fef08a; border-color: rgba(250, 204, 21, .38); }
+        .ops-health-pill.critical { color: #fecdd3; border-color: rgba(251, 77, 93, .42); }
+
+        .ops-mini-button {
+            cursor: pointer;
+            border-radius: 8px;
+        }
+
+        .ops-signal-grid {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0,1fr));
+            gap: 10px;
+        }
+
+        .ops-signal {
+            padding: 13px;
+            border: 1px solid rgba(125, 211, 252, .16);
+            background: rgba(5, 12, 26, .58);
+            border-radius: 9px;
+        }
+
+        .ops-signal span {
+            display: block;
+            color: var(--cmd-muted);
+            font-size: 11px;
+            font-weight: 750;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            margin-bottom: 8px;
+        }
+
+        .ops-signal strong {
+            color: #fff;
+            font-size: 24px;
+            letter-spacing: -.03em;
+        }
+
+        .ops-list {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 126px;
+            overflow: auto;
+            padding-right: 3px;
+        }
+
+        .ops-list-item {
+            display: grid;
+            grid-template-columns: 9px minmax(0,1fr) auto;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border: 1px solid rgba(125, 211, 252, .14);
+            background: rgba(5, 12, 26, .55);
+            border-radius: 9px;
+            cursor: pointer;
+        }
+
+        .ops-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--cmd-cyan);
+            box-shadow: 0 0 14px currentColor;
+        }
+
+        .ops-dot.red { background: var(--cmd-red); color: var(--cmd-red); }
+        .ops-dot.yellow { background: var(--cmd-yellow); color: var(--cmd-yellow); }
+        .ops-dot.green { background: var(--cmd-green); color: var(--cmd-green); }
+
+        .ops-item-title {
+            color: #f8fbff;
+            font-weight: 850;
+            font-size: 13px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .ops-item-sub {
+            color: var(--cmd-muted);
+            font-size: 11px;
+            margin-top: 2px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .ops-item-tag {
+            color: #cfe8ff;
+            font-size: 11px;
+            font-weight: 800;
+            padding: 4px 7px;
+            border-radius: 999px;
+            background: rgba(96, 165, 250, .12);
+            border: 1px solid rgba(96, 165, 250, .22);
+        }
+
+        .ops-empty {
+            color: var(--cmd-muted);
+            border: 1px dashed rgba(125, 211, 252, .18);
+            border-radius: 9px;
+            padding: 18px 12px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .command-center .dashboard-table-wrap {
+            border-radius: 10px;
+            position: relative;
+            overflow: auto;
+            max-height: min(52vh, 520px);
+            scrollbar-width: thin;
+            scrollbar-color: rgba(125, 211, 252, .55) rgba(15, 23, 42, .55);
+            border-bottom: 1px solid rgba(125, 211, 252, .30);
+        }
+
+        .command-center .dashboard-table-wrap::after {
+            content: "";
+            position: sticky;
+            left: 0;
+            bottom: 0;
+            display: block;
+            pointer-events: none;
+            height: 22px;
+            margin-top: -22px;
+            background: linear-gradient(180deg, rgba(5, 12, 26, 0), rgba(5, 12, 26, .92));
+        }
+
+        .command-center .dashboard-table-wrap::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+
+        .command-center .dashboard-table-wrap::-webkit-scrollbar-track {
+            background: rgba(5, 12, 26, .74);
+            border-left: 1px solid rgba(125, 211, 252, .12);
+        }
+
+        .command-center .dashboard-table-wrap::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, rgba(125, 211, 252, .72), rgba(37, 99, 235, .72));
+            border: 3px solid rgba(5, 12, 26, .84);
+            border-radius: 999px;
+        }
+
+        .command-center .dashboard-table-wrap::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, rgba(186, 230, 253, .92), rgba(59, 130, 246, .92));
+        }
+
+        .command-center .dashboard-table thead th {
+            background: rgba(5, 12, 26, .92);
+            color: #9eb4ce;
+            letter-spacing: .08em;
+            position: sticky;
+            top: 0;
+            z-index: 3;
+            box-shadow: 0 1px 0 rgba(125, 211, 252, .18), 0 12px 20px rgba(2, 6, 23, .22);
+        }
+
+        .command-center.monitor-mode .content {
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .command-center.monitor-mode #dashboard {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .command-center.monitor-mode .dashboard-shell > header {
+            padding: 10px 16px;
+            position: sticky;
+            top: 0;
+            z-index: 1200;
+            flex: 0 0 auto;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 12px 32px rgba(2, 6, 23, .36), 0 1px 0 rgba(125, 211, 252, .16);
+        }
+
+        .command-center.monitor-mode .dashboard-header {
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .command-center.monitor-mode .dashboard-title {
+            font-size: 18px;
+        }
+
+        .command-center.monitor-mode #lastUpdate {
+            padding: 4px 8px;
+            font-size: 11px;
+        }
+
+        .command-center.monitor-mode #dashboardFilterBtn,
+        .command-center.monitor-mode #compactBtn,
+        .command-center.monitor-mode #notifBtn,
+        .command-center.monitor-mode #dashboardFilters,
+        .command-center.monitor-mode .live-ops-grid,
+        .command-center.monitor-mode #dashboardCardsView {
+            display: none !important;
+        }
+
+        .command-center.monitor-mode .summary {
+            grid-template-columns: repeat(4, minmax(140px, 1fr));
+            gap: 8px;
+            margin-top: 10px !important;
+        }
+
+        .command-center.monitor-mode .summary-card {
+            min-height: 70px;
+            padding: 10px 12px;
+            border-radius: 8px;
+        }
+
+        .command-center.monitor-mode .summary-card h3 {
+            font-size: 10px;
+            margin-bottom: 4px;
+        }
+
+        .command-center.monitor-mode .summary-card .value {
+            font-size: 26px;
+            line-height: 1;
+        }
+
+        .command-center.monitor-mode .summary-card .card-icon-bg {
+            opacity: .08;
+            transform: scale(.72);
+        }
+
+        .command-center.monitor-mode #dashboardTableView {
+            display: block !important;
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
+            padding: 8px 10px 0;
+        }
+
+        .command-center.monitor-mode #dashboardTableView::before {
+            content: "MONITOR LIVE / AUTO-SCROLL";
+            display: block;
+            width: fit-content;
+            margin: 0 0 6px auto;
+            padding: 4px 8px;
+            border: 1px solid rgba(125, 211, 252, .20);
+            border-radius: 999px;
+            background: rgba(5, 12, 26, .70);
+            color: rgba(207, 232, 255, .76);
+            font-size: 10px;
+            font-weight: 850;
+            letter-spacing: .10em;
+        }
+
+        .command-center.monitor-mode .dashboard-table-wrap {
+            height: calc(100vh - 166px);
+            max-height: calc(100vh - 166px);
+            border-radius: 8px;
+        }
+
+        .command-center.monitor-mode .dashboard-table th,
+        .command-center.monitor-mode .dashboard-table td {
+            padding: 7px 10px;
+            font-size: 12px;
+            line-height: 1.12;
+            white-space: nowrap;
+        }
+
+        .command-center.monitor-mode .dashboard-table thead th {
+            font-size: 10px;
+        }
+
+        .command-center.monitor-mode .status-badge {
+            padding: 4px 9px;
+            font-size: 10px;
+        }
+
+        .command-center.monitor-mode .toner-inline {
+            gap: 4px;
+        }
+
+        .command-center.monitor-mode .toner-mini {
+            min-width: 32px;
+        }
+
+        .command-center.monitor-mode .mini-bar {
+            width: 30px;
+        }
+
+        .command-center.monitor-mode .mini-label {
+            display: none;
+        }
+
+        .command-center .dashboard-table tbody td {
+            background: rgba(10, 17, 31, .72);
+            border-bottom: 1px solid rgba(125, 211, 252, .10);
+        }
+
+        .command-center .dashboard-table tbody tr:hover td {
+            background: rgba(14, 165, 233, .10);
+        }
+
+        .command-center .command-printer-card {
+            cursor: pointer;
+        }
+
+        .command-center .command-printer-card:hover {
+            border-color: rgba(125, 211, 252, .42);
+            transform: translateY(-2px);
+        }
+
+        .command-center #printerModal.modal-overlay.open {
+            display: flex;
+            justify-content: flex-end;
+            align-items: stretch;
+            background: rgba(2, 6, 23, .68);
+            backdrop-filter: blur(12px);
+        }
+
+        .command-center #printerModal .modal-box {
+            width: min(520px, 100vw);
+            max-width: 520px;
+            height: 100vh;
+            max-height: 100vh;
+            border-radius: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            background:
+                linear-gradient(180deg, rgba(17, 28, 48, .98), rgba(5, 10, 21, .98)),
+                radial-gradient(circle at top right, rgba(34, 211, 238, .18), transparent 30%);
+            border: 0;
+            border-left: 1px solid var(--cmd-line-strong);
+            box-shadow: -28px 0 80px rgba(0,0,0,.45);
+            animation: commandPanelIn .24s cubic-bezier(.2,.8,.2,1);
+        }
+
+        @keyframes commandPanelIn {
+            from { transform: translateX(24px); opacity: .2; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .command-center #printerModal .modal-title {
+            padding-right: 54px;
+            color: #fff;
+            font-size: 25px;
+        }
+
+        .command-center #printerModal .modal-subtitle {
+            color: #9fb4cf;
+            border-bottom: 1px solid rgba(125, 211, 252, .16);
+            padding-bottom: 16px;
+        }
+
+        .command-center #printerModal .modal-section {
+            background: rgba(5, 12, 26, .50);
+            border: 1px solid rgba(125, 211, 252, .15);
+            border-radius: 10px;
+            padding: 14px;
+            margin-top: 12px;
+        }
+
+        .command-center #printerModal .modal-actions {
+            margin-top: auto;
+            border-top: 1px solid rgba(125, 211, 252, .16);
+            padding-top: 16px;
+        }
+
+        .command-center .toast {
+            background: rgba(6, 12, 24, .94);
+            border: 1px solid rgba(125, 211, 252, .26);
+            box-shadow: 0 18px 48px rgba(0,0,0,.36);
+        }
+
+        body.theme-light.command-center {
+            background: #eef4fb;
+            color: #111827;
+        }
+
+        .theme-light.command-center::before {
+            opacity: .26;
+        }
+
+        .theme-light.command-center .live-ops-grid,
+        .theme-light.command-center .ops-panel {
+            color: #111827;
+        }
+
+        .theme-light.command-center .ops-panel {
+            background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(241,245,249,.96));
+            border-color: rgba(71, 85, 105, .18);
+        }
+
+        .theme-light.command-center .ops-panel h3,
+        .theme-light.command-center .ops-signal strong,
+        .theme-light.command-center .ops-item-title {
+            color: #0f172a;
+        }
+
+        .theme-light.command-center .ops-signal,
+        .theme-light.command-center .ops-list-item {
+            background: rgba(248,250,252,.82);
+            border-color: rgba(71, 85, 105, .16);
+        }
+
+        .theme-light.command-center .ops-item-sub,
+        .theme-light.command-center .ops-signal span,
+        .theme-light.command-center .ops-empty {
+            color: #475569;
+        }
+
+        @media (max-width: 1180px) {
+            .live-ops-grid {
+                grid-template-columns: 1fr;
+            }
+            .ops-list {
+                max-height: 190px;
+            }
+        }
+
+        @media (max-width: 760px) {
+            .command-center .dashboard-shell > header {
+                padding: 14px 12px;
+            }
+            .live-ops-grid {
+                padding: 12px 0;
+            }
+            .ops-signal-grid {
+                grid-template-columns: 1fr;
+            }
+            .command-center #printerModal .modal-box {
+                width: 100vw;
+            }
+        }
     </style>
     <link rel="stylesheet" href="design-system.css">
 </head>
-<body class="app-dashboard">
+<body class="app-dashboard command-center">
     <div class="layout">
         <aside class="sidebar">
             <h2><span class="sidebar-title">Ricoh Monitor</span></h2>
@@ -4531,9 +5315,9 @@
                                 <span data-i18n="dashboard_filters">Filtros del dashboard</span>
                                 <span class="filter-toggle-state" id="filterToggleState" data-i18n="filters_hidden">Ocultos</span>
                             </button>
-                            <button id="fullscreenBtn" class="filter-toggle-btn" type="button" onclick="toggleDashboardFullscreen()" title="Pantalla completa">
-                                <span class="filter-toggle-icon" id="fullscreenBtnIcon">&#9974;</span>
-                                <span id="fullscreenBtnLabel" data-i18n="fullscreen">Pantalla completa</span>
+                            <button id="fullscreenBtn" class="filter-toggle-btn" type="button" onclick="toggleDashboardFullscreen()" title="Monitor">
+                                <span class="filter-toggle-icon" id="fullscreenBtnIcon"><i class="bi bi-tv"></i></span>
+                                <span id="fullscreenBtnLabel" data-i18n="monitor_mode">Monitor</span>
                             </button>
                             <button id="compactBtn" class="filter-toggle-btn compact-btn" type="button" onclick="toggleCompactMode()" title="Modo compacto">
                                 <span class="filter-toggle-icon">&#8644;</span>
@@ -4554,7 +5338,7 @@
                 </header>
 
                 <div id="dashboardFilters" class="dashboard-filters closed">
-                    <input id="searchInput" class="toolbar-input" type="text" placeholder="Buscar por shared name, name, IP, modelo o serie" data-i18n-ph="search_placeholder">
+                    <input id="searchInput" class="toolbar-input" type="search" name="dashboard_filter_query_no_login" inputmode="search" role="searchbox" placeholder="Buscar por shared name, name, IP, modelo o serie" data-i18n-ph="search_placeholder" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" aria-autocomplete="none" data-lpignore="true" data-1p-ignore="true" data-form-type="other" readonly>
                     <select id="viewMode" class="toolbar-select"><option value="table" data-i18n="view_table">Vista tabla</option><option value="cards" data-i18n="view_cards">Vista tarjetas</option></select>
                     <select id="statusFilter" class="toolbar-select"><option value="all" data-i18n="status_all">Estado: Todas</option><option value="online" data-i18n="status_online">Estado: Online</option><option value="offline" data-i18n="status_offline">Estado: Offline</option></select>
                     <select id="typeFilter" class="toolbar-select"><option value="all" data-i18n="type_all">Tipo: Todas</option><option value="color" data-i18n="type_color">Tipo: Color</option><option value="mono" data-i18n="type_mono">Tipo: Blanco y negro</option></select>
@@ -4562,6 +5346,48 @@
                     <select id="sortFilter" class="toolbar-select"><option value="relevance_desc" data-i18n="sort_relevance_desc">Orden: Relevancia ↓</option><option value="relevance_asc" data-i18n="sort_relevance_asc">Orden: Relevancia ↑</option><option value="shared_name_asc" data-i18n="sort_shared_asc">Orden: Shared Name A-Z</option><option value="shared_name_desc" data-i18n="sort_shared_desc">Orden: Shared Name Z-A</option><option value="name_asc" data-i18n="sort_name_asc">Orden: Name A-Z</option><option value="name_desc" data-i18n="sort_name_desc">Orden: Name Z-A</option><option value="ip_asc" data-i18n="sort_ip_asc">Orden: IP ↑</option><option value="ip_desc" data-i18n="sort_ip_desc">Orden: IP ↓</option><option value="model_asc" data-i18n="sort_model_asc">Orden: Modelo A-Z</option><option value="model_desc" data-i18n="sort_model_desc">Orden: Modelo Z-A</option></select>
                     <button class="toolbar-button" onclick="resetFilters()" data-i18n="btn_clean">Limpiar</button>
                 </div>
+
+                <section class="live-ops-grid" aria-label="Live Ops">
+                    <div class="ops-panel ops-system-panel">
+                        <div class="ops-panel-head">
+                            <div>
+                                <span class="ops-kicker">LIVE OPS</span>
+                                <h3>Centro de comando</h3>
+                            </div>
+                            <span class="ops-health-pill" id="opsHealthPill"><i class="bi bi-activity"></i> Verificando</span>
+                        </div>
+                        <div class="ops-signal-grid">
+                            <div class="ops-signal"><span>Disponibilidad</span><strong id="opsAvailability">0%</strong></div>
+                            <div class="ops-signal"><span>SNMP online</span><strong id="opsOnlineRatio">0/0</strong></div>
+                            <div class="ops-signal"><span>Críticas</span><strong id="opsCriticalCount">0</strong></div>
+                            <div class="ops-signal"><span>Tóner bajo</span><strong id="opsLowCount">0</strong></div>
+                        </div>
+                    </div>
+                    <div class="ops-panel ops-critical-panel">
+                        <div class="ops-panel-head">
+                            <div>
+                                <span class="ops-kicker">PRIORIDAD</span>
+                                <h3>Impresoras críticas</h3>
+                            </div>
+                            <span class="ops-count-pill" id="opsCriticalBadge">0</span>
+                        </div>
+                        <div id="criticalPrintersPanel" class="ops-list">
+                            <div class="ops-empty">Sin impresoras críticas.</div>
+                        </div>
+                    </div>
+                    <div class="ops-panel ops-activity-panel">
+                        <div class="ops-panel-head">
+                            <div>
+                                <span class="ops-kicker">TIMELINE</span>
+                                <h3>Eventos recientes</h3>
+                            </div>
+                            <button class="ops-mini-button" type="button" onclick="openNotifHistory()">Historial</button>
+                        </div>
+                        <div id="recentActivityPanel" class="ops-list">
+                            <div class="ops-empty">Sin eventos recientes.</div>
+                        </div>
+                    </div>
+                </section>
 
                 <div id="dashboardCardsView" class="dashboard-view-wrap"><div class="grid" id="printersGrid"></div></div>
                 <div id="dashboardTableView" class="dashboard-view-wrap" style="display:none;">
@@ -4614,7 +5440,7 @@
                         <button class="action-button" onclick="discoverPrinters()"><i class="bi bi-search"></i><span data-i18n="btn_search_printers">Buscar impresoras</span></button>
                         <button class="action-button action-button-secondary" onclick="importPrinters()"><i class="bi bi-box-arrow-in-down"></i><span data-i18n="btn_import_found">Importar encontradas</span></button>
                     </div>
-                    <div class="table-wrapper discovery-results-table"><table><thead><tr><th></th><th>Shared Name</th><th data-i18n="th_name">Nombre</th><th>IP</th><th data-i18n="th_model">Modelo</th><th data-i18n="th_serial">Serie</th><th data-i18n="th_status">Tipo</th></tr></thead><tbody id="discoverPrintersList"><tr><td colspan="7" data-i18n="discover_hint">Ingrese rango y presione buscar.</td></tr></tbody></table></div>
+                    <div class="table-wrapper discovery-results-table"><table><thead><tr><th></th><th>Equipo</th><th>IP</th><th>Modelo / Serie</th><th data-i18n="th_status">Tipo</th></tr></thead><tbody id="discoverPrintersList"><tr><td colspan="5" data-i18n="discover_hint">Ingrese rango y presione buscar.</td></tr></tbody></table></div>
                     </div>
                     </div>
                 </div>
@@ -4624,7 +5450,7 @@
                         <h3 class="section-card-title" data-i18n="registered_printers">Impresoras registradas</h3>
                         <div class="table-search"><i class="bi bi-search"></i><input id="printerSearch" placeholder="Buscar impresora..." data-i18n-ph="search_printer_ph" oninput="filterSavedPrinters()"></div>
                     </div>
-                    <div class="table-wrapper"><table><thead><tr><th class="sortable-th" onclick="toggleSavedPrintersSort('id')"><span>ID</span> <span class="sort-ind" id="savedPrintersSort_id"></span></th><th class="sortable-th" onclick="toggleSavedPrintersSort('shared_name')"><span>Shared Name</span> <span class="sort-ind" id="savedPrintersSort_shared_name"></span></th><th class="sortable-th" onclick="toggleSavedPrintersSort('name')"><span>Nombre</span> <span class="sort-ind" id="savedPrintersSort_name"></span></th><th class="sortable-th" onclick="toggleSavedPrintersSort('ip')"><span>IP</span> <span class="sort-ind" id="savedPrintersSort_ip"></span></th><th>Modelo</th><th>Serie</th><th>Tipo</th><th data-i18n="th_actions">Acciones</th></tr></thead><tbody id="savedPrintersList"><tr><td colspan="8" data-i18n="loading_printers">Cargando impresoras...</td></tr></tbody></table></div>
+                    <div class="table-wrapper"><table><thead><tr><th class="sortable-th" onclick="toggleSavedPrintersSort('shared_name')"><span>Shared Name</span> <span class="sort-ind" id="savedPrintersSort_shared_name"></span></th><th class="sortable-th" onclick="toggleSavedPrintersSort('name')"><span>Nombre</span> <span class="sort-ind" id="savedPrintersSort_name"></span></th><th class="sortable-th" onclick="toggleSavedPrintersSort('ip')"><span>IP</span> <span class="sort-ind" id="savedPrintersSort_ip"></span></th><th>Modelo</th><th>Serie</th><th>Tipo</th><th data-i18n="th_actions">Acciones</th></tr></thead><tbody id="savedPrintersList"><tr><td colspan="7" data-i18n="loading_printers">Cargando impresoras...</td></tr></tbody></table></div>
                 </div>
             </div>
 
@@ -4752,6 +5578,7 @@
                         <button class="cfg-nav-btn active" onclick="showConfigSection('cfgAppearance',this)"><i class="bi bi-moon-stars"></i> <span data-i18n="config_nav_appearance">Apariencia</span></button>
                         <button class="cfg-nav-btn" onclick="showConfigSection('cfgLanguage',this)"><i class="bi bi-translate"></i> <span data-i18n="config_nav_language">Idioma</span></button>
                         <button class="cfg-nav-btn" onclick="showConfigSection('cfgCache',this)"><i class="bi bi-database"></i> <span data-i18n="config_nav_cache">Caché</span></button>
+                        <button class="cfg-nav-btn" onclick="showConfigSection('cfgDataTransfer',this)"><i class="bi bi-arrow-left-right"></i> Importar / Exportar</button>
                         <button class="cfg-nav-btn" onclick="showConfigSection('cfgShortcuts',this)"><i class="bi bi-keyboard"></i> <span data-i18n="config_nav_shortcuts">Atajos</span></button>
                         <div class="admin-only" style="padding:14px 18px 10px;margin-top:8px;font-size:11px;font-weight:700;color:#475569;letter-spacing:.08em;text-transform:uppercase;border-top:1px solid #1e293b;" data-i18n="config_nav_security">Seguridad</div>
                         <button class="cfg-nav-btn admin-only" onclick="showConfigSection('cfgAD',this)"><i class="bi bi-diagram-3"></i> Active Directory</button>
@@ -4798,6 +5625,31 @@
                             </div>
                         </div>
 
+                        <!-- Importar / Exportar -->
+                        <div id="cfgDataTransfer" class="cfg-section">
+                            <div class="cfg-section-header"><i class="bi bi-arrow-left-right" style="color:#38bdf8"></i><div><div class="cfg-section-title">Importar / Exportar</div><div class="cfg-section-desc">Respalda o carga datos masivos de impresoras e inventario de impresoras usando CSV.</div></div></div>
+                            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:20px;">
+                                <div style="padding:16px;background:#1e293b;border-radius:10px;border:1px solid #334155;display:flex;flex-direction:column;gap:12px;">
+                                    <div style="font-size:14px;font-weight:700;color:#f1f5f9"><i class="bi bi-printer"></i> Impresoras monitoreadas</div>
+                                    <div style="font-size:12px;color:#94a3b8;line-height:1.5">Exporta o importa shared name, nombre, modelo, IP, serie, ubicacion, color y comunidad SNMP.</div>
+                                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                                        <button class="action-button action-button-secondary" type="button" onclick="exportPrintersMasterCSV()"><i class="bi bi-filetype-csv"></i> Exportar CSV</button>
+                                        <button class="action-button" type="button" onclick="document.getElementById('printersMasterImportFile').click()"><i class="bi bi-upload"></i> Importar CSV</button>
+                                    </div>
+                                    <input id="printersMasterImportFile" type="file" accept=".csv,text/csv" style="display:none" onchange="importPrintersMasterCSV(this.files[0]);this.value=''">
+                                </div>
+                                <div style="padding:16px;background:#1e293b;border-radius:10px;border:1px solid #334155;display:flex;flex-direction:column;gap:12px;">
+                                    <div style="font-size:14px;font-weight:700;color:#f1f5f9"><i class="bi bi-clipboard-check"></i> Inventario de impresoras</div>
+                                    <div style="font-size:12px;color:#94a3b8;line-height:1.5">Exporta o importa serial, modelo, shared name, ubicacion, estado, IP, switch, puerto, MAC, asset tag y notas.</div>
+                                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                                        <button class="action-button action-button-secondary" type="button" onclick="exportPrinterAssetsMasterCSV()"><i class="bi bi-filetype-csv"></i> Exportar CSV</button>
+                                        <button class="action-button" type="button" onclick="document.getElementById('printerAssetsMasterImportFile').click()"><i class="bi bi-upload"></i> Importar CSV</button>
+                                    </div>
+                                    <input id="printerAssetsMasterImportFile" type="file" accept=".csv,text/csv" style="display:none" onchange="importPrinterAssetsMasterCSV(this.files[0]);this.value=''">
+                                </div>
+                            </div>
+                            <div id="dataTransferStatus" class="field-help" style="margin-top:14px;color:#94a3b8"></div>
+                        </div>
                         <!-- Atajos -->
                         <div id="cfgShortcuts" class="cfg-section">
                             <div class="cfg-section-header"><i class="bi bi-keyboard" style="color:#fbbf24"></i><div><div class="cfg-section-title" data-i18n="config_shortcuts">Atajos de teclado</div><div class="cfg-section-desc">Accesos rápidos disponibles en el dashboard.</div></div></div>
@@ -4887,7 +5739,6 @@
                                 </table>
                             </div>
                         </div>
-
                         <!-- Centro de salud -->
                         <div id="cfgHealth" class="cfg-section">
                             <div class="cfg-section-header"><i class="bi bi-activity" style="color:#22c55e"></i><div><div class="cfg-section-title">Centro de salud</div><div class="cfg-section-desc">Estado operativo del API, base de datos, scheduler, sincronizaciones y errores recientes.</div></div></div>
@@ -5452,7 +6303,6 @@
             localStorage.removeItem('auth_user');
             window.location.href = '/frontend/login.html';
         }
-
         function applyTabPermissions() {
             const tabMap = {
                 dashboard: 0, printers: 1, counters: 2,
@@ -5484,9 +6334,10 @@
         const PRINTERS_POLL_MS = 30000;
         let discoveredPrintersCache = [];
         let hostnameLookupController = null;
-        let savedPrintersSortColumn = 'id';
+        let savedPrintersSortColumn = 'shared_name';
         let savedPrintersSortDirection = 'asc';
         let countersAutoTimer = null;
+        let monitorAutoScrollTimer = null;
         let countersSortColumn = 'name';
         let countersSortDirection = 'asc';
         let countersRawData = [];
@@ -5852,7 +6703,7 @@
             es: {
                 menu_dashboard: 'Dashboard', menu_printers: 'Impresoras', menu_counters: 'Contadores', menu_inventory: 'Control de Inventario', menu_toner_control: 'Control de Toner', menu_config: 'Configuración',
                 total_printers: 'Total impresoras', online: 'Online', offline: 'Offline', low_toner: 'Tóner bajo',
-                dashboard_filters: 'Filtros del dashboard', filters_hidden: 'Ocultos', filters_visible: 'Visibles', fullscreen: 'Pantalla completa', exit_fullscreen: 'Salir pantalla', compact_mode: 'Modo compacto',
+                dashboard_filters: 'Filtros del dashboard', filters_hidden: 'Ocultos', filters_visible: 'Visibles', fullscreen: 'Monitor', exit_fullscreen: 'Salir monitor', monitor_mode: 'Monitor', exit_monitor_mode: 'Salir monitor', compact_mode: 'Modo compacto',
                 search_placeholder: 'Buscar por shared name, name, IP, modelo o serie',
                 view_table: 'Vista tabla', view_cards: 'Vista tarjetas',
                 status_all: 'Estado: Todas', status_online: 'Estado: Online', status_offline: 'Estado: Offline',
@@ -5871,7 +6722,7 @@
                 shortcut_col: 'Atajo', action_col: 'Acción', shortcut_search: 'Abrir búsqueda rápida', shortcut_close: 'Cerrar modal / drawer activo',
                 shortcut_tabs: 'Cambiar entre secciones', shortcut_refresh: 'Refrescar la sección actual',
                 shortcut_new: 'Crear registro según la sección', shortcut_filters: 'Mostrar u ocultar filtros del dashboard',
-                shortcut_compact: 'Activar modo compacto', shortcut_fullscreen: 'Alternar pantalla completa',
+                shortcut_compact: 'Activar modo compacto', shortcut_fullscreen: 'Alternar monitor',
                 shortcut_notifications: 'Abrir notificaciones',
                 theme_changed_to: 'Tema cambiado a', lang_set: 'Idioma configurado:',
                 btn_cancel: 'Cancelar', btn_save: 'Guardar', btn_close: 'Cerrar', btn_edit: 'Editar', btn_delete: 'Eliminar', btn_refresh: 'Refrescar', btn_confirm: 'Confirmar',
@@ -5999,7 +6850,7 @@
             en: {
                 menu_dashboard: 'Dashboard', menu_printers: 'Printers', menu_counters: 'Counters', menu_inventory: 'Inventory Control', menu_toner_control: 'Toner Control', menu_config: 'Settings',
                 total_printers: 'Total printers', online: 'Online', offline: 'Offline', low_toner: 'Low toner',
-                dashboard_filters: 'Dashboard filters', filters_hidden: 'Hidden', filters_visible: 'Visible', fullscreen: 'Fullscreen', exit_fullscreen: 'Exit fullscreen', compact_mode: 'Compact mode', search_placeholder: 'Search by shared name, name, IP, model or serial',
+                dashboard_filters: 'Dashboard filters', filters_hidden: 'Hidden', filters_visible: 'Visible', fullscreen: 'Monitor', exit_fullscreen: 'Exit monitor', monitor_mode: 'Monitor', exit_monitor_mode: 'Exit monitor', compact_mode: 'Compact mode', search_placeholder: 'Search by shared name, name, IP, model or serial',
                 view_table: 'Table view', view_cards: 'Card view',
                 status_all: 'Status: All', status_online: 'Status: Online', status_offline: 'Status: Offline',
                 type_all: 'Type: All', type_color: 'Type: Color', type_mono: 'Type: B&W',
@@ -6017,7 +6868,7 @@
                 shortcut_col: 'Shortcut', action_col: 'Action', shortcut_search: 'Open quick search', shortcut_close: 'Close active modal / drawer',
                 shortcut_tabs: 'Switch between sections', shortcut_refresh: 'Refresh current section',
                 shortcut_new: 'Create a record for the current section', shortcut_filters: 'Show or hide dashboard filters',
-                shortcut_compact: 'Toggle compact mode', shortcut_fullscreen: 'Toggle fullscreen',
+                shortcut_compact: 'Toggle compact mode', shortcut_fullscreen: 'Toggle monitor',
                 shortcut_notifications: 'Open notifications',
                 theme_changed_to: 'Theme changed to', lang_set: 'Language set:',
                 btn_cancel: 'Cancel', btn_save: 'Save', btn_close: 'Close', btn_edit: 'Edit', btn_delete: 'Delete', btn_refresh: 'Refresh', btn_confirm: 'Confirm',
@@ -6209,8 +7060,10 @@
         function resolveAppConfirm(value) { document.getElementById('appConfirmModal')?.classList.remove('open'); if (_appConfirmResolve) { _appConfirmResolve(value); _appConfirmResolve = null; } }
         function openAddressBookFormModal(entry) { return new Promise(resolve => { _abFormResolve = resolve; const isEdit = !!entry; const ti = document.getElementById('abFormTitle'); const s = document.getElementById('abFormSubtitle'); if (ti) ti.textContent = isEdit ? t('edit_user') : t('add_user'); if (s) s.textContent = currentAddressBookPrinter ? (currentAddressBookPrinter.shared_name || currentAddressBookPrinter.name || '') : ''; document.getElementById('abFormName').value = entry?.name ?? ''; document.getElementById('abFormKeyDisplay').value = entry?.key_display ?? ''; document.getElementById('abFormFreq').value = (entry?.freq === false) ? 'no' : 'si'; document.getElementById('abFormTitle1').value = entry?.title1 ?? ''; document.getElementById('abFormTitle2').value = entry?.title2 ?? ''; document.getElementById('abFormTitle3').value = entry?.title3 ?? ''; document.getElementById('abFormUserCode').value = entry?.user_code ?? ''; document.getElementById('abFormEmail').value = entry?.email_address ?? ''; document.getElementById('abFormFolder').value = entry?.folder ?? ''; document.getElementById('abFormStatus').value = entry?.status ?? 'Activo'; document.getElementById('addressBookFormModal')?.classList.add('open'); setTimeout(() => document.getElementById('abFormName')?.focus(), 120); }); }
         function submitAddressBookForm() { const name = (document.getElementById('abFormName')?.value || '').trim(); if (!name) { showToast(t('name_required'), 'error'); return; } const payload = { name, key_display: normalizeAddressBookPromptValue(document.getElementById('abFormKeyDisplay')?.value), freq: document.getElementById('abFormFreq')?.value !== 'no', title1: normalizeAddressBookPromptValue(document.getElementById('abFormTitle1')?.value), title2: normalizeAddressBookPromptValue(document.getElementById('abFormTitle2')?.value), title3: normalizeAddressBookPromptValue(document.getElementById('abFormTitle3')?.value), user_code: normalizeAddressBookPromptValue(document.getElementById('abFormUserCode')?.value), email_address: normalizeAddressBookPromptValue(document.getElementById('abFormEmail')?.value), folder: normalizeAddressBookPromptValue(document.getElementById('abFormFolder')?.value), status: normalizeAddressBookPromptValue(document.getElementById('abFormStatus')?.value) || 'Activo' }; document.getElementById('addressBookFormModal')?.classList.remove('open'); if (_abFormResolve) { _abFormResolve(payload); _abFormResolve = null; } } function resolveAddressBookForm(value) { document.getElementById('addressBookFormModal')?.classList.remove('open'); if (_abFormResolve) { _abFormResolve(value); _abFormResolve = null; } }
-        function saveDashboardFilters() { try { const state = { search: document.getElementById('searchInput')?.value || '', viewMode: document.getElementById('viewMode')?.value || 'table', statusFilter: document.getElementById('statusFilter')?.value || 'all', typeFilter: document.getElementById('typeFilter')?.value || 'all', errorFilter: document.getElementById('errorFilter')?.value || 'all', sortFilter: document.getElementById('sortFilter')?.value || 'relevance_desc', sortColumn: dashboardSortColumn, sortDirection: dashboardSortDirection }; localStorage.setItem('ricoh_dash_filters', JSON.stringify(state)); } catch (e) { } }
-        function restoreDashboardFilters() { try { const raw = localStorage.getItem('ricoh_dash_filters'); if (!raw) return; const s = JSON.parse(raw); if (s.search) document.getElementById('searchInput').value = s.search; if (s.viewMode) document.getElementById('viewMode').value = s.viewMode; if (s.statusFilter) document.getElementById('statusFilter').value = s.statusFilter; if (s.typeFilter) document.getElementById('typeFilter').value = s.typeFilter; if (s.errorFilter) document.getElementById('errorFilter').value = s.errorFilter; if (s.sortFilter) document.getElementById('sortFilter').value = s.sortFilter; if (s.sortColumn) dashboardSortColumn = s.sortColumn; if (s.sortDirection) dashboardSortDirection = s.sortDirection; } catch (e) { } }
+        function saveDashboardFilters() { try { const state = { viewMode: document.getElementById('viewMode')?.value || 'table', statusFilter: document.getElementById('statusFilter')?.value || 'all', typeFilter: document.getElementById('typeFilter')?.value || 'all', errorFilter: document.getElementById('errorFilter')?.value || 'all', sortFilter: document.getElementById('sortFilter')?.value || 'relevance_desc', sortColumn: dashboardSortColumn, sortDirection: dashboardSortDirection }; localStorage.setItem('ricoh_dash_filters', JSON.stringify(state)); } catch (e) { } }
+        function clearDashboardSearchAutofill() { const searchInput = document.getElementById('searchInput'); if (searchInput && searchInput.dataset.userSearch !== '1') searchInput.value = ''; }
+        function hardenDashboardSearchAutofill() { const searchInput = document.getElementById('searchInput'); if (!searchInput || searchInput.dataset.autofillHardened === '1') return; searchInput.dataset.autofillHardened = '1'; searchInput.name = 'rm_filter_' + Math.random().toString(36).slice(2); searchInput.setAttribute('autocomplete', 'new-password'); searchInput.setAttribute('readonly', 'readonly'); const enable = () => { searchInput.removeAttribute('readonly'); if (searchInput.dataset.userSearch !== '1') searchInput.value = ''; setTimeout(() => { if (searchInput.dataset.userSearch !== '1') searchInput.value = ''; }, 60); setTimeout(() => { if (searchInput.dataset.userSearch !== '1') searchInput.value = ''; }, 250); }; searchInput.addEventListener('pointerdown', enable); searchInput.addEventListener('focus', enable); searchInput.addEventListener('keydown', enable); searchInput.addEventListener('input', () => { searchInput.dataset.userSearch = '1'; }); }
+        function restoreDashboardFilters() { try { const raw = localStorage.getItem('ricoh_dash_filters'); const s = raw ? JSON.parse(raw) : {}; if (s.search) { delete s.search; localStorage.setItem('ricoh_dash_filters', JSON.stringify(s)); } hardenDashboardSearchAutofill(); clearDashboardSearchAutofill(); setTimeout(clearDashboardSearchAutofill, 80); setTimeout(clearDashboardSearchAutofill, 350); setTimeout(clearDashboardSearchAutofill, 1000); if (s.viewMode) document.getElementById('viewMode').value = s.viewMode; if (s.statusFilter) document.getElementById('statusFilter').value = s.statusFilter; if (s.typeFilter) document.getElementById('typeFilter').value = s.typeFilter; if (s.errorFilter) document.getElementById('errorFilter').value = s.errorFilter; if (s.sortFilter) document.getElementById('sortFilter').value = s.sortFilter; if (s.sortColumn) dashboardSortColumn = s.sortColumn; if (s.sortDirection) dashboardSortDirection = s.sortDirection; } catch (e) { hardenDashboardSearchAutofill(); clearDashboardSearchAutofill(); } }
         function showLoadingIn(tbodyId, colspan, msg) {
             const el = document.getElementById(tbodyId);
             if (!el) return;
@@ -6237,23 +7090,65 @@
                 '</div></td></tr>';
         } function animateCountUp(el, target) { if (!el) return; const current = parseInt(el.textContent, 10) || 0; if (current === target) { el.textContent = String(target); return; } const diff = target - current; const duration = 320; const start = performance.now(); const step = now => { const elapsed = Math.min(now - start, duration); const progress = elapsed / duration; const eased = 1 - Math.pow(1 - progress, 3); el.textContent = String(Math.round(current + diff * eased)); if (elapsed < duration) requestAnimationFrame(step); else el.textContent = String(target); }; requestAnimationFrame(step); }
         function closePrinterModal() { document.getElementById('printerModal')?.classList.remove('open'); }
-        function openPrinterModal(printer) { if (!printer) return; currentModalPrinter = printer; const modal = document.getElementById('printerModal'); const title = document.getElementById('modalTitle'); const subtitle = document.getElementById('modalSubtitle'); const info = document.getElementById('modalInfoGrid'); const error = document.getElementById('modalErrorContent'); const toner = document.getElementById('modalTonerContent'); if (title) title.textContent = printer.shared_name || printer.name || t('printer_fallback'); if (subtitle) subtitle.textContent = `${printer.model ?? '-'} | IP: ${printer.ip ?? '-'} | Serie: ${printer.serial ?? '-'}`; if (info) { info.innerHTML = ''; const fields = [['Shared Name', printer.shared_name ?? '-'], [t('th_name'), printer.name ?? '-'], [t('th_model'), printer.model ?? '-'], [t('th_serial'), printer.serial ?? '-'], ['IP', printer.ip ?? '-'], [t('th_location'), printer.location ?? '-'], [t('ml_tipo'), printer.is_color ? t('color_type') : t('bw_type')], [t('th_status'), (printer.status || 'offline').toUpperCase()]]; fields.forEach(([k, v]) => { info.insertAdjacentHTML('beforeend', `<div class="modal-field"><div class="modal-field-label">${k}</div><div class="modal-field-value">${v}</div></div>`); }); } if (error) { error.parentElement.style.display = ''; error.innerHTML = `<span class="${getErrorClass(printer.error_message, printer.status)}">${printer.error_message || t('no_error')}</span>`; } if (toner) { toner.parentElement.style.display = ''; let tonerHtml = `<div class="modal-toner-item"><div class="modal-toner-row"><span>Black</span><span>${safeValue(printer.toner_black) === null ? '-' : safeValue(printer.toner_black) + '%'}</span></div><div class="modal-bar"><div class="modal-bar-fill bar-black" style="width:${Math.max(0, Math.min(100, safeValue(printer.toner_black) ?? 0))}%"></div></div></div>`; if (printer.is_color) { tonerHtml += `<div class="modal-toner-item"><div class="modal-toner-row"><span>Cyan</span><span>${safeValue(printer.toner_cyan) === null ? '-' : safeValue(printer.toner_cyan) + '%'}</span></div><div class="modal-bar"><div class="modal-bar-fill bar-cyan" style="width:${Math.max(0, Math.min(100, safeValue(printer.toner_cyan) ?? 0))}%"></div></div></div>`; tonerHtml += `<div class="modal-toner-item"><div class="modal-toner-row"><span>Magenta</span><span>${safeValue(printer.toner_magenta) === null ? '-' : safeValue(printer.toner_magenta) + '%'}</span></div><div class="modal-bar"><div class="modal-bar-fill bar-magenta" style="width:${Math.max(0, Math.min(100, safeValue(printer.toner_magenta) ?? 0))}%"></div></div></div>`; tonerHtml += `<div class="modal-toner-item"><div class="modal-toner-row"><span>Yellow</span><span>${safeValue(printer.toner_yellow) === null ? '-' : safeValue(printer.toner_yellow) + '%'}</span></div><div class="modal-bar"><div class="modal-bar-fill bar-yellow" style="width:${Math.max(0, Math.min(100, safeValue(printer.toner_yellow) ?? 0))}%"></div></div></div>`; } toner.innerHTML = tonerHtml; } if (info) info.className = 'modal-grid'; const actions = document.querySelector('#printerModal .modal-actions'); if (actions) { actions.innerHTML = _readOnly ? '<button class="action-button action-button-secondary" onclick="closePrinterModal()">' + t('btn_close') + '</button>' : '<button class="action-button action-button-secondary" onclick="closePrinterModal()">' + t('btn_close') + '</button><button class="action-button action-button-warning" onclick="openAddressBookFromModal()">' + t('address_book_title') + '</button><button class="action-button" onclick="editFromModal()">' + t('btn_edit') + '</button>'; } if (modal) modal.classList.add('open'); } function openPrinterDetailsFromDashboard(index) { const printer = dashboardRawData[index]; if (printer) openPrinterModal(printer); }
+        function openPrinterModal(printer) { if (!printer) return; currentModalPrinter = printer; const modal = document.getElementById('printerModal'); const title = document.getElementById('modalTitle'); const subtitle = document.getElementById('modalSubtitle'); const info = document.getElementById('modalInfoGrid'); const error = document.getElementById('modalErrorContent'); const toner = document.getElementById('modalTonerContent'); if (title) title.textContent = printer.shared_name || printer.name || t('printer_fallback'); if (subtitle) subtitle.textContent = `${printer.model ?? '-'} | IP: ${printer.ip ?? '-'} | Serie: ${printer.serial ?? '-'}`; if (info) { info.innerHTML = ''; const fields = [['Shared Name', printer.shared_name ?? '-'], [t('th_name'), printer.name ?? '-'], [t('th_model'), printer.model ?? '-'], [t('th_serial'), printer.serial ?? '-'], ['IP', printer.ip ?? '-'], [t('th_location'), printer.location ?? '-'], [t('ml_tipo'), printer.is_color ? t('color_type') : t('bw_type')], [t('th_status'), (printer.status || 'offline').toUpperCase()]]; fields.forEach(([k, v]) => { info.insertAdjacentHTML('beforeend', `<div class="modal-field"><div class="modal-field-label">${k}</div><div class="modal-field-value">${v}</div></div>`); }); } if (error) { error.parentElement.style.display = ''; error.innerHTML = `<span class="${getErrorClass(printer.error_message, printer.status)}">${printer.error_message || t('no_error')}</span>`; } if (toner) { toner.parentElement.style.display = ''; let tonerHtml = `<div class="modal-toner-item"><div class="modal-toner-row"><span>Black</span><span>${safeValue(printer.toner_black) === null ? '-' : safeValue(printer.toner_black) + '%'}</span></div><div class="modal-bar"><div class="modal-bar-fill bar-black" style="width:${Math.max(0, Math.min(100, safeValue(printer.toner_black) ?? 0))}%"></div></div></div>`; if (printer.is_color) { tonerHtml += `<div class="modal-toner-item"><div class="modal-toner-row"><span>Cyan</span><span>${safeValue(printer.toner_cyan) === null ? '-' : safeValue(printer.toner_cyan) + '%'}</span></div><div class="modal-bar"><div class="modal-bar-fill bar-cyan" style="width:${Math.max(0, Math.min(100, safeValue(printer.toner_cyan) ?? 0))}%"></div></div></div>`; tonerHtml += `<div class="modal-toner-item"><div class="modal-toner-row"><span>Magenta</span><span>${safeValue(printer.toner_magenta) === null ? '-' : safeValue(printer.toner_magenta) + '%'}</span></div><div class="modal-bar"><div class="modal-bar-fill bar-magenta" style="width:${Math.max(0, Math.min(100, safeValue(printer.toner_magenta) ?? 0))}%"></div></div></div>`; tonerHtml += `<div class="modal-toner-item"><div class="modal-toner-row"><span>Yellow</span><span>${safeValue(printer.toner_yellow) === null ? '-' : safeValue(printer.toner_yellow) + '%'}</span></div><div class="modal-bar"><div class="modal-bar-fill bar-yellow" style="width:${Math.max(0, Math.min(100, safeValue(printer.toner_yellow) ?? 0))}%"></div></div></div>`; } toner.innerHTML = tonerHtml; } if (info) info.className = 'modal-grid'; const actions = document.querySelector('#printerModal .modal-actions'); if (actions) { actions.innerHTML = _readOnly ? '<button class="action-button action-button-secondary" onclick="closePrinterModal()">' + t('btn_close') + '</button>' : '<button class="action-button action-button-secondary" onclick="closePrinterModal()">' + t('btn_close') + '</button><button class="action-button action-button-warning" onclick="openAddressBookFromModal()">' + t('address_book_title') + '</button><button class="action-button" onclick="editFromModal()">' + t('btn_edit') + '</button>'; } if (modal) modal.classList.add('open'); } function openPrinterDetailsFromDashboard(index) { const printer = dashboardRawData[index]; if (printer) openCommandPrinterPanel(printer); }
+        window.openPrinterDetailsFromDashboard = openPrinterDetailsFromDashboard;
         function openAddressBookFromModal() { if (_readOnly) return; if (!currentModalPrinter) return; openAddressBook(currentModalPrinter); }
         function editFromModal() { if (_readOnly) return; if (!currentModalPrinter) return; const p = currentModalPrinter; const title = document.getElementById('modalTitle'); const subtitle = document.getElementById('modalSubtitle'); const infoGrid = document.getElementById('modalInfoGrid'); const errorEl = document.getElementById('modalErrorContent'); const tonerEl = document.getElementById('modalTonerContent'); const actions = document.querySelector('#printerModal .modal-actions'); if (title) title.textContent = t('edit_printer'); if (subtitle) subtitle.textContent = `${p.shared_name || p.name || t('printer_fallback')} | IP: ${p.ip ?? '-'}`; if (errorEl) errorEl.parentElement.style.display = 'none'; if (tonerEl) tonerEl.parentElement.style.display = 'none'; if (infoGrid) { const esc = v => (v || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;'); infoGrid.className = 'form-grid'; infoGrid.innerHTML = `<div><label>Shared Name</label><input id="modalEditSharedName" value="${esc(p.shared_name)}"></div><div><label>${t('th_name')}</label><input id="modalEditName" value="${esc(p.name)}"></div><div><label>${t('th_model')}</label><input id="modalEditModel" value="${esc(p.model)}"></div><div><label>IP</label><input id="modalEditIp" value="${esc(p.ip)}"></div><div><label>${t('th_serial')}</label><input id="modalEditSerial" value="${esc(p.serial)}"></div><div><label>${t('th_location')}</label><input id="modalEditLocation" value="${esc(p.location)}"></div><div><label>${t('ml_tipo')}</label><select id="modalEditIsColor"><option value="true"${p.is_color ? ' selected' : ''}>${t('color_type')}</option><option value="false"${!p.is_color ? ' selected' : ''}>${t('bw_type')}</option></select></div><div><label>SNMP Community</label><input id="modalEditCommunity" value="${esc(p.snmp_community || 'public')}"></div>`; } if (actions) actions.innerHTML = '<button class="action-button action-button-secondary" onclick="cancelEditFromModal()">' + t('btn_cancel') + '</button><button class="action-button" onclick="saveFromModal()">' + t('btn_save') + '</button>'; } function cancelEditFromModal() { const e = document.getElementById('modalErrorContent'); const t = document.getElementById('modalTonerContent'); const g = document.getElementById('modalInfoGrid'); if (e) e.parentElement.style.display = ''; if (t) t.parentElement.style.display = ''; if (g) g.className = 'modal-grid'; if (currentModalPrinter) openPrinterModal(currentModalPrinter); }
         async function saveFromModal() { if (!currentModalPrinter) return; const ip = (document.getElementById('modalEditIp')?.value || '').trim(); const model = (document.getElementById('modalEditModel')?.value || '').trim(); if (!model || !ip) { showToast(t('model_ip_required'), 'error'); return; } if (!isValidIpv4(ip)) { showToast(t('invalid_ip'), 'error'); return; } const modalBox = document.querySelector('#printerModal .modal-box'); const savingOv = document.createElement('div'); savingOv.className = 'modal-saving-overlay'; savingOv.innerHTML = '<div class="loading-spinner"></div><div class="loading-spinner-text">' + t('saving') + '</div>'; if (modalBox) modalBox.appendChild(savingOv); const payload = { shared_name: (document.getElementById('modalEditSharedName')?.value || '').trim() || null, name: (document.getElementById('modalEditName')?.value || '').trim() || null, model, ip, serial: (document.getElementById('modalEditSerial')?.value || '').trim() || null, location: (document.getElementById('modalEditLocation')?.value || '').trim() || null, is_color: document.getElementById('modalEditIsColor')?.value === 'true', snmp_community: (document.getElementById('modalEditCommunity')?.value || 'public').trim() || 'public' }; try { const response = await fetch(`/printers/${currentModalPrinter.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); const data = await response.json(); if (!response.ok) throw new Error(data.detail || 'No se pudo guardar'); showToast(t('printer_updated'), 'success'); closePrinterModal(); loadPrinters(); loadSavedPrinters(); } catch (error) { showToast(error.message || t('error_saving_printer'), 'error'); console.error(error); } finally { if (savingOv.parentNode) savingOv.remove(); } } function updateDashboardSortIndicators() { const cols = ['shared_name', 'name', 'model', 'serial', 'ip', 'location', 'status', 'error_message']; cols.forEach(c => { const el = document.getElementById(`dsort_${c}`); if (!el) return; const active = dashboardSortColumn === c; el.classList.toggle('active', active); el.textContent = active ? (dashboardSortDirection === 'asc' ? '↑' : '↓') : '↕'; }); }
         function showTab(tabName) { window.scrollTo(0, 0); const contentEl = document.querySelector('.content'); if (contentEl) contentEl.scrollTop = 0; document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active')); const selected = document.getElementById(tabName); if (selected) selected.classList.add('active'); document.querySelectorAll('.menu-button').forEach(btn => btn.classList.remove('active')); const tabMap = { dashboard: 0, printers: 1, counters: 2, inventory: 3, tonerControl: 4, printerAssets: 5, config: 6 }; const idx = tabMap[tabName]; const buttons = document.querySelectorAll('.sidebar .menu-button'); if (idx !== undefined && buttons[idx]) buttons[idx].classList.add('active'); if (tabName === 'dashboard') { startPrintersPolling(); loadPrinters(); } else { stopPrintersPolling(); } if (tabName === 'printers') loadSavedPrinters(); if (tabName === 'counters') loadCounters(); if (tabName === 'inventory') loadInventory(); if (tabName === 'tonerControl') loadTonerControl(); if (tabName === 'config') loadConfig(); if (tabName === 'printerAssets') loadPrinterAssets(); document.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active')); const _mnavBtn = document.getElementById('mnav-' + tabName); if (_mnavBtn) _mnavBtn.classList.add('active'); }
         function toggleDashboardFilters() { const panel = document.getElementById('dashboardFilters'); const icon = document.getElementById('filterToggleIcon'); const state = document.getElementById('filterToggleState'); const btn = document.getElementById('dashboardFilterBtn'); const closed = panel.classList.toggle('closed'); if (btn) btn.classList.toggle('is-open', !closed); if (icon) icon.textContent = closed ? '▾' : '▴'; if (state) state.textContent = closed ? t('filters_hidden') : t('filters_visible'); }
+        function stopMonitorAutoScroll() {
+            if (monitorAutoScrollTimer) {
+                clearInterval(monitorAutoScrollTimer);
+                monitorAutoScrollTimer = null;
+            }
+        }
+        function startMonitorAutoScroll() {
+            stopMonitorAutoScroll();
+            const tableWrap = document.querySelector('#dashboardTableView .table-wrapper.dashboard-table-wrap');
+            if (!tableWrap) return;
+            let pauseUntil = Date.now() + 2500;
+            let resettingToTop = false;
+            const pause = () => { pauseUntil = Date.now() + 5000; };
+            tableWrap.onmouseenter = pause;
+            tableWrap.onwheel = pause;
+            tableWrap.onpointerdown = pause;
+            monitorAutoScrollTimer = setInterval(() => {
+                if (!document.body.classList.contains('monitor-mode')) {
+                    stopMonitorAutoScroll();
+                    return;
+                }
+                if (Date.now() < pauseUntil) return;
+                const maxScroll = tableWrap.scrollHeight - tableWrap.clientHeight;
+                if (maxScroll <= 8) return;
+                if (resettingToTop) {
+                    if (tableWrap.scrollTop <= 2) {
+                        resettingToTop = false;
+                        pauseUntil = Date.now() + 1800;
+                    }
+                    return;
+                }
+                if (tableWrap.scrollTop >= maxScroll - 3) {
+                    resettingToTop = true;
+                    pauseUntil = Date.now() + 900;
+                    tableWrap.scrollTo({ top: 0, behavior: 'smooth' });
+                    return;
+                }
+                tableWrap.scrollTop = Math.min(maxScroll, tableWrap.scrollTop + 1);
+            }, 70);
+        }
         function toggleDashboardFullscreen() {
             const root = document.documentElement; const sidebar = document.querySelector('.sidebar'); const btnLabel = document.getElementById('fullscreenBtnLabel'); const btnIcon = document.getElementById('fullscreenBtnIcon'); const viewMode = document.getElementById('viewMode'); const setUi = isFs => {
                 document.body.classList.toggle('fullscreen', isFs);
+                document.body.classList.toggle('monitor-mode', isFs);
                 if (sidebar) sidebar.style.display = isFs ? 'none' : '';
                 if (viewMode && isFs) viewMode.value = 'table';
-                if (btnLabel) btnLabel.textContent = isFs ? t('exit_fullscreen') : t('fullscreen');
-                if (btnIcon) btnIcon.textContent = isFs ? '🗗' : '⛶';
+                if (btnLabel) btnLabel.textContent = isFs ? t('exit_monitor_mode') : t('monitor_mode');
+                if (btnIcon) btnIcon.innerHTML = isFs ? '<i class="bi bi-x-lg"></i>' : '<i class="bi bi-tv"></i>';
                 const fsBtn = document.getElementById('fullscreenBtn');
                 if (fsBtn) fsBtn.classList.toggle('fullscreen-active', isFs);
                 if (isFs) loadPrinters();
-                setTimeout(() => { setTableFullHeight(); }, 80);
+                setTimeout(() => { setTableFullHeight(); if (isFs) startMonitorAutoScroll(); else stopMonitorAutoScroll(); }, 80);
             };
             if (document.fullscreenElement) {
                 document.exitFullscreen().then(() => setUi(false)).catch(err => console.error(err));
@@ -6261,7 +7156,7 @@
             }
             root.requestFullscreen().then(() => setUi(true)).catch(err => console.error(err));
         }
-        document.addEventListener('fullscreenchange', () => { const isFs = !!document.fullscreenElement; const sidebar = document.querySelector('.sidebar'); const btnLabel = document.getElementById('fullscreenBtnLabel'); const btnIcon = document.getElementById('fullscreenBtnIcon'); const viewMode = document.getElementById('viewMode'); document.body.classList.toggle('fullscreen', isFs); if (sidebar) sidebar.style.display = isFs ? 'none' : ''; if (viewMode && isFs) viewMode.value = 'table'; if (btnLabel) btnLabel.textContent = isFs ? t('exit_fullscreen') : t('fullscreen'); if (btnIcon) btnIcon.textContent = isFs ? '🗗' : '⛶'; setTimeout(() => { setTableFullHeight(); if (isFs) loadPrinters(); }, 80); });
+        document.addEventListener('fullscreenchange', () => { const isFs = !!document.fullscreenElement; const sidebar = document.querySelector('.sidebar'); const btnLabel = document.getElementById('fullscreenBtnLabel'); const btnIcon = document.getElementById('fullscreenBtnIcon'); const viewMode = document.getElementById('viewMode'); document.body.classList.toggle('fullscreen', isFs); document.body.classList.toggle('monitor-mode', isFs); if (sidebar) sidebar.style.display = isFs ? 'none' : ''; if (viewMode && isFs) viewMode.value = 'table'; if (btnLabel) btnLabel.textContent = isFs ? t('exit_monitor_mode') : t('monitor_mode'); if (btnIcon) btnIcon.innerHTML = isFs ? '<i class="bi bi-x-lg"></i>' : '<i class="bi bi-tv"></i>'; setTimeout(() => { setTableFullHeight(); if (isFs) { loadPrinters(); startMonitorAutoScroll(); } else stopMonitorAutoScroll(); }, 80); });
         function setDensityMode(mode) { document.body.classList.remove('density-compact', 'density-standard', 'density-large'); document.body.classList.add(mode === 'compact' ? 'density-compact' : mode === 'large' ? 'density-large' : 'density-standard'); }
         function isValidIpv4(ip) { return /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/.test((ip || '').trim()); }
         function setFieldValidation(inputId, helpId, message = '', state = '') { const input = document.getElementById(inputId); const help = document.getElementById(helpId); if (!input) return; input.classList.remove('input-valid', 'input-invalid'); if (state === 'valid') input.classList.add('input-valid'); if (state === 'invalid') input.classList.add('input-invalid'); if (help) { help.textContent = message; help.className = `field-help${state === 'invalid' ? ' error' : state === 'valid' ? ' success' : ''}`; } }
@@ -6272,9 +7167,17 @@
         async function autofillPrinterNameFromIp() { const ipEl = document.getElementById('printerIp'); const nameEl = document.getElementById('printerName'); const communityEl = document.getElementById('printerCommunity'); if (!ipEl || !nameEl) return; const ip = ipEl.value.trim(); const community = (communityEl?.value || 'public').trim() || 'public'; if (!isValidIpv4(ip)) return; if (hostnameLookupController) { try { hostnameLookupController.abort(); } catch (e) { } } const controller = new AbortController(); hostnameLookupController = controller; const timer = setTimeout(() => controller.abort(), 7000); try { const response = await fetch(`/printers/resolve-hostname?ip=${encodeURIComponent(ip)}&community=${encodeURIComponent(community)}`, { signal: controller.signal }); const data = await response.json(); if (data?.hostname && !nameEl.value.trim()) { nameEl.value = data.hostname; nameEl.dataset.autoFilled = 'true'; } } catch (error) { if (error.name !== 'AbortError') console.warn('No se pudo resolver el hostname.', error); } finally { clearTimeout(timer); if (hostnameLookupController === controller) hostnameLookupController = null; } }
         function safeValue(value) { if (value === null || value === undefined || value === '') return null; const n = Number(value); return Number.isNaN(n) ? null : n; }
         function renderTonerMini(label, value, cssClass) { const numeric = safeValue(value); if (numeric === null) return `<span class="tc-muted">-</span>`; const width = Math.max(0, Math.min(100, numeric)); return `<div class="toner-mini" title="${label}: ${numeric}%"><div class="mini-bar"><div class="fill ${cssClass} bar-fill-anim" style="--bar-w:${width}%"></div></div><span class="mini-label">${numeric}%</span></div>`; } function normalizeErrorType(errorText) { const text = (errorText || 'Sin error').toLowerCase(); if (!text || text === 'sin error') return 'ok'; if (text.includes('crítico') || text.includes('critical')) return 'critical'; if (text.includes('low toner') || text.includes('tóner bajo')) return 'low'; return 'other'; }
+        function commandEsc(v) { return String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+        function commandPrinterRisk(printer) { const status = (printer.status || 'offline').toLowerCase(); const errorType = normalizeErrorType(printer.error_message); const black = safeValue(printer.toner_black); const cyan = safeValue(printer.toner_cyan); const magenta = safeValue(printer.toner_magenta); const yellow = safeValue(printer.toner_yellow); const toners = [black, cyan, magenta, yellow].filter(v => v !== null); const minToner = toners.length ? Math.min(...toners) : null; if (status !== 'online' || errorType === 'critical' || (minToner !== null && minToner < 10)) return 'critical'; if (errorType === 'low' || errorType === 'other' || (minToner !== null && minToner < 30)) return 'warning'; return 'ok'; }
+        async function refreshCommandHealth(force) { const now = Date.now(); if (!force && refreshCommandHealth.last && now - refreshCommandHealth.last < 30000) return; refreshCommandHealth.last = now; try { const res = await fetch('/health', { headers: (typeof getAuthHeaders === 'function') ? getAuthHeaders() : {} }); const health = await res.json(); const pill = document.getElementById('opsHealthPill'); if (!pill) return; const ok = res.ok && health?.database?.ok !== false && health?.status !== 'error'; if (!ok) { pill.className = 'ops-health-pill critical'; pill.innerHTML = '<i class="bi bi-exclamation-octagon"></i> Sistema con fallas'; pill.title = JSON.stringify(health); } else { pill.title = 'API, base de datos y scheduler respondieron correctamente'; } } catch (e) { const pill = document.getElementById('opsHealthPill'); if (pill) { pill.className = 'ops-health-pill critical'; pill.innerHTML = '<i class="bi bi-exclamation-octagon"></i> API sin respuesta'; } } }
+        function renderLiveOpsSummary(data, result) { const total = data.length; const online = data.filter(p => (p.status || '').toLowerCase() === 'online').length; const critical = data.filter(p => commandPrinterRisk(p) === 'critical').length; const low = data.filter(p => commandPrinterRisk(p) === 'warning').length; const availability = total ? Math.round((online / total) * 100) : 0; const setText = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; }; setText('opsAvailability', availability + '%'); setText('opsOnlineRatio', online + '/' + total); setText('opsCriticalCount', critical); setText('opsLowCount', low); setText('opsCriticalBadge', critical); const pill = document.getElementById('opsHealthPill'); if (pill) { const status = critical > 0 ? 'critical' : low > 0 ? 'warn' : 'ok'; const label = critical > 0 ? 'Atención crítica' : low > 0 ? 'Advertencias' : 'Saludable'; pill.className = 'ops-health-pill ' + status; pill.innerHTML = '<i class="bi bi-activity"></i> ' + label; } if (result?.cached_at) { const cachedDate = new Date(result.cached_at); const signal = document.getElementById('opsOnlineRatio'); if (signal) signal.title = 'Última lectura: ' + cachedDate.toLocaleString(); } refreshCommandHealth(false); }
+        function renderCriticalPrintersPanel(data) { const panel = document.getElementById('criticalPrintersPanel'); if (!panel) return; const critical = data.map((printer, index) => ({ printer, index, risk: commandPrinterRisk(printer) })).filter(x => x.risk !== 'ok').sort((a, b) => a.risk === 'critical' && b.risk !== 'critical' ? -1 : a.risk !== 'critical' && b.risk === 'critical' ? 1 : 0).slice(0, 5); if (!critical.length) { panel.innerHTML = '<div class="ops-empty">Sin impresoras críticas.</div>'; return; } panel.innerHTML = critical.map(item => { const p = item.printer; const dot = item.risk === 'critical' ? 'red' : 'yellow'; const tag = item.risk === 'critical' ? 'CRÍTICA' : 'ALERTA'; const name = commandEsc(p.shared_name || p.name || p.ip || '-'); const sub = commandEsc((p.error_message && p.error_message !== 'Sin error') ? p.error_message : ((p.model || '-') + ' | ' + (p.ip || '-'))); return '<div class="ops-list-item" onclick="openPrinterDetailsFromDashboard(' + item.index + ')"><span class="ops-dot ' + dot + '"></span><div><div class="ops-item-title">' + name + '</div><div class="ops-item-sub">' + sub + '</div></div><span class="ops-item-tag">' + tag + '</span></div>'; }).join(''); }
+        function renderRecentActivityPanel() { const panel = document.getElementById('recentActivityPanel'); if (!panel) return; const items = (Array.isArray(window._notifItems) ? window._notifItems : []).slice(0, 5); if (!items.length) { panel.innerHTML = '<div class="ops-empty">Sin eventos recientes.</div>'; return; } panel.innerHTML = items.map(n => { const type = n.type || 'info'; const dot = type.includes('offline') || type.includes('critical') || type.includes('error') ? 'red' : type.includes('toner') ? 'yellow' : 'green'; const title = commandEsc(n.printer || n.title || 'Evento'); const sub = commandEsc(n.message || n.new || type); const time = n.timestamp ? new Date(n.timestamp).toLocaleTimeString() : ''; return '<div class="ops-list-item"><span class="ops-dot ' + dot + '"></span><div><div class="ops-item-title">' + title + '</div><div class="ops-item-sub">' + sub + '</div></div><span class="ops-item-tag">' + commandEsc(time || 'LIVE') + '</span></div>'; }).join(''); }
+        function openCommandPrinterPanel(printer) { openPrinterModal(printer); }
+        window.openCommandPrinterPanel = openCommandPrinterPanel;
         function getErrorClass(errorText, status) { if ((status || '').toLowerCase() !== 'online') return 'error-critical'; const type = normalizeErrorType(errorText); if (type === 'critical') return 'error-critical'; if (type === 'low') return 'error-warn'; if (type === 'other') return 'error-critical'; return 'error-ok'; }
         function renderTonerBar(label, value, cssClass) { const numeric = safeValue(value); const width = numeric !== null ? Math.max(0, Math.min(100, numeric)) : 0; const pct = numeric !== null ? numeric + '%' : '-'; return `<div class="toner-item"><div class="toner-label-row"><span>${label}</span><span>${pct}</span></div><div class="bar"><div class="bar-fill ${cssClass} bar-fill-anim" style="--bar-w:${width}%"></div></div></div>`; }
-        function buildCard(printer) { const status = (printer.status || 'offline').toLowerCase(); const statusClass = status === 'online' ? 'status-online' : 'status-offline'; const shared = printer.shared_name || t('no_shared_name'); const nameLine = printer.name ? `<div class="printer-secondary">${printer.name}</div>` : ''; let tonerHtml = renderTonerBar('Black', printer.toner_black, 'bar-black'); if (printer.is_color) { tonerHtml += renderTonerBar('Cyan', printer.toner_cyan, 'bar-cyan'); tonerHtml += renderTonerBar('Magenta', printer.toner_magenta, 'bar-magenta'); tonerHtml += renderTonerBar('Yellow', printer.toner_yellow, 'bar-yellow'); } return `<div class="card"><div class="card-header"><div><div class="printer-name">${shared}</div>${nameLine}<div class="printer-model">${printer.model ?? '-'}</div></div><div class="status-pill ${statusClass}" data-tooltip="${status === 'online' ? 'Impresora en línea' : 'Impresora fuera de línea'}">${status === 'online' ? 'ONLINE' : 'OFFLINE'}</div></div><div class="info-row"><strong>${t('serial_label')}</strong> ${printer.serial ?? '-'}</div><div class="info-row"><strong>${t('ip_label')}</strong> ${printer.ip ?? '-'}</div><div class="info-row"><strong>${t('location_label')}</strong> ${printer.location ?? '-'}</div><div class="info-row"><strong>${t('error_label')}</strong> <span class="${getErrorClass(printer.error_message, printer.status)}">${printer.error_message ?? t('no_error')}</span></div><div class="info-row"><strong>${t('type_label')}</strong> ${printer.is_color ? t('color_type') : t('bw_type')}</div><div class="toner-section"><div class="toner-title">${t('consumables')}</div>${tonerHtml}</div></div>`; }
+        function buildCard(printer) { const status = (printer.status || 'offline').toLowerCase(); const statusClass = status === 'online' ? 'status-online' : 'status-offline'; const shared = printer.shared_name || t('no_shared_name'); const nameLine = printer.name ? `<div class="printer-secondary">${printer.name}</div>` : ''; let tonerHtml = renderTonerBar('Black', printer.toner_black, 'bar-black'); if (printer.is_color) { tonerHtml += renderTonerBar('Cyan', printer.toner_cyan, 'bar-cyan'); tonerHtml += renderTonerBar('Magenta', printer.toner_magenta, 'bar-magenta'); tonerHtml += renderTonerBar('Yellow', printer.toner_yellow, 'bar-yellow'); } return `<div class="card command-printer-card" onclick="openCommandPrinterPanel(dashboardRawData.find(p=>p.id===${Number(printer.id) || 0}) || dashboardRawData.find(p=>p.ip==='${commandEsc(printer.ip)}'))"><div class="card-header"><div><div class="printer-name">${shared}</div>${nameLine}<div class="printer-model">${printer.model ?? '-'}</div></div><div class="status-pill ${statusClass}" data-tooltip="${status === 'online' ? 'Impresora en línea' : 'Impresora fuera de línea'}">${status === 'online' ? 'ONLINE' : 'OFFLINE'}</div></div><div class="info-row"><strong>${t('serial_label')}</strong> ${printer.serial ?? '-'}</div><div class="info-row"><strong>${t('ip_label')}</strong> ${printer.ip ?? '-'}</div><div class="info-row"><strong>${t('location_label')}</strong> ${printer.location ?? '-'}</div><div class="info-row"><strong>${t('error_label')}</strong> <span class="${getErrorClass(printer.error_message, printer.status)}">${printer.error_message ?? t('no_error')}</span></div><div class="info-row"><strong>${t('type_label')}</strong> ${printer.is_color ? t('color_type') : t('bw_type')}</div><div class="toner-section"><div class="toner-title">${t('consumables')}</div>${tonerHtml}</div></div>`; }
         function buildDashboardTableRow(printer, index) { const status = (printer.status || 'offline').toLowerCase(); const statusHtml = status === 'online' ? '<span class="status-badge status-badge-online" data-tooltip="Impresora en línea — respondiendo SNMP">Online</span>' : '<span class="status-badge status-badge-offline" data-tooltip="Impresora fuera de línea — sin respuesta SNMP">Offline</span>'; const errorClass = getErrorClass(printer.error_message, printer.status); const errorText = printer.error_message || t('no_error'); const normalized = normalizeErrorType(printer.error_message); let rowClass = ''; if (status !== 'online') rowClass = 'row-error'; else if (normalized === 'critical') rowClass = 'row-error'; else if (normalized === 'low') rowClass = 'row-low'; const tonerPieces = [renderTonerMini('K', printer.toner_black, 'bar-black')]; if (printer.is_color) { tonerPieces.push(renderTonerMini('C', printer.toner_cyan, 'bar-cyan')); tonerPieces.push(renderTonerMini('M', printer.toner_magenta, 'bar-magenta')); tonerPieces.push(renderTonerMini('Y', printer.toner_yellow, 'bar-yellow')); } var stagger = ' stagger-row'; var staggerDelay = ' style="animation-delay:' + String(index * 25) + 'ms"'; const hl = s => _dashSearchTerm ? highlightText(s, _dashSearchTerm) : s; return '<tr class="' + rowClass + stagger + '"' + staggerDelay + '><td><span class="clickable-name" onclick="openPrinterDetailsFromDashboard(' + index + ')">' + (printer.shared_name != null ? hl(printer.shared_name) : '-') + '</span></td><td>' + (printer.name != null ? hl(printer.name) : '-') + '</td><td>' + (printer.model != null ? hl(printer.model) : '-') + '</td><td>' + (printer.serial != null ? hl(printer.serial) : '-') + '</td><td>' + (printer.ip != null ? hl(printer.ip) : '-') + '</td><td>' + (printer.location != null ? hl(printer.location) : '-') + '</td><td>' + statusHtml + '</td><td class="' + errorClass + '">' + hl(errorText) + '</td><td><div class="toner-inline">' + tonerPieces.join('') + '</div></td></tr>'; } function compareDashboardValues(a, b, column) { const av = ((a[column] ?? '') + '').toLowerCase().trim(); const bv = ((b[column] ?? '') + '').toLowerCase().trim(); if (column === 'ip') { const aip = av.split('.').map(x => parseInt(x || '0', 10)); const bip = bv.split('.').map(x => parseInt(x || '0', 10)); for (let i = 0; i < 4; i++) { if ((aip[i] || 0) < (bip[i] || 0)) return -1; if ((aip[i] || 0) > (bip[i] || 0)) return 1; } return 0; } return av.localeCompare(bv); }
         function sortDashboardTableColumns(data) { const sorted = [...data]; sorted.sort((a, b) => { let result = compareDashboardValues(a, b, dashboardSortColumn); if (dashboardSortDirection === 'desc') result *= -1; return result; }); return sorted; }
         function toggleTableSort(column) { if (dashboardSortColumn === column) { dashboardSortDirection = dashboardSortDirection === 'asc' ? 'desc' : 'asc'; } else { dashboardSortColumn = column; dashboardSortDirection = 'asc'; } saveDashboardFilters(); loadPrinters(); }
@@ -6295,7 +7198,7 @@
                 abSessionToken = null;
             }
         }
-        function clearDiscoveredPrinters() { discoveredPrintersCache = []; const list = document.getElementById('discoverPrintersList'); const selectAll = document.getElementById('selectAllDiscovered'); if (list) list.innerHTML = '<tr><td colspan="7">Configure la búsqueda y presione buscar.</td></tr>'; if (selectAll) selectAll.checked = false; }
+        function clearDiscoveredPrinters() { discoveredPrintersCache = []; const list = document.getElementById('discoverPrintersList'); const selectAll = document.getElementById('selectAllDiscovered'); if (list) list.innerHTML = '<tr><td colspan="5">Configure la búsqueda y presione buscar.</td></tr>'; if (selectAll) selectAll.checked = false; }
 
 
         function openAddressBook(printer) {
@@ -6737,15 +7640,97 @@
 
             const tableWrap = document.querySelector('#dashboardTableView .table-wrapper.dashboard-table-wrap');
             if (!tableWrap) return;
+            const isMonitor = document.body.classList.contains('monitor-mode');
             const headerH = header ? header.getBoundingClientRect().height : 60;
             const filtersH = (filters && !filters.classList.contains('closed')) ? filters.getBoundingClientRect().height : 0;
-            const extraTop = 20;
+            const extraTop = isMonitor ? 6 : 20;
             const available = Math.max(320, window.innerHeight - headerH - filtersH - extraTop);
             tableWrap.style.height = available + 'px';
             tableWrap.style.maxHeight = available + 'px';
         }
         function refreshConfigThemeButtons() { const current = localStorage.getItem('ricoh_theme') || 'dark'; const darkBtn = document.getElementById('themeDarkBtn'); const lightBtn = document.getElementById('themeLightBtn'); const purpleBtn = document.getElementById('themePurpleBtn'); const contrastBtn = document.getElementById('themeContrastBtn'); if (darkBtn) darkBtn.className = current === 'dark' ? 'action-button' : 'action-button action-button-secondary'; if (lightBtn) lightBtn.className = current === 'light' ? 'action-button' : 'action-button action-button-secondary'; if (purpleBtn) purpleBtn.className = current === 'purple' ? 'action-button' : 'action-button action-button-secondary'; if (contrastBtn) contrastBtn.className = current === 'contrast' ? 'action-button' : 'action-button action-button-secondary'; }
-        function loadConfig() { refreshConfigThemeButtons(); refreshConfigLangButtons(); refreshCacheInfo(); if (_isAdmin) { loadHealthCenter(); loadActivityLogs(); loadAdConfig(); loadSystemUsers(); } const adCard = document.getElementById('adConfigCard'); const usersCard = document.getElementById('usersConfigCard'); if (adCard) adCard.style.display = _isAdmin ? '' : 'none'; if (usersCard) usersCard.style.display = _isAdmin ? '' : 'none'; }
+        function loadConfig() {
+            refreshConfigThemeButtons();
+            refreshConfigLangButtons();
+            refreshCacheInfo();
+            if (_isAdmin) {
+                loadAdConfig();
+                loadSystemUsers();
+                loadHealthCenter();
+                loadActivityLogs();
+            }
+        }
+
+        async function readCsvFileAsText(file) {
+            if (!file) return null;
+            return await file.text();
+        }
+
+        function showImportSummary(label, data) {
+            const errors = Array.isArray(data.errors) ? data.errors : [];
+            const text = `${label}: ${data.created || 0} creados, ${data.updated || 0} actualizados, ${data.skipped || 0} omitidos.`;
+            const detail = errors.length ? ` Primer error fila ${errors[0].row}: ${errors[0].error}` : '';
+            const status = document.getElementById('dataTransferStatus');
+            if (status) status.textContent = text + detail;
+            showToast(text, errors.length ? 'error' : 'success', 7000);
+        }
+
+        async function saveCsvToDownloads(url, label) {
+            const response = await fetch(url);
+            const data = await response.json();
+            if (!response.ok || !data.ok) throw new Error(data.detail || `No se pudo exportar ${label}.`);
+            const message = `${label} guardado en Descargas: ${data.path}`;
+            const status = document.getElementById('dataTransferStatus');
+            if (status) status.textContent = message;
+            showToast(message, 'success', 8000);
+        }
+
+        async function exportPrintersMasterCSV() {
+            try {
+                await saveCsvToDownloads('/printers/export/csv/downloads', 'Impresoras');
+            } catch (error) {
+                showToast(error.message || t('no_data_export'), 'error');
+            }
+        }
+
+        async function importPrintersMasterCSV(file) {
+            const content = await readCsvFileAsText(file);
+            if (!content) return;
+            if (!await appConfirm('Importar impresoras', `Se importaran los datos de ${file.name}. Las IP existentes se actualizaran.`)) return;
+            try {
+                const res = await fetch('/printers/import/csv', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: file.name, content }) });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'No se pudo importar el CSV.');
+                showImportSummary('Impresoras', data);
+                if (typeof loadSavedPrinters === 'function') loadSavedPrinters();
+                if (typeof loadPrinters === 'function') loadPrinters();
+            } catch (error) {
+                showToast(error.message || 'Error importando impresoras', 'error');
+            }
+        }
+
+        async function exportPrinterAssetsMasterCSV() {
+            try {
+                await saveCsvToDownloads('/printer-assets/bulk/export/csv/downloads', 'Inventario de impresoras');
+            } catch (error) {
+                showToast(error.message || t('no_data_export'), 'error');
+            }
+        }
+
+        async function importPrinterAssetsMasterCSV(file) {
+            const content = await readCsvFileAsText(file);
+            if (!content) return;
+            if (!await appConfirm('Importar inventario de impresoras', `Se importaran los datos de ${file.name}. Los registros existentes se actualizaran por ID, serie, IP o asset tag.`)) return;
+            try {
+                const res = await fetch('/printer-assets/bulk/import/csv', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: file.name, content }) });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'No se pudo importar el CSV.');
+                showImportSummary('Inventario de impresoras', data);
+                if (typeof loadPrinterAssets === 'function') loadPrinterAssets();
+            } catch (error) {
+                showToast(error.message || 'Error importando inventario de impresoras', 'error');
+            }
+        }
         function setTheme(theme) {
         document.body.classList.remove('theme-light', 'theme-purple', 'theme-contrast');
           if (theme === 'light') document.body.classList.add('theme-light');
@@ -6808,8 +7793,53 @@
                 clearTimeout(timer);
             }
         }
-        async function loadSavedPrinters() { const list = document.getElementById('savedPrintersList'); if (!list) return; try { showLoadingIn('savedPrintersList', 8, t('loading_printers')); const response = await fetch('/printers/'); const data = await response.json(); if (!Array.isArray(data)) { list.innerHTML = '<tr><td colspan="8">' + t('error_loading_printers') + '</td></tr>'; return; } savedPrintersData = data; renderSavedPrinters(); } catch (error) { list.innerHTML = '<tr><td colspan="8">' + t('could_not_load_printers') + '</td></tr>'; console.error('loadSavedPrinters error:', error); } }
-        function renderSavedPrinters() { const list = document.getElementById('savedPrintersList'); if (!list) return; const search = (document.getElementById('printerSearch')?.value || '').toLowerCase().trim(); let data = [...savedPrintersData]; if (search) { data = data.filter(p => ((p.shared_name || '') + ' ' + (p.name || '') + ' ' + (p.ip || '') + ' ' + (p.model || '') + ' ' + (p.serial || '')).toLowerCase().includes(search)); } data.sort((a, b) => { let av = ((a[savedPrintersSortColumn] ?? '') + '').toLowerCase(); let bv = ((b[savedPrintersSortColumn] ?? '') + '').toLowerCase(); if (savedPrintersSortColumn === 'id') { av = Number(a.id) || 0; bv = Number(b.id) || 0; return savedPrintersSortDirection === 'asc' ? av - bv : bv - av; } if (savedPrintersSortColumn === 'ip') { return savedPrintersSortDirection === 'asc' ? ipToNumber(a.ip) - ipToNumber(b.ip) : ipToNumber(b.ip) - ipToNumber(a.ip); } let r = av.localeCompare ? av.localeCompare(bv) : (av < bv ? -1 : av > bv ? 1 : 0); return savedPrintersSortDirection === 'desc' ? -r : r; }); updateSortIndicators('savedPrintersSort_', savedPrintersSortColumn, savedPrintersSortDirection); if (!data.length) { list.innerHTML = '<tr><td colspan="8">' + t('no_registered_printers') + '</td></tr>'; return; } list.innerHTML = ''; data.forEach(p => { const pJson = JSON.stringify(p).replace(/"/g, '&quot;'); list.innerHTML += `<tr><td>${p.id}</td><td>${p.shared_name ?? '-'}</td><td>${p.name ?? '-'}</td><td>${p.ip ?? '-'}</td><td>${p.model ?? '-'}</td><td>${p.serial ?? '-'}</td><td>${p.is_color ? 'Color' : 'B/N'}</td><td><div class="action-row" style="margin-bottom:0;gap:6px;"><button class="action-button" style="padding:6px 10px;font-size:12px;" onclick='openDrawer(${pJson})'>${t('btn_edit')}</button><button class="action-button action-button-danger" style="padding:6px 10px;font-size:12px;" onclick="deletePrinter(${p.id})">${t('btn_delete')}</button><button class="action-button action-button-warning" style="padding:6px 10px;font-size:12px;" onclick='openAddressBook(${pJson})'>${t('address_book_title')}</button></div></td></tr>`; }); } function filterSavedPrinters() { renderSavedPrinters(); }
+        async function loadSavedPrinters() {
+            const list = document.getElementById('savedPrintersList');
+            if (!list) return;
+            try {
+                showLoadingIn('savedPrintersList', 7, t('loading_printers'));
+                const response = await fetch('/printers/');
+                const data = await response.json();
+                if (!Array.isArray(data)) {
+                    list.innerHTML = '<tr><td colspan="7">' + t('error_loading_printers') + '</td></tr>';
+                    return;
+                }
+                savedPrintersData = data;
+                renderSavedPrinters();
+            } catch (error) {
+                list.innerHTML = '<tr><td colspan="7">' + t('could_not_load_printers') + '</td></tr>';
+                console.error('loadSavedPrinters error:', error);
+            }
+        }
+        function renderSavedPrinters() {
+            const list = document.getElementById('savedPrintersList');
+            if (!list) return;
+            const esc = value => String(value ?? '-').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            const search = (document.getElementById('printerSearch')?.value || '').toLowerCase().trim();
+            let data = [...savedPrintersData];
+            if (search) {
+                data = data.filter(p => ((p.shared_name || '') + ' ' + (p.name || '') + ' ' + (p.ip || '') + ' ' + (p.model || '') + ' ' + (p.serial || '')).toLowerCase().includes(search));
+            }
+            data.sort((a, b) => {
+                if (savedPrintersSortColumn === 'ip') {
+                    return savedPrintersSortDirection === 'asc' ? ipToNumber(a.ip) - ipToNumber(b.ip) : ipToNumber(b.ip) - ipToNumber(a.ip);
+                }
+                const av = ((a[savedPrintersSortColumn] ?? '') + '').toLowerCase();
+                const bv = ((b[savedPrintersSortColumn] ?? '') + '').toLowerCase();
+                const result = av.localeCompare ? av.localeCompare(bv) : (av < bv ? -1 : av > bv ? 1 : 0);
+                return savedPrintersSortDirection === 'desc' ? -result : result;
+            });
+            updateSortIndicators('savedPrintersSort_', savedPrintersSortColumn, savedPrintersSortDirection);
+            if (!data.length) {
+                list.innerHTML = '<tr><td colspan="7">' + t('no_registered_printers') + '</td></tr>';
+                return;
+            }
+            list.innerHTML = '';
+            data.forEach(p => {
+                const pJson = JSON.stringify(p).replace(/"/g, '&quot;');
+                list.innerHTML += `<tr><td>${esc(p.shared_name)}</td><td>${esc(p.name)}</td><td>${esc(p.ip)}</td><td>${esc(p.model)}</td><td>${esc(p.serial)}</td><td>${p.is_color ? 'Color' : 'B/N'}</td><td><div class="action-row" style="margin-bottom:0;gap:6px;"><button class="action-button" style="padding:6px 10px;font-size:12px;" onclick='openDrawer(${pJson})'>${t('btn_edit')}</button><button class="action-button action-button-danger" style="padding:6px 10px;font-size:12px;" onclick="deletePrinter(${p.id})">${t('btn_delete')}</button><button class="action-button action-button-warning" style="padding:6px 10px;font-size:12px;" onclick='openAddressBook(${pJson})'>${t('address_book_title')}</button></div></td></tr>`;
+            });
+        } function filterSavedPrinters() { renderSavedPrinters(); }
         function toggleSavedPrintersSort(column) { if (savedPrintersSortColumn === column) { savedPrintersSortDirection = savedPrintersSortDirection === 'asc' ? 'desc' : 'asc'; } else { savedPrintersSortColumn = column; savedPrintersSortDirection = 'asc'; } updateSortIndicators('savedPrintersSort_', savedPrintersSortColumn, savedPrintersSortDirection); renderSavedPrinters(); }
         // Helpers para la tarjeta "Buscar impresoras en red"
         function togglePrinterSection(id) {
@@ -6903,8 +7933,65 @@
             }
             return true;
         }
-        async function discoverPrinters() { if (!validateDiscoverFields()) return; const mode = document.getElementById('discoverMode')?.value || 'range'; const community = (document.getElementById('discoverCommunity')?.value || 'public').trim() || 'public'; const list = document.getElementById('discoverPrintersList'); if (!list) return; let ips = []; if (mode === 'ip') { ips = [document.getElementById('discoverSingleIp')?.value.trim()]; } else { const startParts = document.getElementById('discoverStartIp')?.value.trim().split('.'); const endParts = document.getElementById('discoverEndIp')?.value.trim().split('.'); if (!startParts || !endParts) return; const base = startParts.slice(0, 3).join('.'); const from = parseInt(startParts[3], 10); const to = parseInt(endParts[3], 10); for (let i = from; i <= to; i++)ips.push(`${base}.${i}`); } list.innerHTML = '<tr><td colspan="7">' + t('searching_addresses') + ' ' + ips.length + ' ' + t('addresses_suffix') + '</td></tr>'; discoveredPrintersCache = []; const batchSize = 6; for (let i = 0; i < ips.length; i += batchSize) { const batch = ips.slice(i, i + batchSize); const results = await Promise.allSettled(batch.map(async ip => { try { const r = await fetch(`/printers/resolve-hostname?ip=${encodeURIComponent(ip)}&community=${encodeURIComponent(community)}`); const d = await r.json(); if (d && d.hostname) { return { shared_name: '', name: d.hostname || '', ip, model: d.model || '', serial: d.serial || '', is_color: d.is_color || false }; } } catch (e) { } return null; })); results.forEach(r => { if (r.status === 'fulfilled' && r.value) discoveredPrintersCache.push(r.value); }); list.innerHTML = '<tr><td colspan="7">' + t('searching_addresses') + ' ' + (i + batch.length) + '/' + ips.length + ' IPs, ' + discoveredPrintersCache.length + ' found</td></tr>'; } if (!discoveredPrintersCache.length) { list.innerHTML = '<tr><td colspan="7">' + t('no_printers_found') + '</td></tr>'; return; } list.innerHTML = ''; discoveredPrintersCache.forEach((p, idx) => { list.innerHTML += `<tr><td class="discover-select-col"><input id="discoverSelect_${idx}" class="discover-checkbox" type="checkbox" checked></td><td>${p.shared_name || '-'}</td><td>${p.name || '-'}</td><td>${p.ip}</td><td>${p.model || '-'}</td><td>${p.serial || '-'}</td><td>${p.is_color ? 'Color' : 'B/N'}</td></tr>`; }); }
-        async function importPrinters() { const selected = getSelectedDiscoveredPrinters(); if (!selected.length) { showToast(t('select_printer_import'), 'error'); return; } let imported = 0, errors = 0; for (const p of selected) { try { const payload = { shared_name: p.shared_name || null, name: p.name || null, model: p.model || 'Desconocido', ip: p.ip, serial: p.serial || null, location: null, is_color: !!p.is_color, snmp_community: 'public' }; const r = await fetch('/printers/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); if (r.ok) imported++; else errors++; } catch (e) { errors++; } } showToast(imported + ' ' + t('imported_label') + ', ' + errors + ' ' + t('errors_label') + '.', errors ? 'error' : 'success'); if (imported > 0) loadSavedPrinters(); clearDiscoveredPrinters(); } function onInvTypeChange() { const type = document.getElementById('invType')?.value || ''; const wrapper = document.getElementById('invNameWrapper'); if (!wrapper) return; const old = document.getElementById('invName'); const curVal = old ? old.value : ''; if (type === 'toner') { if (old && old.tagName === 'SELECT') return; const sel = document.createElement('select'); sel.id = 'invName';['Toner Negro', 'Toner Cyan', 'Toner Amarillo', 'Toner Magenta'].forEach(n => { const o = document.createElement('option'); o.value = n; o.textContent = n; sel.appendChild(o); }); wrapper.innerHTML = ''; wrapper.appendChild(sel); } else { if (old && old.tagName === 'INPUT') return; const inp = document.createElement('input'); inp.id = 'invName'; inp.placeholder = 'Ej: Drum Unit MP C3003'; if (curVal) inp.value = curVal; wrapper.innerHTML = ''; wrapper.appendChild(inp); } }
+        async function discoverPrinters() {
+            if (!validateDiscoverFields()) return;
+            const mode = document.getElementById('discoverMode')?.value || 'range';
+            const community = (document.getElementById('discoverCommunity')?.value || 'public').trim() || 'public';
+            const list = document.getElementById('discoverPrintersList');
+            if (!list) return;
+            const esc = value => String(value ?? '-').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            let ips = [];
+            if (mode === 'ip') {
+                ips = [document.getElementById('discoverSingleIp')?.value.trim()];
+            } else {
+                const startParts = document.getElementById('discoverStartIp')?.value.trim().split('.');
+                const endParts = document.getElementById('discoverEndIp')?.value.trim().split('.');
+                if (!startParts || !endParts) return;
+                const base = startParts.slice(0, 3).join('.');
+                const from = parseInt(startParts[3], 10);
+                const to = parseInt(endParts[3], 10);
+                for (let i = from; i <= to; i++) ips.push(`${base}.${i}`);
+            }
+            list.innerHTML = '<tr><td colspan="5">' + t('searching_addresses') + ' ' + ips.length + ' ' + t('addresses_suffix') + '</td></tr>';
+            discoveredPrintersCache = [];
+            const batchSize = 6;
+            for (let i = 0; i < ips.length; i += batchSize) {
+                const batch = ips.slice(i, i + batchSize);
+                const results = await Promise.allSettled(batch.map(async ip => {
+                    try {
+                        const r = await fetch(`/printers/resolve-hostname?ip=${encodeURIComponent(ip)}&community=${encodeURIComponent(community)}`);
+                        if (!r.ok) return null;
+                        const d = await r.json();
+                        const name = d?.hostname || d?.name || '';
+                        const model = d?.model || '';
+                        const serial = d?.serial || '';
+                        if (name || model || serial) {
+                            return { shared_name: name || ip, name: name || ip, ip, model, serial, is_color: !!d?.is_color, snmp_community: community };
+                        }
+                    } catch (e) { }
+                    return null;
+                }));
+                results.forEach(r => {
+                    if (r.status === 'fulfilled' && r.value && !discoveredPrintersCache.some(p => p.ip === r.value.ip)) {
+                        discoveredPrintersCache.push(r.value);
+                    }
+                });
+                list.innerHTML = '<tr><td colspan="5">' + t('searching_addresses') + ' ' + Math.min(i + batch.length, ips.length) + '/' + ips.length + ' IPs, ' + discoveredPrintersCache.length + ' encontradas</td></tr>';
+            }
+            if (!discoveredPrintersCache.length) {
+                list.innerHTML = '<tr><td colspan="5">' + t('no_printers_found') + '</td></tr>';
+                return;
+            }
+            list.innerHTML = '';
+            discoveredPrintersCache.forEach((p, idx) => {
+                const shared = esc(p.shared_name);
+                const name = esc(p.name && p.name !== p.shared_name ? p.name : '');
+                const model = esc(p.model);
+                const serial = esc(p.serial ? 'S/N: ' + p.serial : '');
+                list.innerHTML += `<tr><td class="discover-select-col"><input id="discoverSelect_${idx}" class="discover-checkbox" type="checkbox" checked></td><td><div class="discover-device-main">${shared}</div>${name ? `<div class="discover-device-sub">${name}</div>` : ''}</td><td>${esc(p.ip)}</td><td><div class="discover-device-main">${model}</div>${serial ? `<div class="discover-device-sub">${serial}</div>` : ''}</td><td>${p.is_color ? 'Color' : 'B/N'}</td></tr>`;
+            });
+        }
+        async function importPrinters() { const selected = getSelectedDiscoveredPrinters(); if (!selected.length) { showToast(t('select_printer_import'), 'error'); return; } let imported = 0, errors = 0; for (const p of selected) { try { const payload = { shared_name: p.shared_name || null, name: p.name || null, model: p.model || 'Desconocido', ip: p.ip, serial: p.serial || null, location: null, is_color: !!p.is_color, snmp_community: p.snmp_community || (document.getElementById('discoverCommunity')?.value || 'public').trim() || 'public' }; const r = await fetch('/printers/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); if (r.ok) imported++; else errors++; } catch (e) { errors++; } } showToast(imported + ' ' + t('imported_label') + ', ' + errors + ' ' + t('errors_label') + '.', errors ? 'error' : 'success'); if (imported > 0) loadSavedPrinters(); clearDiscoveredPrinters(); } function onInvTypeChange() { const type = document.getElementById('invType')?.value || ''; const wrapper = document.getElementById('invNameWrapper'); if (!wrapper) return; const old = document.getElementById('invName'); const curVal = old ? old.value : ''; if (type === 'toner') { if (old && old.tagName === 'SELECT') return; const sel = document.createElement('select'); sel.id = 'invName';['Toner Negro', 'Toner Cyan', 'Toner Amarillo', 'Toner Magenta'].forEach(n => { const o = document.createElement('option'); o.value = n; o.textContent = n; sel.appendChild(o); }); wrapper.innerHTML = ''; wrapper.appendChild(sel); } else { if (old && old.tagName === 'INPUT') return; const inp = document.createElement('input'); inp.id = 'invName'; inp.placeholder = 'Ej: Drum Unit MP C3003'; if (curVal) inp.value = curVal; wrapper.innerHTML = ''; wrapper.appendChild(inp); } }
         function resetInventoryForm() { document.getElementById('invEditId').value = ''; document.getElementById('invType').value = 'toner'; onInvTypeChange(); document.getElementById('invModel').value = ''; document.getElementById('invPartNumber').value = ''; document.getElementById('invQty').value = '0'; document.getElementById('invMin').value = '1'; document.getElementById('invLocation').value = ''; document.getElementById('invNotes').value = ''; const titleEl = document.getElementById('invFormTitle'); if (titleEl) titleEl.textContent = t('add_inv_item_title'); const subEl = document.getElementById('invFormSubtitle'); if (subEl) subEl.textContent = t('add_inv_item_subtitle'); document.getElementById('inventoryFormModal')?.classList.remove('open'); } function toggleInventoryForm() { document.getElementById('inventoryFormModal')?.classList.add('open'); }
         function updateInventorySummary(data) { const total = data.length; const low = data.filter(i => i.quantity <= i.min_stock).length; const toner = data.filter(i => i.type === 'toner').length; const other = data.filter(i => i.type !== 'toner').length; animateCountUp(document.getElementById('invTotalItems'), total); animateCountUp(document.getElementById('invLowStock'), low); animateCountUp(document.getElementById('invTonerCount'), toner); animateCountUp(document.getElementById('invOtherCount'), other); }
         function getInventoryTypeBadge(type) { const t = (type || '').toLowerCase(); if (t === 'toner') return '<span class="status-badge" style="background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.3)">Toner</span>'; if (t === 'drum') return '<span class="status-badge" style="background:rgba(139,92,246,.15);color:#a78bfa;border:1px solid rgba(139,92,246,.3)">Drum</span>'; if (t === 'fuser') return '<span class="status-badge" style="background:rgba(249,115,22,.15);color:#fb923c;border:1px solid rgba(249,115,22,.3)">Fuser</span>'; return '<span class="status-badge" style="background:#1f2937;color:#9ca3af">' + type + '</span>'; }
@@ -7759,6 +8846,9 @@
                     document.getElementById('offlinePrinters').textContent = '0';
                     document.getElementById('lowTonerPrinters').textContent = '0';
                     document.getElementById('lastUpdate').textContent = t('no_data');
+                    renderLiveOpsSummary([], result);
+                    renderCriticalPrintersPanel([]);
+                    renderRecentActivityPanel();
                 } else {
                     let onlineCount = 0, offlineCount = 0, lowTonerCount = 0;
                     data.forEach((printer, index) => {
@@ -7799,12 +8889,18 @@
                         badgeToner.textContent = lowTonerCount;
                         badgeToner.style.display = lowTonerCount > 0 ? 'flex' : 'none';
                     }
+                    renderLiveOpsSummary(data, result);
+                    renderCriticalPrintersPanel(data);
+                    renderRecentActivityPanel();
                 }
 
                 cardsView.style.display = viewMode === 'cards' ? 'block' : 'none';
                 tableView.style.display = viewMode === 'table' ? 'block' : 'none';
                 updateDashboardSortIndicators();
                 applyTablePreferences('dashboard');
+                if (document.body.classList.contains('monitor-mode')) {
+                    setTimeout(() => { setTableFullHeight(); startMonitorAutoScroll(); }, 120);
+                }
             } catch (error) {
                 if (error.name !== 'AbortError') console.error('loadPrinters error:', error);
             } finally {
@@ -7875,6 +8971,7 @@
         // === Notificaciones SSE + Panel ===
         let _notifItems = [];
         let _notifUnread = 0;
+        window._notifItems = _notifItems;
 
         const _notifIcons = { offline: '🔴', toner_critical: '🟡', toner_delta: '🟢' };
 
@@ -7887,6 +8984,8 @@
         }
 
         function _renderNotifList() {
+            window._notifItems = _notifItems;
+            renderRecentActivityPanel();
             const list = document.getElementById('notifList');
             if (!_notifItems.length) {
                 list.innerHTML = '<div class="notif-empty">Sin notificaciones nuevas</div>';
@@ -7929,6 +9028,7 @@
         function clearNotifications() {
             _notifItems = [];
             _notifUnread = 0;
+            window._notifItems = _notifItems;
             _updateBadge();
             _renderNotifList();
         }
@@ -7937,6 +9037,7 @@
             document.getElementById('notifHistoryModal').style.display = 'flex';
             await loadNotifHistory();
         }
+        window.openNotifHistory = openNotifHistory;
 
         function closeNotifHistory() {
             document.getElementById('notifHistoryModal').style.display = 'none';
@@ -7968,9 +9069,7 @@
         }
 
         function initNotificationStream() {
-            const token = encodeURIComponent(localStorage.getItem('auth_token') || '');
-            if (!token) return;
-            const es = new EventSource('/notifications/stream?token=' + token);
+            const es = new EventSource('/notifications/stream');
             es.onmessage = function (e) {
                 try {
                     const d = JSON.parse(e.data);
@@ -7979,6 +9078,8 @@
                     if (_notifItems.length > 20) _notifItems.pop();
                     _notifUnread++;
                     _updateBadge();
+                    window._notifItems = _notifItems;
+                    renderRecentActivityPanel();
                     const panel = document.getElementById('notifPanel');
                     if (panel.classList.contains('open')) _renderNotifList();
                 } catch (_) { }
@@ -8018,25 +9119,25 @@
             try {
                 const res = await fetch('/settings/ad', { method: 'POST', headers: { 'Content-Type': 'application/json', ...getAuthHeaders() }, body: JSON.stringify(payload) });
                 if (!res.ok) throw new Error();
-                st.textContent = '✅ Configuración guardada';
+                st.textContent = 'Configuración guardada';
                 st.style.color = '#22c55e';
             } catch (e) {
-                st.textContent = '❌ Error guardando configuración';
+                st.textContent = 'Error guardando configuración';
                 st.style.color = '#f87171';
             }
         }
 
         async function testAdConnection() {
             const st = document.getElementById('adStatus');
-            st.textContent = '⏳ Probando conexión...';
+            st.textContent = 'Probando conexión...';
             st.style.color = '#94a3b8';
             try {
                 const res = await fetch('/settings/ad/test', { method: 'POST', headers: getAuthHeaders() });
                 const d = await res.json();
-                if (res.ok) { st.textContent = '✅ ' + d.message; st.style.color = '#22c55e'; }
-                else { st.textContent = '❌ ' + (d.detail || 'Error'); st.style.color = '#f87171'; }
+                if (res.ok) { st.textContent = d.message; st.style.color = '#22c55e'; }
+                else { st.textContent = d.detail || 'Error'; st.style.color = '#f87171'; }
             } catch (e) {
-                st.textContent = '❌ No se pudo conectar';
+                st.textContent = 'No se pudo conectar';
                 st.style.color = '#f87171';
             }
         }
@@ -8126,6 +9227,7 @@
                 loadSystemUsers();
             } catch (e) { showToast('Error eliminando usuario', 'error'); }
         }
+
         // ── Búsqueda AD ────────────────────────────────────────
         let _adSearchTimer = null;
 
@@ -8134,7 +9236,7 @@
             const status = document.getElementById('adUserSearchStatus');
             clearTimeout(_adSearchTimer);
             if (q.length < 2) { suggestions.style.display = 'none'; status.textContent = ''; return; }
-            status.textContent = '🔍 Buscando en AD...';
+            status.textContent = 'Buscando en AD...';
             _adSearchTimer = setTimeout(async () => {
                 try {
                     const res = await fetch(`/auth/ad/search?q=${encodeURIComponent(q)}`, { headers: getAuthHeaders() });
@@ -8155,7 +9257,7 @@
                         </div>`).join('');
                     suggestions.style.display = 'block';
                 } catch (e) {
-                    status.textContent = '⚠️ ' + (e.message || 'Error conectando AD — ingresa el usuario manualmente');
+                    status.textContent = (e.message || 'Error conectando AD') + ' - ingresa el usuario manualmente';
                     suggestions.style.display = 'none';
                 }
             }, 350);
@@ -8165,9 +9267,8 @@
             document.getElementById('userModalUsername').value = username;
             document.getElementById('userModalDisplay').value = displayName;
             document.getElementById('adUserSuggestions').style.display = 'none';
-            document.getElementById('adUserSearchStatus').textContent = '✅ ' + displayName;
+            document.getElementById('adUserSearchStatus').textContent = displayName;
         }
-
         document.addEventListener('click', (e) => {
             const panel = document.getElementById('notifPanel');
             if (panel && panel.classList.contains('open') &&
@@ -8182,11 +9283,14 @@
                 const data = await res.json();
                 _notifItems = data.map(r => ({
                     type: r.event_type,
+                    printer: r.printer,
                     message: r.message,
                     timestamp: r.timestamp
                 }));
                 _notifUnread = _notifItems.length;
+                window._notifItems = _notifItems;
                 _updateBadge();
+                renderRecentActivityPanel();
             } catch (e) { console.warn('No se pudo cargar historial de notificaciones', e); }
         }
         _loadRecentNotifs();
@@ -8224,5 +9328,3 @@
     <script src="/frontend/js/visual-polish.js"></script>
 </body>
 </html>
-
-

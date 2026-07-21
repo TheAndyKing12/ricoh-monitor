@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 import asyncio
 import json
@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import SessionLocal
 from app import crud
-from .auth import require_admin, require_tab, verify_token_value
+from .auth import require_admin, require_tab
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
 
@@ -94,11 +94,8 @@ def push_event_sync(event_type: str, data: dict):
 
 
 @router.get("/stream")
-async def notification_stream(token: str = Query(default="")):
+async def notification_stream():
     """SSE endpoint — el frontend se conecta aquí para recibir notificaciones"""
-    if not token:
-        raise HTTPException(status_code=401, detail="Token requerido")
-    verify_token_value(token)
     queue: asyncio.Queue = asyncio.Queue(maxsize=50)
 
     async with _subscribers_lock:

@@ -25,7 +25,6 @@ def check_imports() -> None:
         "apscheduler",
         "fastapi",
         "jose",
-        "ldap3",
         "openpyxl",
         "pyodbc",
         "requests",

@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends
 import logging
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
+import sys
 import threading
 import time
 from contextlib import asynccontextmanager
@@ -333,9 +334,13 @@ app.include_router(auth.router)
 
 # Mount frontend static files so dashboard can be served at /frontend/dashboard.html
 try:
-    frontend_dir = Path(__file__).resolve().parents[2] / "frontend"
-    if frontend_dir.exists():
-        app.mount("/frontend", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
+    frontend_candidates = [Path(__file__).resolve().parents[2] / "frontend"]
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        frontend_candidates.insert(0, Path(sys._MEIPASS).resolve() / "frontend")
+    for frontend_dir in frontend_candidates:
+        if frontend_dir.exists():
+            app.mount("/frontend", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
+            break
 except Exception:
     # ignore mounting errors in environments where filesystem layout differs
     pass

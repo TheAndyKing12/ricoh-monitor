@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Body, Query, Response
+from fastapi.responses import StreamingResponse
 from ipaddress import ip_network, ip_address
 from pydantic import BaseModel
 from datetime import datetime, timezone
+from pathlib import Path
 import csv
 import io
 import re
@@ -17,6 +19,7 @@ from ..database import SessionLocal
 from .. import crud, schemas, models
 from .. import utils
 from ..utils import _clean_snmp_text, _normalize_ricoh_model, safe_int, detect_is_color, detect_is_color_from_model, get_db
+from .. import ricoh_mib
 
 from app.ricoh_http import get_ricoh_http_counters, get_ricoh_http_hostname
  
@@ -25,6 +28,86 @@ from .auth import require_tab
 import time 
 
 router = APIRouter(prefix="/printers", tags=["Printers"])
+
+
+class CSVImportPayload(BaseModel):
+    content: str
+    filename: str | None = None
+
+
+PRINTER_IMPORT_FIELDS = [
+    "shared_name",
+    "name",
+    "model",
+    "ip",
+    "serial",
+    "location",
+    "is_color",
+    "snmp_community",
+]
+
+
+def _csv_value(row: dict, *names: str) -> str:
+    normalized = {str(k).strip().lower().replace(" ", "_"): v for k, v in row.items()}
+    for name in names:
+        value = normalized.get(name.strip().lower().replace(" ", "_"))
+        if value is not None:
+            return str(value).strip()
+    return ""
+
+
+def _parse_bool(value: str) -> bool:
+    return str(value or "").strip().lower() in {"1", "true", "yes", "si", "sí", "color", "y"}
+
+
+def _decode_csv_content(content: str) -> list[dict]:
+    text = (content or "").lstrip("\ufeff")
+    try:
+        dialect = csv.Sniffer().sniff(text[:2048], delimiters=",;\t")
+    except csv.Error:
+        dialect = csv.excel
+    reader = csv.DictReader(io.StringIO(text), dialect=dialect)
+    if not reader.fieldnames:
+        raise HTTPException(status_code=400, detail="El archivo CSV no tiene encabezados")
+    return list(reader)
+
+
+def _downloads_dir() -> Path:
+    downloads = Path.home() / "Downloads"
+    downloads.mkdir(parents=True, exist_ok=True)
+    return downloads
+
+
+def _unique_download_path(filename: str) -> Path:
+    path = _downloads_dir() / filename
+    if not path.exists():
+        return path
+    stem = path.stem
+    suffix = path.suffix
+    for index in range(1, 1000):
+        candidate = path.with_name(f"{stem}_{index}{suffix}")
+        if not candidate.exists():
+            return candidate
+    return path.with_name(f"{stem}_{int(time.time())}{suffix}")
+
+
+def _build_printers_csv(db: Session) -> str:
+    output = io.StringIO()
+    output.write("\ufeff")
+    writer = csv.DictWriter(output, fieldnames=PRINTER_IMPORT_FIELDS)
+    writer.writeheader()
+    for printer in crud.get_printers(db):
+        writer.writerow({
+            "shared_name": printer.shared_name or "",
+            "name": printer.name or "",
+            "model": printer.model or "",
+            "ip": printer.ip or "",
+            "serial": printer.serial or "",
+            "location": printer.location or "",
+            "is_color": "true" if printer.is_color else "false",
+            "snmp_community": printer.snmp_community or "public",
+        })
+    return output.getvalue()
 STATUS_CACHE = {
     "timestamp": 0,
     "data": None
@@ -52,13 +135,16 @@ HOSTNAME_SYNC_IN_PROGRESS: set[int] = set()
 HOSTNAME_SYNC_LOCK = threading.Lock()
 
 PRINTER_IDENTITY_OIDS = {
-    "sys_descr": "1.3.6.1.2.1.1.1.0",
-    "sys_name": "1.3.6.1.2.1.1.5.0",
-    "hr_descr_1": "1.3.6.1.2.1.25.3.2.1.3.1",
-    "hr_descr_2": "1.3.6.1.2.1.25.3.2.1.3.2",
-    "printer_name": "1.3.6.1.2.1.43.5.1.1.16.1",
-    "serial": "1.3.6.1.2.1.43.5.1.1.17.1",
-    "toner_cyan": "1.3.6.1.2.1.43.11.1.1.9.1.2",
+    "sys_descr": ricoh_mib.OID["sys_descr"],
+    "sys_name": ricoh_mib.OID["sys_name"],
+    "hr_descr_1": ricoh_mib.OID["hr_descr_1"],
+    "hr_descr_2": ricoh_mib.OID["hr_descr_2"],
+    "printer_name": ricoh_mib.OID["printer_name"],
+    "serial": ricoh_mib.OID["printer_serial"],
+    "toner_cyan": ricoh_mib.OID["marker_cyan"],
+    "ricoh_sys_name": ricoh_mib.OID["ricoh_sys_name"],
+    "ricoh_nic_name": ricoh_mib.OID["ricoh_nic_name"],
+    "ricoh_nic_description": ricoh_mib.OID["ricoh_nic_description"],
 }
 
 
@@ -78,27 +164,18 @@ def _looks_like_color_from_live_data(model, cyan_toner):
 
 def get_printer_identity(ip: str, community: str = "public", resolve_network_name: bool = False) -> dict:
     """Best-effort identity lookup for reconciling a reused printer IP."""
-    oids = list(PRINTER_IDENTITY_OIDS.values())
+    oids = ricoh_mib.IDENTITY_OIDS
     values = get_snmp_values(ip, community, oids, timeout=2, retries=0)
-    by_key = {key: values.get(oid) for key, oid in PRINTER_IDENTITY_OIDS.items()}
-
-    name = _clean_snmp_text(by_key.get("sys_name")) or _clean_snmp_text(by_key.get("printer_name"))
+    identity = ricoh_mib.parse_identity(values)
+    name = identity.get("name")
     if resolve_network_name and not name:
         name = resolve_hostname_value(ip, community)
-    model = (
-        _normalize_ricoh_model(by_key.get("hr_descr_1"))
-        or _normalize_ricoh_model(by_key.get("hr_descr_2"))
-        or _normalize_ricoh_model(by_key.get("printer_name"))
-        or _normalize_ricoh_model(by_key.get("sys_descr"))
-    )
-    serial = _clean_snmp_text(by_key.get("serial"))
-    is_color = _looks_like_color_from_live_data(model, by_key.get("toner_cyan"))
 
     return {
         "name": name,
-        "model": model,
-        "serial": serial,
-        "is_color": is_color,
+        "model": identity.get("model"),
+        "serial": identity.get("serial"),
+        "is_color": identity.get("is_color"),
     }
 
 
@@ -125,6 +202,35 @@ def _build_reconcile_data(existing, incoming: dict, identity: dict) -> dict:
     return data
 
 
+def _describe_printer_changes(existing, data: dict) -> str:
+    labels = {
+        "shared_name": "shared name",
+        "name": "nombre",
+        "model": "modelo",
+        "serial": "serie",
+        "ip": "IP",
+        "location": "ubicacion",
+        "is_color": "tipo",
+        "snmp_community": "SNMP community",
+    }
+    parts = []
+    for field, new_value in data.items():
+        old_value = getattr(existing, field, None)
+        if old_value == new_value:
+            continue
+        if field == "snmp_community":
+            parts.append("SNMP community actualizada")
+            continue
+        if field == "is_color":
+            old_text = "Color" if old_value else "B/N"
+            new_text = "Color" if new_value else "B/N"
+        else:
+            old_text = str(old_value or "-")
+            new_text = str(new_value or "-")
+        parts.append(f"{labels.get(field, field)}: {old_text} -> {new_text}")
+    return "; ".join(parts)
+
+
 def _sync_hostname_for_printer(printer_id: int):
     db = SessionLocal()
     try:
@@ -134,7 +240,10 @@ def _sync_hostname_for_printer(printer_id: int):
         identity = get_printer_identity(printer.ip, printer.snmp_community, resolve_network_name=True)
         data = _build_reconcile_data(printer, {}, identity)
         if data:
+            changes = _describe_printer_changes(printer, data)
             crud.update_printer(db, printer_id, data)
+            if changes:
+                crud.create_log(db, "printer", "updated", f'Identidad detectada por SNMP/HTTP en "{printer.shared_name or printer.name or printer.ip}": {changes}')
             clear_all_cache()
     except Exception:
         pass
@@ -242,19 +351,15 @@ def decode_printer_error_state(raw_value):
 
 def build_fast_printer_status(printer):
 
-    is_color = detect_is_color(printer)
+    model_hint = " ".join(
+        str(getattr(printer, attr, "") or "")
+        for attr in ("shared_name", "name", "model")
+    )
+    is_color = False if ricoh_mib.model_says_mono(model_hint) else detect_is_color(printer)
 
-    oids = [
-        "1.3.6.1.2.1.43.11.1.1.9.1.1",
-        "1.3.6.1.2.1.25.3.5.1.1.1",
-        "1.3.6.1.2.1.25.3.5.1.2.1",
-    ]
+    oids = list(ricoh_mib.STATUS_OIDS)
     if is_color:
-        oids += [
-            "1.3.6.1.2.1.43.11.1.1.9.1.2",
-            "1.3.6.1.2.1.43.11.1.1.9.1.3",
-            "1.3.6.1.2.1.43.11.1.1.9.1.4"
-        ]
+        oids += ricoh_mib.COLOR_STATUS_OIDS
 
     try:
         values = get_snmp_values(printer.ip, printer.snmp_community, oids)
@@ -271,12 +376,14 @@ def build_fast_printer_status(printer):
     # SNMP is unreliable on Ricoh printers — it often returns the model name.
     live_name = printer.name or printer.model
 
-    toner_black = safe_int(_v("1.3.6.1.2.1.43.11.1.1.9.1.1"))
-    status_code = safe_int(_v("1.3.6.1.2.1.25.3.5.1.1.1"))
-    error_state_raw = _v("1.3.6.1.2.1.25.3.5.1.2.1")
+    toner_black = ricoh_mib.choose_toner(values or {}, "marker_black", "ricoh_toner_black")
+    status_code = safe_int(_v(ricoh_mib.OID["printer_state"]))
+    error_state_raw = _v(ricoh_mib.OID["printer_error_state"])
     error_list = decode_printer_error_state(error_state_raw)
+    alert_message = ricoh_mib.parse_status_alert(values or {})
 
-    status = "online" if toner_black is not None else "offline"
+    snmp_alive = any(value is not None for value in (values or {}).values())
+    status = "online" if snmp_alive else "offline"
     printer_state = "unknown"
     if status_code == 3:
         printer_state = "idle"
@@ -289,6 +396,8 @@ def build_fast_printer_status(printer):
 
     if status == "offline":
         error_message = "Sin respuesta SNMP"
+    elif alert_message:
+        error_message = alert_message
     elif error_list:
         error_message = ", ".join(error_list)
     elif toner_black is not None and toner_black < 10:
@@ -314,9 +423,9 @@ def build_fast_printer_status(printer):
     }
 
     if is_color:
-        toner_cyan = safe_int(_v("1.3.6.1.2.1.43.11.1.1.9.1.2"))
-        toner_magenta = safe_int(_v("1.3.6.1.2.1.43.11.1.1.9.1.3"))
-        toner_yellow = safe_int(_v("1.3.6.1.2.1.43.11.1.1.9.1.4"))
+        toner_cyan = ricoh_mib.choose_toner(values or {}, "marker_cyan", "ricoh_toner_cyan")
+        toner_magenta = ricoh_mib.choose_toner(values or {}, "marker_magenta", "ricoh_toner_magenta")
+        toner_yellow = ricoh_mib.choose_toner(values or {}, "marker_yellow", "ricoh_toner_yellow")
         printer_data["toner_cyan"] = toner_cyan
         printer_data["toner_magenta"] = toner_magenta
         printer_data["toner_yellow"] = toner_yellow
@@ -399,6 +508,75 @@ def list_printers(db: Session = Depends(get_db)):
     return printers
 
 
+@router.get("/export/csv", dependencies=[Depends(require_tab("printers"))])
+def export_printers_csv(db: Session = Depends(get_db)):
+    output = io.StringIO(_build_printers_csv(db))
+    return StreamingResponse(
+        output,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=printers.csv"},
+    )
+
+
+@router.get("/export/csv/downloads", dependencies=[Depends(require_tab("printers"))])
+def export_printers_csv_to_downloads(db: Session = Depends(get_db)):
+    path = _unique_download_path("printers.csv")
+    path.write_text(_build_printers_csv(db), encoding="utf-8")
+    return {"ok": True, "path": str(path)}
+
+
+@router.post("/import/csv", dependencies=[Depends(require_tab("printers"))])
+def import_printers_csv(payload: CSVImportPayload, db: Session = Depends(get_db)):
+    created = 0
+    updated = 0
+    skipped = 0
+    errors = []
+    rows = _decode_csv_content(payload.content)
+
+    for index, row in enumerate(rows, start=2):
+        try:
+            ip = _csv_value(row, "ip", "static_ip")
+            model = _csv_value(row, "model", "modelo")
+            if not ip:
+                skipped += 1
+                errors.append({"row": index, "error": "IP requerida"})
+                continue
+            if not model:
+                model = "Desconocido"
+
+            existing = crud.get_printer_by_ip(db, ip)
+
+            data = {
+                "shared_name": _csv_value(row, "shared_name", "shared name", "nombre_compartido") or None,
+                "name": _csv_value(row, "name", "nombre") or None,
+                "model": model,
+                "ip": ip,
+                "serial": _csv_value(row, "serial", "serie") or None,
+                "location": _csv_value(row, "location", "ubicacion", "ubicación") or None,
+                "is_color": _parse_bool(_csv_value(row, "is_color", "color")),
+                "snmp_community": _csv_value(row, "snmp_community", "community") or "public",
+            }
+
+            if existing:
+                duplicate = crud.get_printer_by_ip(db, ip)
+                if duplicate and duplicate.id != existing.id:
+                    skipped += 1
+                    errors.append({"row": index, "error": f"IP duplicada: {ip}"})
+                    continue
+                crud.update_printer(db, existing.id, data)
+                updated += 1
+            else:
+                crud.create_printer(db, schemas.PrinterCreate(**data))
+                created += 1
+        except Exception as exc:
+            skipped += 1
+            errors.append({"row": index, "error": str(exc)[:200]})
+
+    clear_all_cache()
+    crud.create_log(db, "printer", "imported", f"Importacion CSV de impresoras: {created} creadas, {updated} actualizadas, {skipped} omitidas")
+    return {"created": created, "updated": updated, "skipped": skipped, "errors": errors}
+
+
 @router.put("/{printer_id}", response_model=schemas.PrinterResponse, dependencies=[Depends(require_tab("printers"))])
 def update_printer(printer_id: int, printer: schemas.PrinterUpdate, db: Session = Depends(get_db)):
     existing = crud.get_printer_by_id(db, printer_id)
@@ -420,9 +598,11 @@ def update_printer(printer_id: int, printer: schemas.PrinterUpdate, db: Session 
     if identity.get("is_color") is not None:
         data["is_color"] = bool(identity.get("is_color"))
 
+    changes = _describe_printer_changes(existing, data)
     updated = crud.update_printer(db, printer_id, data)
     clear_all_cache()
-    crud.create_log(db, "printer", "updated", f'Impresora "{updated.shared_name or updated.name}" ({updated.ip}) actualizada')
+    detail = f": {changes}" if changes else ""
+    crud.create_log(db, "printer", "updated", f'Impresora "{updated.shared_name or updated.name}" ({updated.ip}) actualizada{detail}')
     return updated
 
 
@@ -452,7 +632,7 @@ def reconcile_printer_identity(printer_id: int, db: Session = Depends(get_db)):
 
     updated = crud.update_printer(db, printer_id, data)
     clear_all_cache()
-    changed = ", ".join(sorted(data.keys()))
+    changed = _describe_printer_changes(printer, data) or ", ".join(sorted(data.keys()))
     crud.create_log(db, "printer", "updated", f'Identidad reconciliada: "{updated.shared_name or updated.name}" ({updated.ip}) ({changed})')
     return updated
 
@@ -562,25 +742,12 @@ def get_printers_status(db: Session = Depends(get_db)):
 
 def build_printer_counters(printer):
     # basic counters (batch SNMP)
-    oids = [
-        "1.3.6.1.2.1.43.10.2.1.4.1.1",  # total
-        "1.3.6.1.4.1.367.3.2.1.7.2.9.1.2.1",  # bw pages
-        "1.3.6.1.4.1.367.3.2.1.7.2.9.1.2.3"   # color pages
-    ]
+    oids = ricoh_mib.COUNTER_OIDS
     model_hint = " ".join(
         str(getattr(printer, attr, "") or "")
         for attr in ("shared_name", "name", "model")
-    ).upper()
-    model_says_color = detect_is_color_from_model(model_hint)
-    model_says_mono = (
-        "BNW" in model_hint
-        or "B/N" in model_hint
-        or "B&W" in model_hint
-        or "BLACK" in model_hint
-        or "MONO" in model_hint
-        or bool(re.search(r"\bIM\s*\d{3,5}\b", model_hint))
-    ) and not model_says_color
-    is_color = False if model_says_mono else (detect_is_color(printer) or model_says_color)
+    )
+    model_says_mono = ricoh_mib.model_says_mono(model_hint)
     try:
         vals = get_snmp_values(printer.ip, printer.snmp_community, oids)
     except Exception:
@@ -591,13 +758,14 @@ def build_printer_counters(printer):
             return None
         return vals.get(oid)
 
-    total_pages = safe_int(_v(oids[0]))
-    bw_pages = safe_int(_v(oids[1]))
-    color_pages = safe_int(_v(oids[2]))
-    if model_says_mono:
-        color_pages = None
-    elif not is_color and color_pages is not None:
-        is_color = True
+    reading, is_color = ricoh_mib.normalize_counter_reading(
+        vals or {},
+        model_text=model_hint,
+        db_is_color=None if model_says_mono else bool(getattr(printer, "is_color", False)),
+    )
+    total_pages = reading.total_pages
+    bw_pages = reading.bw_pages
+    color_pages = reading.color_pages
 
     snmp_present = any(_v(oid) is not None for oid in oids)
 
@@ -610,15 +778,6 @@ def build_printer_counters(printer):
     http_used = False
     http_data = get_ricoh_http_counters(printer.ip)
     if http_data:
-        if http_data.get("bw_pages") is not None:
-            bw_pages = safe_int(http_data["bw_pages"])
-            http_used = True
-        if is_color and http_data.get("color_pages") is not None:
-            color_pages = safe_int(http_data["color_pages"])
-            http_used = True
-        if http_data.get("total_pages") is not None:
-            total_pages = safe_int(http_data["total_pages"])
-            http_used = True
         if http_data.get("copy_bw") is not None:
             copy_bw = safe_int(http_data["copy_bw"])
             http_used = True
@@ -631,6 +790,17 @@ def build_printer_counters(printer):
         if is_color and http_data.get("print_color") is not None:
             print_color = safe_int(http_data["print_color"])
             http_used = True
+        if http_data.get("bw_pages") is not None and (copy_bw is not None or print_bw is not None):
+            bw_pages = safe_int(http_data["bw_pages"])
+            http_used = True
+        if is_color and http_data.get("color_pages") is not None and (copy_color is not None or print_color is not None):
+            color_pages = safe_int(http_data["color_pages"])
+            http_used = True
+        if http_data.get("total_pages") is not None and (
+            copy_bw is not None or print_bw is not None or copy_color is not None or print_color is not None
+        ):
+            total_pages = safe_int(http_data["total_pages"])
+            http_used = True
 
     # if copy/print counters are available prefer summing them for BW and Color
     if copy_bw is not None or print_bw is not None:
@@ -638,9 +808,9 @@ def build_printer_counters(printer):
     if is_color and (copy_color is not None or print_color is not None):
         color_pages = (copy_color or 0) + (print_color or 0)
 
-    # Some Ricoh models expose total and B/W counters but not the private color
-    # counter. In that case color is still recoverable as total - B/W.
-    if is_color and color_pages is None and total_pages is not None and bw_pages is not None:
+    # Some Ricoh color models expose total and B/W counters but not the private
+    # color counter. Never do this for models RMAdmin/our hints identify as mono.
+    if is_color and not model_says_mono and color_pages is None and total_pages is not None and bw_pages is not None:
         derived_color = total_pages - bw_pages
         if derived_color >= 0:
             color_pages = derived_color
@@ -777,11 +947,7 @@ def get_printer_counters_debug(printer_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Printer not found")
 
     is_color = detect_is_color(printer)
-    oids = [
-        "1.3.6.1.2.1.43.10.2.1.4.1.1",
-        "1.3.6.1.4.1.367.3.2.1.7.2.9.1.2.1",
-        "1.3.6.1.4.1.367.3.2.1.7.2.9.1.2.3",
-    ]
+    oids = ricoh_mib.COUNTER_OIDS
     snmp_raw: dict[str, str | None] = {}
     try:
         vals = get_snmp_values(printer.ip, printer.snmp_community, oids)
@@ -807,6 +973,11 @@ def get_printer_counters_debug(printer_id: int, db: Session = Depends(get_db)):
             "is_color": is_color,
         },
         "snmp_raw": snmp_raw,
+        "snmp_map": {
+            "printer_total": ricoh_mib.OID["printer_total"],
+            "ricoh_bw_pages": ricoh_mib.OID["ricoh_bw_pages"],
+            "ricoh_color_pages": ricoh_mib.OID["ricoh_color_pages"],
+        },
         "http_raw": http_raw,
         "final_applied": final_applied,
     }
@@ -1124,6 +1295,51 @@ def _format_report_date(value: datetime | None) -> str | None:
     return value.date().isoformat() if value else None
 
 
+COUNTER_REPORT_VALUE_FIELDS = (
+    "total_pages",
+    "bw_pages",
+    "color_pages",
+    "copy_bw",
+    "copy_color",
+    "print_bw",
+    "print_color",
+)
+
+
+def _snapshot_has_counter_values(snapshot) -> bool:
+    if not snapshot:
+        return False
+    return any(getattr(snapshot, field, None) is not None for field in COUNTER_REPORT_VALUE_FIELDS)
+
+
+def _first_valid_snapshot(query, start_dt: datetime, end_dt: datetime):
+    for snapshot in query.filter(
+        models.PrinterCounterSnapshot.captured_at >= start_dt,
+        models.PrinterCounterSnapshot.captured_at <= end_dt,
+    ).order_by(models.PrinterCounterSnapshot.captured_at.asc()).all():
+        if _snapshot_has_counter_values(snapshot):
+            return snapshot
+    return None
+
+
+def _last_valid_snapshot(query, end_dt: datetime):
+    for snapshot in query.filter(
+        models.PrinterCounterSnapshot.captured_at <= end_dt,
+    ).order_by(models.PrinterCounterSnapshot.captured_at.desc()).all():
+        if _snapshot_has_counter_values(snapshot):
+            return snapshot
+    return None
+
+
+def _safe_report_delta(start_value, end_value) -> tuple[int | None, bool]:
+    if start_value is None or end_value is None:
+        return None, False
+    delta = end_value - start_value
+    if delta < 0:
+        return None, True
+    return delta, False
+
+
 def _build_counters_consumption_report(db: Session, start_date: str, end_date: str) -> dict:
     start_dt = _parse_date_yyyy_mm_dd(start_date, "start_date")
     end_dt = _parse_date_yyyy_mm_dd(end_date, "end_date")
@@ -1142,8 +1358,8 @@ def _build_counters_consumption_report(db: Session, start_date: str, end_date: s
             models.PrinterCounterSnapshot.granularity == "daily",
         )
 
-        start_snap = base_q.filter(models.PrinterCounterSnapshot.captured_at >= start_dt).order_by(models.PrinterCounterSnapshot.captured_at.asc()).first()
-        end_snap = base_q.filter(models.PrinterCounterSnapshot.captured_at <= end_inclusive).order_by(models.PrinterCounterSnapshot.captured_at.desc()).first()
+        start_snap = _first_valid_snapshot(base_q, start_dt, end_inclusive)
+        end_snap = _last_valid_snapshot(base_q, end_inclusive)
 
         start_total = start_snap.total_pages if start_snap else None
         end_total = end_snap.total_pages if end_snap else None
@@ -1152,15 +1368,29 @@ def _build_counters_consumption_report(db: Session, start_date: str, end_date: s
         start_color = start_snap.color_pages if start_snap else None
         end_color = end_snap.color_pages if end_snap else None
 
-        total_consumed = (end_total - start_total) if (start_total is not None and end_total is not None) else None
-        bw_consumed = (end_bw - start_bw) if (start_bw is not None and end_bw is not None) else None
-        color_consumed = (end_color - start_color) if (start_color is not None and end_color is not None) else None
+        total_consumed, total_reset = _safe_report_delta(start_total, end_total)
+        bw_consumed, bw_reset = _safe_report_delta(start_bw, end_bw)
+        color_consumed, color_reset = _safe_report_delta(start_color, end_color)
+        if total_consumed is None and bw_consumed is not None and color_consumed is not None:
+            total_consumed = bw_consumed + color_consumed
 
-        counter_reset_detected = False
-        for delta in (total_consumed, bw_consumed, color_consumed):
-            if delta is not None and delta < 0:
-                counter_reset_detected = True
-                break
+        counter_reset_detected = total_reset or bw_reset or color_reset
+        missing_initial = start_snap is None or start_snap.captured_at.date() > start_dt.date()
+        missing_final = end_snap is None or end_snap.captured_at.date() < end_dt.date()
+        no_comparable_values = (
+            total_consumed is None
+            and bw_consumed is None
+            and color_consumed is None
+        )
+        notes = []
+        if missing_initial:
+            notes.append("Sin lectura inicial exacta")
+        if missing_final:
+            notes.append("Sin lectura final exacta")
+        if no_comparable_values:
+            notes.append("Sin contadores comparables")
+        if counter_reset_detected:
+            notes.append("Posible reinicio de contador")
 
         row = {
             "printer_id": printer.id,
@@ -1181,7 +1411,8 @@ def _build_counters_consumption_report(db: Session, start_date: str, end_date: s
             "end_color": end_color,
             "consumed_color": color_consumed,
             "counter_reset_detected": counter_reset_detected,
-            "incomplete": (start_snap is None or end_snap is None),
+            "incomplete": missing_initial or missing_final or no_comparable_values or counter_reset_detected,
+            "notes": "; ".join(notes),
         }
         report_rows.append(row)
 
@@ -1212,7 +1443,18 @@ COUNTERS_REPORT_FIELDS = [
     ("consumed_color", "Consumo color"),
     ("counter_reset_detected", "Reinicio contador"),
     ("incomplete", "Incompleto"),
+    ("notes", "Notas"),
 ]
+
+
+def _format_counters_report_cell(field: str, value):
+    if value is None:
+        return ""
+    if field == "is_color":
+        return "Color" if value else "B/N"
+    if field in {"counter_reset_detected", "incomplete"}:
+        return "Sí" if value else "No"
+    return value
 
 
 @router.get("/counters/consumption-report", dependencies=[Depends(require_tab("counters"))])
@@ -1239,7 +1481,7 @@ def export_counters_consumption_report(
     headers = [label for _, label in COUNTERS_REPORT_FIELDS]
     writer.writerow(headers)
     for row in rows:
-        writer.writerow([row.get(field) for field in fields])
+        writer.writerow([_format_counters_report_cell(field, row.get(field)) for field in fields])
 
     filename = f"counters_consumption_{start_date}_to_{end_date}.csv"
     return Response(
@@ -1272,7 +1514,22 @@ def export_counters_consumption_report_xlsx(
     ws.append(headers)
 
     for row in rows:
-        ws.append([row.get(field) for field in fields])
+        ws.append([_format_counters_report_cell(field, row.get(field)) for field in fields])
+
+    try:
+        from openpyxl.styles import Font, PatternFill, Alignment
+        header_fill = PatternFill("solid", fgColor="1F4E78")
+        header_font = Font(color="FFFFFF", bold=True)
+        for cell in ws[1]:
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = Alignment(horizontal="center")
+        for row_cells in ws.iter_rows(min_row=2):
+            for cell in row_cells:
+                cell.alignment = Alignment(vertical="top")
+        ws.auto_filter.ref = ws.dimensions
+    except Exception:
+        pass
 
     for column_cells in ws.columns:
         max_len = max(len(str(cell.value or "")) for cell in column_cells)

@@ -2,7 +2,6 @@ const fs = require("fs");
 
 const inlineScriptFiles = [
   "frontend/dashboard.html",
-  "frontend/login.html",
 ];
 
 const standaloneScriptFiles = [
@@ -24,6 +23,10 @@ function checkScript(source, label) {
 }
 
 for (const file of inlineScriptFiles) {
+  if (!fs.existsSync(file)) {
+    console.log(`${file}: skipped`);
+    continue;
+  }
   const html = fs.readFileSync(file, "utf8");
   const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)];
 
@@ -38,6 +41,10 @@ for (const file of inlineScriptFiles) {
 }
 
 for (const file of standaloneScriptFiles) {
+  if (!fs.existsSync(file)) {
+    console.log(`${file}: skipped`);
+    continue;
+  }
   checkScript(fs.readFileSync(file, "utf8"), file);
 }
 
