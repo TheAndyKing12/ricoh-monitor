@@ -1322,8 +1322,9 @@ def _first_valid_snapshot(query, start_dt: datetime, end_dt: datetime):
     return None
 
 
-def _last_valid_snapshot(query, end_dt: datetime):
+def _last_valid_snapshot(query, start_dt: datetime, end_dt: datetime):
     for snapshot in query.filter(
+        models.PrinterCounterSnapshot.captured_at >= start_dt,
         models.PrinterCounterSnapshot.captured_at <= end_dt,
     ).order_by(models.PrinterCounterSnapshot.captured_at.desc()).all():
         if _snapshot_has_counter_values(snapshot):
@@ -1359,7 +1360,7 @@ def _build_counters_consumption_report(db: Session, start_date: str, end_date: s
         )
 
         start_snap = _first_valid_snapshot(base_q, start_dt, end_inclusive)
-        end_snap = _last_valid_snapshot(base_q, end_inclusive)
+        end_snap = _last_valid_snapshot(base_q, start_dt, end_inclusive)
 
         start_total = start_snap.total_pages if start_snap else None
         end_total = end_snap.total_pages if end_snap else None
