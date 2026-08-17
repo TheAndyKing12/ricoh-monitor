@@ -65,6 +65,34 @@ def test_address_book_import_rejects_missing_name():
         address_book._map_address_book_import_row({"Registration No.": "1"})
 
 
+def test_address_book_native_csv_detection_accepts_csv_headers():
+    raw = b"\xef\xbb\xbfRegistration No.,Name,E-mail Address\n1,User,user@example.com\n"
+
+    assert address_book._looks_like_address_book_csv(raw, "text/csv") is True
+
+
+def test_address_book_native_csv_detection_rejects_html_login():
+    raw = b"<html><body><form action='authForm.cgi'>login</form></body></html>"
+
+    assert address_book._looks_like_address_book_csv(raw, "text/html") is False
+
+
+def test_address_book_extracts_wim_upload_form():
+    html = """
+    <form method="post" action="address/adrsImport.cgi">
+      <input type="hidden" name="wimToken" value="abc123">
+      <input type="file" name="csvFile">
+      <input type="submit" value="Import">
+    </form>
+    """
+
+    forms = address_book._extract_wim_forms(html, "http://10.0.0.10/web/entry/es/address/adrsMaintenance.cgi", "10.0.0.10")
+
+    assert forms[0]["url"].endswith("/web/entry/es/address/adrsImport.cgi")
+    assert forms[0]["inputs"]["wimToken"] == "abc123"
+    assert forms[0]["file_fields"] == ["csvFile"]
+
+
 def test_address_book_local_crud_roundtrip(tmp_path, monkeypatch):
     monkeypatch.setattr(address_book, "STORE_PATH", tmp_path / "address_book.json")
     created = address_book._create_local_entry(

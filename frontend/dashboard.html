@@ -5462,8 +5462,12 @@
                     <button class="action-button" type="button" onclick="loadAddressBookEntries()" data-i18n="btn_refresh">Refrescar</button>
                     <button class="action-button action-button-secondary" type="button" onclick="exportAddressBook('csv')"><i class="bi bi-filetype-csv"></i> CSV</button>
                     <button class="action-button action-button-secondary" type="button" onclick="exportAddressBook('xlsx')"><i class="bi bi-file-earmark-excel"></i> Excel</button>
+                    <button class="action-button action-button-secondary" type="button" onclick="exportNativeAddressBookCSV()"><i class="bi bi-download"></i> CSV Ricoh</button>
+                    <button class="action-button action-button-secondary" type="button" onclick="diagnoseNativeAddressBookCSV()"><i class="bi bi-activity"></i> Diagnóstico CSV</button>
                     <button class="action-button action-button-secondary" type="button" onclick="document.getElementById('addressBookImportFile').click()"><i class="bi bi-upload"></i> Importar</button>
                     <input id="addressBookImportFile" type="file" accept=".csv,.xlsx,.xlsm" style="display:none" onchange="importAddressBookFile(this.files[0]);this.value=''">
+                    <button class="action-button action-button-secondary" type="button" onclick="document.getElementById('addressBookNativeImportFile').click()"><i class="bi bi-cloud-upload"></i> Importar Ricoh</button>
+                    <input id="addressBookNativeImportFile" type="file" accept=".csv" style="display:none" onchange="importNativeAddressBookCSV(this.files[0]);this.value=''">
                     <button class="action-button action-button-secondary" type="button" onclick="closeAddressBookSession()" data-i18n="close_session">Cerrar sesión</button>
                     <button id="addressBookApplyBtn" class="action-button action-button-secondary" type="button" onclick="applyAddressBookChanges()" data-i18n="apply_changes_printer" style="display:none">Aplicar cambios a impresora</button>
                     <div class="table-search" style="margin-left:auto;min-width:240px"><i class="bi bi-search"></i><input id="addressBookSearch" placeholder="Buscar usuario, correo o registro..." oninput="filterAddressBookEntries()"></div>
@@ -7492,6 +7496,55 @@
             } catch (error) { showToast(error.message, 'error', 5000); }
             finally { setAddressBookBusy(false); }
         }
+        function getDownloadFilenameFromResponse(response, fallback) {
+            const disposition = response.headers.get('content-disposition') || '';
+            const encodedMatch = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+            const plainMatch = disposition.match(/filename="?([^";]+)"?/i);
+            try {
+                return decodeURIComponent(encodedMatch?.[1] || plainMatch?.[1] || fallback);
+            } catch (_) {
+                return encodedMatch?.[1] || plainMatch?.[1] || fallback;
+            }
+        }
+        async function saveBlobResponse(response, fallbackFilename) {
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = getDownloadFilenameFromResponse(response, fallbackFilename);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        }
+        async function exportNativeAddressBookCSV() {
+            if (!currentAddressBookPrinter || addressBookBusy) return;
+            setAddressBookBusy(true, 'Descargando CSV Ricoh...');
+            try {
+                const response = await addressBookFetch(`/printers/${currentAddressBookPrinter.id}/address-book/native/export?backup=true`);
+                if (!response.ok) await readAddressBookResponse(response, 'No se pudo exportar CSV nativo Ricoh.');
+                await saveBlobResponse(response, 'ricoh_address_book.csv');
+                const backup = response.headers.get('x-ricoh-addressbook-backup');
+                showToast(backup ? 'CSV Ricoh exportado y backup guardado.' : 'CSV Ricoh exportado.', 'success', 5000);
+            } catch (error) { showToast(error.message, 'error', 7000); }
+            finally { setAddressBookBusy(false); }
+        }
+        async function diagnoseNativeAddressBookCSV() {
+            if (!currentAddressBookPrinter || addressBookBusy) return;
+            setAddressBookBusy(true, 'Diagnosticando CSV Ricoh...');
+            try {
+                const response = await addressBookFetch(`/printers/${currentAddressBookPrinter.id}/address-book/native/diagnostics`);
+                const data = await readAddressBookResponse(response, 'No se pudo diagnosticar CSV Ricoh.');
+                const pages = data.maintenance_pages?.length || 0;
+                const forms = data.forms?.length || 0;
+                const fileForms = (data.forms || []).filter(item => item.file_fields && item.file_fields.length).length;
+                const status = document.getElementById('addressBookStatus');
+                if (status) status.textContent = `CSV Ricoh diagnóstico | páginas: ${pages} | formularios: ${forms} | formularios con archivo: ${fileForms}`;
+                showToast(`Diagnóstico CSV: ${pages} páginas, ${forms} formularios, ${fileForms} con carga.`, fileForms ? 'success' : 'warning', 7000);
+                console.info('Ricoh address book native CSV diagnostics', data);
+            } catch (error) { showToast(error.message, 'error', 7000); }
+            finally { setAddressBookBusy(false); }
+        }
         function arrayBufferToBase64(buffer) {
             const bytes = new Uint8Array(buffer); let binary = '';
             for (let offset = 0; offset < bytes.length; offset += 0x8000) binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
@@ -7510,6 +7563,26 @@
                 const errorText = data.errors?.length ? ` | ${data.errors.length} filas con error` : '';
                 showToast(`Importados: ${data.imported} (${data.created} nuevos, ${data.updated} actualizados)${errorText}`, data.errors?.length ? 'error' : 'success', 6000);
             } catch (error) { showToast(error.message, 'error', 6000); }
+            finally { setAddressBookBusy(false); }
+        }
+        async function importNativeAddressBookCSV(file) {
+            if (!file || !currentAddressBookPrinter || addressBookBusy) return;
+            if (!file.name.toLowerCase().endsWith('.csv')) { showToast('Use un CSV exportado desde Ricoh.', 'error'); return; }
+            if (file.size > 10 * 1024 * 1024) { showToast('El archivo supera 10 MB.', 'error'); return; }
+            if (!await appConfirm('Importar CSV Ricoh', `Se subirá ${file.name} directamente al Web Image Monitor. Se intentará crear backup antes de aplicar.`)) return;
+            setAddressBookBusy(true, 'Importando CSV Ricoh...');
+            try {
+                const content_base64 = arrayBufferToBase64(await file.arrayBuffer());
+                const response = await addressBookFetch(`/printers/${currentAddressBookPrinter.id}/address-book/native/import?backup_before=true`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename: file.name, content_base64 })
+                });
+                const data = await readAddressBookResponse(response, 'No se pudo importar CSV Ricoh.');
+                renderAddressBookEntries(data.entries || [], data.storage_mode || 'ricoh-real');
+                const backupMsg = data.backup_path ? ' Backup creado.' : (data.backup_error ? ' Sin backup previo: ' + data.backup_error : '');
+                showToast('CSV Ricoh importado.' + backupMsg, data.backup_error ? 'warning' : 'success', 8000);
+            } catch (error) { showToast(error.message, 'error', 8000); }
             finally { setAddressBookBusy(false); }
         }
         async function closeAddressBookSession() {

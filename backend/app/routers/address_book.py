@@ -12,6 +12,7 @@ import unicodedata
 import html as html_lib
 import traceback
 from pathlib import Path
+from datetime import datetime
 from typing import List
 
 import requests
@@ -27,7 +28,9 @@ from .auth import require_tab
 router = APIRouter(prefix="/printers", tags=["AddressBook"], dependencies=[Depends(require_tab("printers"))])
 
 STORE_LOCK = threading.Lock()
-STORE_PATH = Path(__file__).resolve().parents[2] / "data" / "address_book_store.json"
+DATA_DIR = Path(__file__).resolve().parents[2] / "data"
+STORE_PATH = DATA_DIR / "address_book_store.json"
+BACKUP_DIR = DATA_DIR / "address_book_backups"
 DEFAULT_STORAGE_MODE = "ricoh-real"
 SUPPORTED_STORAGE_MODES = {"local-safe", "ricoh-real"}
 RICOH_HTTP_TIMEOUT = 8
@@ -411,6 +414,226 @@ def _ricoh_post_first_ok(session: requests.Session, printer_ip: str, path: str, 
     if last_resp is not None:
         return last_resp, _ricoh_entry_urls(printer_ip, path)[0]
     raise HTTPException(status_code=502, detail=f"Ricoh endpoint not available: {path}")
+
+
+def _ricoh_address_maintenance_paths() -> list[str]:
+    return [
+        "address/adrsMaintenance.cgi",
+        "address/adrsMainte.cgi",
+        "address/adrsCsv.cgi",
+        "address/adrsImportExport.cgi",
+        "address/adrsList.cgi",
+    ]
+
+
+def _ricoh_native_export_candidate_paths() -> list[str]:
+    return [
+        "address/adrsExport.cgi",
+        "address/adrsCsvExport.cgi",
+        "address/adrsListExport.cgi",
+        "address/adrsDownload.cgi",
+        "address/adrsBackup.cgi",
+        "address/adrsMaintenance.cgi?mode=EXPORT",
+        "address/adrsMaintenance.cgi?mode=CSV_EXPORT",
+        "address/adrsImportExport.cgi?mode=EXPORT",
+        "address/adrsImportExport.cgi?mode=CSV_EXPORT",
+    ]
+
+
+def _ricoh_native_import_candidate_paths() -> list[str]:
+    return [
+        "address/adrsImport.cgi",
+        "address/adrsCsvImport.cgi",
+        "address/adrsUpload.cgi",
+        "address/adrsRestore.cgi",
+        "address/adrsMaintenance.cgi",
+        "address/adrsImportExport.cgi",
+    ]
+
+
+def _join_ricoh_url(printer_ip: str, base_url: str, action: str) -> str:
+    action = (action or "").strip()
+    if action.startswith(("http://", "https://")):
+        return action
+    if action.startswith("/"):
+        return f"http://{printer_ip}{action}"
+    if "/" in action:
+        return f"http://{printer_ip}/web/entry/es/{action}"
+    return re.sub(r"[^/]+$", action, base_url)
+
+
+def _extract_wim_forms(html: str, page_url: str, printer_ip: str) -> list[dict]:
+    forms: list[dict] = []
+    for form_match in re.finditer(r"<form\b(?P<attrs>[^>]*)>(?P<body>.*?)</form>", html or "", re.IGNORECASE | re.DOTALL):
+        attrs = form_match.group("attrs") or ""
+        body = form_match.group("body") or ""
+        action_match = re.search(r'action=["\']([^"\']+)["\']', attrs, re.IGNORECASE)
+        method_match = re.search(r'method=["\']([^"\']+)["\']', attrs, re.IGNORECASE)
+        action = action_match.group(1) if action_match else page_url
+        inputs: dict[str, str] = {}
+        file_fields: list[str] = []
+        for input_match in re.finditer(r"<input\b([^>]*)>", body, re.IGNORECASE | re.DOTALL):
+            input_attrs = input_match.group(1) or ""
+            name_match = re.search(r'name=["\']([^"\']+)["\']', input_attrs, re.IGNORECASE)
+            if not name_match:
+                continue
+            name = html_lib.unescape(name_match.group(1))
+            value_match = re.search(r'value=["\']([^"\']*)["\']', input_attrs, re.IGNORECASE)
+            type_match = re.search(r'type=["\']([^"\']+)["\']', input_attrs, re.IGNORECASE)
+            input_type = (type_match.group(1) if type_match else "text").lower()
+            if input_type == "file":
+                file_fields.append(name)
+            else:
+                inputs[name] = html_lib.unescape(value_match.group(1) if value_match else "")
+        text = _clean_ricoh_text(body).lower()
+        forms.append({
+            "url": _join_ricoh_url(printer_ip, page_url, action),
+            "method": (method_match.group(1) if method_match else "GET").upper(),
+            "inputs": inputs,
+            "file_fields": file_fields,
+            "text": text,
+        })
+    return forms
+
+
+def _looks_like_address_book_csv(raw: bytes, content_type: str = "") -> bool:
+    if not raw or len(raw) < 12:
+        return False
+    head = raw[:4096].decode("utf-8-sig", errors="ignore").lower()
+    if "<html" in head or "<!doctype" in head or "authform.cgi" in head:
+        return False
+    if "text/csv" in (content_type or "").lower() or "application/octet-stream" in (content_type or "").lower():
+        return True
+    markers = (
+        "registration",
+        "address",
+        "name",
+        "key display",
+        "e-mail",
+        "email",
+        "user code",
+        "folder",
+    )
+    return ("," in head or ";" in head or "\t" in head) and sum(1 for marker in markers if marker in head) >= 2
+
+
+def _safe_address_book_backup_name(printer: Printer) -> str:
+    label = printer.shared_name or printer.name or printer.ip or f"printer_{printer.id}"
+    return re.sub(r"[^A-Za-z0-9_.-]+", "_", label).strip("_") or f"printer_{printer.id}"
+
+
+def _save_ricoh_address_book_backup(printer: Printer, raw: bytes, suffix: str = ".csv") -> Path:
+    folder = BACKUP_DIR / str(printer.id)
+    folder.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    path = folder / f"{stamp}_{_safe_address_book_backup_name(printer)}{suffix}"
+    path.write_bytes(raw)
+    return path
+
+
+def _fetch_ricoh_maintenance_pages(session: requests.Session, printer_ip: str) -> list[tuple[str, str]]:
+    pages: list[tuple[str, str]] = []
+    for path in _ricoh_address_maintenance_paths():
+        for url in _ricoh_entry_urls(printer_ip, path):
+            try:
+                resp = session.get(url, timeout=RICOH_HTTP_TIMEOUT)
+            except Exception:
+                continue
+            if resp.status_code == 200 and resp.text:
+                pages.append((url, resp.text))
+    return pages
+
+
+def _ricoh_export_native_address_book_csv(session: requests.Session, printer: Printer) -> tuple[bytes, str, str, list[str]]:
+    diagnostics: list[str] = []
+    pages = _fetch_ricoh_maintenance_pages(session, printer.ip)
+
+    for page_url, html in pages:
+        for form in _extract_wim_forms(html, page_url, printer.ip):
+            haystack = (form["url"] + " " + form.get("text", "")).lower()
+            if not any(marker in haystack for marker in ("csv", "export", "backup", "address")):
+                continue
+            try:
+                if form["method"] == "POST":
+                    resp = session.post(form["url"], data=form["inputs"], timeout=RICOH_HTTP_TIMEOUT)
+                else:
+                    resp = session.get(form["url"], params=form["inputs"], timeout=RICOH_HTTP_TIMEOUT)
+                diagnostics.append(f"form:{resp.status_code}:{form['url']}")
+            except Exception as ex:
+                diagnostics.append(f"form:exc={type(ex).__name__}:{form['url']}")
+                continue
+            if resp.status_code == 200 and _looks_like_address_book_csv(resp.content, resp.headers.get("content-type", "")):
+                return resp.content, resp.headers.get("content-disposition", ""), form["url"], diagnostics
+
+    for path in _ricoh_native_export_candidate_paths():
+        for url in _ricoh_entry_urls(printer.ip, path):
+            try:
+                resp = session.get(url, timeout=RICOH_HTTP_TIMEOUT)
+                diagnostics.append(f"candidate:{resp.status_code}:{path}")
+            except Exception as ex:
+                diagnostics.append(f"candidate:exc={type(ex).__name__}:{path}")
+                continue
+            if resp.status_code == 200 and _looks_like_address_book_csv(resp.content, resp.headers.get("content-type", "")):
+                return resp.content, resp.headers.get("content-disposition", ""), url, diagnostics
+
+    raise HTTPException(
+        status_code=404,
+        detail={
+            "message": "No se encontró exportación CSV nativa de la libreta en esta Ricoh.",
+            "diagnostics": diagnostics[-30:],
+        },
+    )
+
+
+def _ricoh_import_native_address_book_csv(session: requests.Session, printer: Printer, filename: str, raw: bytes) -> tuple[str, list[str]]:
+    diagnostics: list[str] = []
+    pages = _fetch_ricoh_maintenance_pages(session, printer.ip)
+    form_candidates: list[dict] = []
+    for page_url, html in pages:
+        for form in _extract_wim_forms(html, page_url, printer.ip):
+            haystack = (form["url"] + " " + form.get("text", "")).lower()
+            if form.get("file_fields") or any(marker in haystack for marker in ("csv", "import", "restore", "upload")):
+                form_candidates.append(form)
+
+    for form in form_candidates:
+        file_fields = form.get("file_fields") or ["file", "importFile", "csvFile", "addressFile"]
+        for field in file_fields:
+            try:
+                files = {field: (filename or "address_book.csv", raw, "text/csv")}
+                resp = session.post(form["url"], data=form.get("inputs") or {}, files=files, timeout=RICOH_HTTP_TIMEOUT)
+                diagnostics.append(f"form:{resp.status_code}:{field}:{form['url']}")
+            except Exception as ex:
+                diagnostics.append(f"form:exc={type(ex).__name__}:{field}:{form['url']}")
+                continue
+            text = (resp.text or "").lower()
+            if resp.status_code in (200, 302) and not ("error" in text and "csv" in text):
+                return form["url"], diagnostics
+
+    token = ""
+    if pages:
+        token = _ricoh_extract_wim_token(pages[0][1])
+    base_data = {"wimToken": token, "mode": "IMPORT", "inputSpecifyModeIn": "WRITE"} if token else {"mode": "IMPORT"}
+    for path in _ricoh_native_import_candidate_paths():
+        for url in _ricoh_entry_urls(printer.ip, path):
+            for field in ("file", "importFile", "csvFile", "addressFile"):
+                try:
+                    files = {field: (filename or "address_book.csv", raw, "text/csv")}
+                    resp = session.post(url, data=base_data, files=files, timeout=RICOH_HTTP_TIMEOUT)
+                    diagnostics.append(f"candidate:{resp.status_code}:{field}:{path}")
+                except Exception as ex:
+                    diagnostics.append(f"candidate:exc={type(ex).__name__}:{field}:{path}")
+                    continue
+                text = (resp.text or "").lower()
+                if resp.status_code in (200, 302) and not ("error" in text and "csv" in text):
+                    return url, diagnostics
+
+    raise HTTPException(
+        status_code=404,
+        detail={
+            "message": "No se encontró importación CSV nativa de la libreta en esta Ricoh.",
+            "diagnostics": diagnostics[-40:],
+        },
+    )
 
 
 def _ricoh_login_address_book(session: requests.Session, printer_ip: str, admin: str | None = None, password: str | None = None):
@@ -1034,6 +1257,103 @@ def import_address_book(
         "errors": errors[:50],
         "entries": entries or [],
         "storage_mode": mode,
+    }
+
+
+@router.get("/{printer_id}/address-book/native/diagnostics")
+def diagnose_native_address_book_csv(
+    printer_id: int,
+    address_book_session: str | None = Header(default=None, alias="X-Address-Book-Session"),
+    db: Session = Depends(get_db),
+):
+    printer = _get_printer_or_404(db, printer_id)
+    session = _get_address_book_client_session(address_book_session, printer.ip)
+    if session is None:
+        raise HTTPException(status_code=401, detail="Conecte la libreta de direcciones antes de diagnosticar CSV Ricoh.")
+    pages = _fetch_ricoh_maintenance_pages(session, printer.ip)
+    forms = []
+    for page_url, html in pages:
+        for form in _extract_wim_forms(html, page_url, printer.ip):
+            forms.append({
+                "url": form["url"],
+                "method": form["method"],
+                "file_fields": form.get("file_fields") or [],
+                "has_wim_token": bool(form.get("inputs", {}).get("wimToken")),
+                "text": (form.get("text") or "")[:160],
+            })
+    return {
+        "printer_id": printer.id,
+        "printer_ip": printer.ip,
+        "maintenance_pages": [url for url, _ in pages],
+        "forms": forms,
+        "export_candidates": _ricoh_native_export_candidate_paths(),
+        "import_candidates": _ricoh_native_import_candidate_paths(),
+    }
+
+
+@router.get("/{printer_id}/address-book/native/export")
+def export_native_address_book_csv(
+    printer_id: int,
+    backup: bool = Query(default=True),
+    address_book_session: str | None = Header(default=None, alias="X-Address-Book-Session"),
+    db: Session = Depends(get_db),
+):
+    printer = _get_printer_or_404(db, printer_id)
+    session = _get_address_book_client_session(address_book_session, printer.ip)
+    if session is None:
+        raise HTTPException(status_code=401, detail="Conecte la libreta de direcciones antes de exportar CSV Ricoh.")
+    raw, disposition, source_url, diagnostics = _ricoh_export_native_address_book_csv(session, printer)
+    backup_path = _save_ricoh_address_book_backup(printer, raw) if backup else None
+    safe_name = _safe_address_book_backup_name(printer)
+    filename = f"ricoh_address_book_{safe_name}.csv"
+    headers = {
+        "Content-Disposition": disposition or f'attachment; filename="{filename}"',
+        "X-Ricoh-AddressBook-Source": source_url,
+        "X-Ricoh-AddressBook-Diagnostics": " | ".join(diagnostics[-8:])[:900],
+    }
+    if backup_path:
+        headers["X-Ricoh-AddressBook-Backup"] = str(backup_path)
+    return Response(raw, media_type="text/csv; charset=utf-8", headers=headers)
+
+
+@router.post("/{printer_id}/address-book/native/import")
+def import_native_address_book_csv(
+    printer_id: int,
+    payload: AddressBookImportRequest,
+    backup_before: bool = Query(default=True),
+    address_book_session: str | None = Header(default=None, alias="X-Address-Book-Session"),
+    db: Session = Depends(get_db),
+):
+    printer = _get_printer_or_404(db, printer_id)
+    session = _get_address_book_client_session(address_book_session, printer.ip)
+    if session is None:
+        raise HTTPException(status_code=401, detail="Conecte la libreta de direcciones antes de importar CSV Ricoh.")
+    try:
+        raw = base64.b64decode(payload.content_base64, validate=True)
+    except Exception as ex:
+        raise HTTPException(status_code=400, detail="Contenido de archivo invalido.") from ex
+    if not _looks_like_address_book_csv(raw, "text/csv"):
+        raise HTTPException(status_code=400, detail="El archivo no parece un CSV de libreta Ricoh.")
+
+    backup_path = None
+    backup_error = None
+    if backup_before:
+        try:
+            backup_raw, _, _, _ = _ricoh_export_native_address_book_csv(session, printer)
+            backup_path = _save_ricoh_address_book_backup(printer, backup_raw)
+        except Exception as ex:
+            backup_error = str(ex)[:220]
+
+    source_url, diagnostics = _ricoh_import_native_address_book_csv(session, printer, payload.filename, raw)
+    entries = _ricoh_load_entries_with_session(session, printer.ip, dump=False)
+    return {
+        "imported": True,
+        "source_url": source_url,
+        "backup_path": str(backup_path) if backup_path else None,
+        "backup_error": backup_error,
+        "diagnostics": diagnostics[-30:],
+        "entries": entries,
+        "storage_mode": "ricoh-real",
     }
 
 
