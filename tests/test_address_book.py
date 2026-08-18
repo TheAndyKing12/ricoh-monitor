@@ -93,6 +93,18 @@ def test_address_book_extracts_wim_upload_form():
     assert forms[0]["file_fields"] == ["csvFile"]
 
 
+def test_address_book_reload_after_write_returns_warning(monkeypatch):
+    def fail_reload(*args, **kwargs):
+        raise HTTPException(status_code=401, detail="Sesion expirada")
+
+    monkeypatch.setattr(address_book, "_ricoh_load_entries_with_session", fail_reload)
+
+    entries, warning = address_book._try_reload_entries_after_write(requests.Session(), "10.0.0.10")
+
+    assert entries == []
+    assert "Sesion expirada" in warning
+
+
 def test_address_book_local_crud_roundtrip(tmp_path, monkeypatch):
     monkeypatch.setattr(address_book, "STORE_PATH", tmp_path / "address_book.json")
     created = address_book._create_local_entry(

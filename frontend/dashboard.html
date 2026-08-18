@@ -6351,6 +6351,7 @@
         let addressBookEntriesCache = [];
         let addressBookStorageMode = 'ricoh-real';
         let addressBookBusy = false;
+        const ADDRESS_BOOK_SESSION_KEY = 'ricoh_address_book_session';
         let currentModalPrinter = null;
         let currentTonerControlPrinterId = null;
         let tonerControlRawData = [];
@@ -7199,7 +7200,7 @@
             if (!confirmed) {
                 currentAddressBookPrinter = null;
                 abCredentials = { admin: null };
-                abSessionToken = null;
+                clearAddressBookSessionState();
             }
         }
         function clearDiscoveredPrinters() { discoveredPrintersCache = []; const list = document.getElementById('discoverPrintersList'); const selectAll = document.getElementById('selectAllDiscovered'); if (list) list.innerHTML = '<tr><td colspan="5">Configure la búsqueda y presione buscar.</td></tr>'; if (selectAll) selectAll.checked = false; }
@@ -7208,7 +7209,7 @@
         function openAddressBook(printer) {
             currentAddressBookPrinter = printer || null;
             abCredentials = { admin: null };
-            abSessionToken = null;
+            clearAddressBookSessionState();
             addressBookEntriesCache = [];
             addressBookStorageMode = 'ricoh-real';
             const search = document.getElementById('addressBookSearch');
@@ -7363,11 +7364,57 @@
             try { return await fetch(url, opts); }
             finally { clearTimeout(timer); }
         }
+        function saveAddressBookSessionState() {
+            if (!currentAddressBookPrinter || !abSessionToken) {
+                sessionStorage.removeItem(ADDRESS_BOOK_SESSION_KEY);
+                return;
+            }
+            sessionStorage.setItem(ADDRESS_BOOK_SESSION_KEY, JSON.stringify({
+                printer: currentAddressBookPrinter,
+                token: abSessionToken,
+                saved_at: Date.now()
+            }));
+        }
+        function clearAddressBookSessionState() {
+            abSessionToken = null;
+            sessionStorage.removeItem(ADDRESS_BOOK_SESSION_KEY);
+        }
+        function restoreAddressBookSessionState() {
+            try {
+                const raw = sessionStorage.getItem(ADDRESS_BOOK_SESSION_KEY);
+                if (!raw) return false;
+                const data = JSON.parse(raw);
+                if (!data?.printer || !data?.token) return false;
+                if (Date.now() - Number(data.saved_at || 0) > 14 * 60 * 1000) {
+                    sessionStorage.removeItem(ADDRESS_BOOK_SESSION_KEY);
+                    return false;
+                }
+                currentAddressBookPrinter = data.printer;
+                abSessionToken = data.token;
+                return true;
+            } catch (_) {
+                sessionStorage.removeItem(ADDRESS_BOOK_SESSION_KEY);
+                return false;
+            }
+        }
+        function reopenAddressBookAuth(message) {
+            clearAddressBookSessionState();
+            if (message) {
+                const status = document.getElementById('addressBookAuthStatus');
+                if (status) status.textContent = message;
+            }
+            if (currentAddressBookPrinter) {
+                const sub = document.getElementById('addressBookAuthSubtitle');
+                if (sub) sub.textContent = (message || 'La sesion expiro. Conecte nuevamente.') + ' IP: ' + (currentAddressBookPrinter.ip || '-');
+                document.getElementById('addressBookPassword').value = '';
+                document.getElementById('addressBookAuthModal')?.classList.add('open');
+            }
+        }
         async function readAddressBookResponse(response, fallback) {
             let data = {};
             try { data = await response.json(); } catch (_) { }
             if (!response.ok) {
-                if (response.status === 401 || response.status === 403) abSessionToken = null;
+                if (response.status === 401 || response.status === 403) clearAddressBookSessionState();
                 const detail = typeof data.detail === 'string' ? data.detail : data.detail?.message;
                 const error = new Error(detail || fallback || 'Error de libreta de direcciones');
                 error.status = response.status;
@@ -7411,6 +7458,7 @@
         function renderAddressBookEntries(entries, storageMode) {
             addressBookEntriesCache = Array.isArray(entries) ? entries : [];
             addressBookStorageMode = storageMode || 'ricoh-real';
+            if (abSessionToken) saveAddressBookSessionState();
             const status = document.getElementById('addressBookStatus');
             const applyBtn = document.getElementById('addressBookApplyBtn');
             if (status) status.textContent = (addressBookStorageMode === 'ricoh-real' ? 'Conectado a Ricoh' : 'Modo local') + ' | Registros: ' + addressBookEntriesCache.length;
@@ -7428,6 +7476,7 @@
                 renderAddressBookEntries(data.entries, data.storage_mode);
             } catch (error) {
                 if (list) list.innerHTML = '<tr><td colspan="12"><div class="empty-state">' + escapeAddressBookText(error.message) + '</div></td></tr>';
+                if (error.status === 401 || error.status === 403) reopenAddressBookAuth('La sesion expiro. Conecte nuevamente.');
                 showToast(error.status === 401 ? 'La sesion expiro. Conecte nuevamente.' : error.message, 'error', 5000);
             } finally { setAddressBookBusy(false); }
         }
@@ -7440,8 +7489,11 @@
                 const response = await addressBookFetch(`/printers/${currentAddressBookPrinter.id}/address-book`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 const data = await readAddressBookResponse(response, t('could_not_add_user'));
                 renderAddressBookEntries(data.entries || [...addressBookEntriesCache, data.entry], data.storage_mode || addressBookStorageMode);
-                showToast(t('user_added'), 'success');
-            } catch (error) { showToast(error.message, 'error', 5000); }
+                showToast(data.reload_warning ? 'Usuario guardado. No se pudo refrescar automaticamente; presione Refrescar.' : t('user_added'), data.reload_warning ? 'warning' : 'success', 7000);
+            } catch (error) {
+                if (error.status === 401 || error.status === 403) reopenAddressBookAuth('La sesion expiro. Conecte nuevamente.');
+                showToast(error.message, 'error', 5000);
+            }
             finally { setAddressBookBusy(false); }
         }
         async function editAddressBookEntryByRegistration(encodedRegistrationNo) {
@@ -7461,8 +7513,11 @@
                 const data = await readAddressBookResponse(response, t('could_not_update_user'));
                 const fallback = addressBookEntriesCache.map(item => String(item.registration_no) === reg ? { ...item, ...payload } : item);
                 renderAddressBookEntries(data.entries || fallback, data.storage_mode || addressBookStorageMode);
-                showToast(t('user_updated'), 'success');
-            } catch (error) { showToast(error.message, 'error', 5000); }
+                showToast(data.reload_warning ? 'Usuario actualizado. No se pudo refrescar automaticamente; presione Refrescar.' : t('user_updated'), data.reload_warning ? 'warning' : 'success', 7000);
+            } catch (error) {
+                if (error.status === 401 || error.status === 403) reopenAddressBookAuth('La sesion expiro. Conecte nuevamente.');
+                showToast(error.message, 'error', 5000);
+            }
             finally { setAddressBookRowBusy(reg, false); setAddressBookBusy(false); }
         }
         async function deleteAddressBookEntry(encodedRegistrationNo) {
@@ -7591,7 +7646,7 @@
             try {
                 const response = await addressBookFetch(`/printers/${currentAddressBookPrinter.id}/address-book/session/close`, { method: 'POST' });
                 await readAddressBookResponse(response, 'No se pudo cerrar la sesion.');
-                abCredentials = { admin: null }; abSessionToken = null; addressBookEntriesCache = [];
+                abCredentials = { admin: null }; clearAddressBookSessionState(); addressBookEntriesCache = [];
                 renderAddressBookRows([]);
                 showToast('Sesion cerrada correctamente', 'success');
             } catch (error) { showToast(error.message, 'error'); }
@@ -8123,6 +8178,7 @@
                 if (!response.ok) throw new Error(data.detail || 'Credenciales inválidas');
                 abCredentials = { admin: admin || 'admin' };
                 abSessionToken = data.session_token || null;
+                saveAddressBookSessionState();
                 document.getElementById('addressBookPassword').value = '';
                 document.getElementById('addressBookAuthModal')?.classList.remove('open');
                 const title = document.getElementById('addressBookPrinterTitle');
@@ -8137,6 +8193,18 @@
                 if (statusEl) { statusEl.textContent = '❌ ' + (error.message || 'Error de autenticación'); statusEl.className = 'field-help error'; }
                 showToast(error.message || 'Error de autenticación', 'error');
             }
+        }
+        function restoreAddressBookViewAfterRefresh() {
+            if (!restoreAddressBookSessionState()) return;
+            const title = document.getElementById('addressBookPrinterTitle');
+            const meta = document.getElementById('addressBookPrinterMeta');
+            const printer = currentAddressBookPrinter;
+            const displayName = printer.shared_name || printer.name || printer.model || t('printer_fallback');
+            if (title) title.textContent = t('address_book_title') + ' - ' + displayName;
+            if (meta) meta.textContent = 'IP: ' + (printer.ip ?? '-') + ' | Modelo: ' + (printer.model ?? '-') + ' | Serie: ' + (printer.serial ?? '-');
+            showTab('addressBook');
+            loadAddressBookEntries();
+            return true;
         }
         function _paSortValue(item, column) {
             const v = item?.[column];
@@ -9035,7 +9103,7 @@
         if (_userNameEl) _userNameEl.textContent = _authUser.display_name || 'Usuario';
 
         applyTabPermissions();
-        showTab('dashboard');
+        if (!restoreAddressBookViewAfterRefresh()) showTab('dashboard');
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/frontend/sw.js', { updateViaCache: 'none' })
                 .then(registration => registration.update())

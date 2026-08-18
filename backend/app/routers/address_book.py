@@ -1633,6 +1633,15 @@ def _ricoh_set_user(session: requests.Session, printer_ip: str, entry: dict, mod
         raise HTTPException(status_code=502, detail=f"Ricoh adrsSetUser failed ({set_resp.status_code})")
 
 
+def _try_reload_entries_after_write(session: requests.Session, printer_ip: str, admin: str | None = None, password: str | None = None) -> tuple[list[dict], str | None]:
+    try:
+        return _ricoh_load_entries_with_session(session, printer_ip, dump=False, admin=admin, password=password), None
+    except HTTPException as ex:
+        return [], str(ex.detail)[:220]
+    except Exception as ex:
+        return [], f"{type(ex).__name__}: {str(ex)[:180]}"
+
+
 def _is_plausible_reg(value) -> bool:
     text = str(value or "").strip()
     return text.isdigit() and 1 <= int(text) <= 99999
@@ -1938,15 +1947,15 @@ def _create_ricoh_entry(printer, payload: AddressBookEntryCreate, admin: str | N
                 existing = _ricoh_load_entries_with_session(session, printer.ip, dump=False, admin=admin, password=password)
                 entry["registration_no"] = _next_registration_no(existing or [])
             _ricoh_set_user(session, printer.ip, entry, "ADDUSER")
-            entries = _ricoh_load_entries_with_session(session, printer.ip, dump=False, admin=admin, password=password)
+            entries, reload_warning = _try_reload_entries_after_write(session, printer.ip, admin=admin, password=password)
             if entries and not any(str(item.get("registration_no") or "").strip().zfill(5) == entry["registration_no"].zfill(5) for item in entries):
                 raise HTTPException(status_code=502, detail="Ricoh no confirmo la creacion del usuario.")
-            return {"entry": entry, "entries": entries or []}
+            return {"entry": entry, "entries": entries or [], "reload_warning": reload_warning, "storage_mode": "ricoh-real"}
         except Exception as ex:
             # Si falla, limpiar sesión del pool
-            if address_book_session:
+            if address_book_session and not isinstance(ex, HTTPException):
                 _close_address_book_client_session(token=address_book_session)
-            else:
+            elif not address_book_session:
                 _close_ricoh_session(printer.ip)
             raise
 
@@ -1970,15 +1979,15 @@ def _update_ricoh_entry(printer, registration_no: str, payload: AddressBookEntry
         try:
             session = _get_address_book_client_session(address_book_session, printer.ip) or _get_or_create_ricoh_session(printer.ip, admin, password)
             _ricoh_set_user(session, printer.ip, entry, "MODUSER")
-            entries = _ricoh_load_entries_with_session(session, printer.ip, dump=False, admin=admin, password=password)
+            entries, reload_warning = _try_reload_entries_after_write(session, printer.ip, admin=admin, password=password)
             refreshed = next((item for item in entries or [] if str(item.get("registration_no") or "").strip().zfill(5) == str(registration_no).strip().zfill(5)), None)
             if entries and (not refreshed or str(refreshed.get("name") or "").strip() != entry["name"]):
                 raise HTTPException(status_code=502, detail="Ricoh no confirmo la actualizacion del usuario.")
-            return {"entry": entry, "entries": entries or []}
+            return {"entry": entry, "entries": entries or [], "reload_warning": reload_warning, "storage_mode": "ricoh-real"}
         except Exception as ex:
-            if address_book_session:
+            if address_book_session and not isinstance(ex, HTTPException):
                 _close_address_book_client_session(token=address_book_session)
-            else:
+            elif not address_book_session:
                 _close_ricoh_session(printer.ip)
             raise
 
